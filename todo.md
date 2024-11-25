@@ -13,12 +13,12 @@
 
 - [ ] Implémenter les bots
 - [ ] Implémenter pour n joueurs (actuel : 2)
-- [ ] Afficher scores à la fin
+- [ ] Afficher scores et map à la fin
 
 ## Graphismes
 
 - [ ] les sssserpents
-- [ ] animation lorsque le serpent mange
+- [ ] animation lorsque le serpent mange et selon les objets
 - [ ] design les cadeaux objets
 - [ ] backgrounds
   - [ ] Jardins avec pommes
