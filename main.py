@@ -32,25 +32,22 @@ TERRAIN_CX: int = (TERRAIN_X + TERRAIN_W) // 2
 TERRAIN_CY: int = (TERRAIN_Y + TERRAIN_H) // 2
 
 
-#
+# Update the snake direction (checking if the new direction is not the opposite of the current one)
 def event_set_snake_direction(main_app: nd.ND_MainApp, direction: ND_Point, snake_idx: int) -> None:
-    #
+
     snakes: Optional[dict[int, Snake]] = main_app.global_vars_get("snakes")
 
-    #
     if snakes is None:
         return
 
-    #
     if snake_idx not in snakes:
         return
 
-    #
     if snakes[snake_idx].last_applied_direction != -direction:
         snakes[snake_idx].direction = direction
 
 
-#
+# Initialize the game
 def on_bt_click_init_game(win: nd.ND_Window) -> None:
     # win.set_state("test")
     # return
@@ -66,16 +63,16 @@ def on_bt_click_init_game(win: nd.ND_Window) -> None:
     # Getting Settings
     # (x, y, cl, size, id, player, (key_up, key_left, key_bottom, key_right))
     a: Optional[list[tuple[str, ND_Point, ND_Color, int, int, str, Optional[tuple[str, str, str, str]]]]] = win.main_app.global_vars_get("init_snakes")
-    #
+    
     init_snakes: list[tuple[str, ND_Point, ND_Color, int, int, str, Optional[tuple[str, str, str, str]]]] = \
         a if a is not None else [
             ("humain1", ND_Point(TERRAIN_X + TERRAIN_W // 3, TERRAIN_Y + (TERRAIN_H * 2) //3), ND_Color(255, 0, 0), 4, 0, "human", ("keydown_z", "keydown_q", "keydown_s", "keydown_d")),
             ("humain2", ND_Point(TERRAIN_X + (TERRAIN_W * 2) // 3, TERRAIN_Y + TERRAIN_H //3), ND_Color(0, 255, 0), 4, 0, "human", ("keydown_up arrow", "keydown_left arrow", "keydown_down arrow", "keydown_right arrow")),
             # ("humain3", ND_Point(TERRAIN_X + TERRAIN_W // 3, TERRAIN_Y + TERRAIN_H //3), ND_Color(0, 0, 255), 4, 0, "human", ("keydown_u", "keydown_h", "keydown_j", "keydown_k"))
         ]
-    #
+
     nb_init_apples: int = 3
-    #
+
     grid: Optional[nd.ND_RectGrid] = win.main_app.global_vars_get("grid")
     cam_grid: Optional[nd.ND_CameraGrid] = win.main_app.global_vars_get("cam_grid")
 
@@ -85,15 +82,14 @@ def on_bt_click_init_game(win: nd.ND_Window) -> None:
     # Snake Atlas
     snake_atlas: Optional[nd.ND_AtlasTexture] = win.main_app.global_vars_get("snake_atlas")
 
-    #
+    # Errors
     if grid is None or cam_grid is None:
         raise UserWarning("Error: no grid, cannot initialise the game !")
-    #
+    
     if apple_grid_elt is None or snake_atlas is None:
         raise UserWarning("Error: apple and snakes textures are not correctly initialized !")
 
 
-    # On nettoie la grille
     grid.clean()
 
     # Wall grid
@@ -108,16 +104,12 @@ def on_bt_click_init_game(win: nd.ND_Window) -> None:
         )
         win.main_app.global_vars_set("wall_grid_elt", wall_grid_elt)
 
-    #
     wall_grid_id: int = grid.add_element_to_grid(wall_grid_elt, [])
 
-    #
     win.main_app.global_vars_set("wall_grid_id", wall_grid_id)
 
-    #
     apple_grid_id: int = grid.add_element_to_grid(apple_grid_elt, [])
 
-    #
     win.main_app.global_vars_set("apple_grid_id", apple_grid_id)
 
 
@@ -127,33 +119,31 @@ def on_bt_click_init_game(win: nd.ND_Window) -> None:
 
     xx: int
     yy: int
-    #
+
     for yy in range(TERRAIN_Y-1, TERRAIN_Y+TERRAIN_H+1):
-        #
+
         grid.add_element_position(wall_grid_id, ND_Point(TERRAIN_X-1, yy))
         grid.add_element_position(wall_grid_id, ND_Point(TERRAIN_X+TERRAIN_W+1, yy))
 
-    #
+
     for xx in range(TERRAIN_X-1, TERRAIN_X+TERRAIN_W+2):
-        #
+
         grid.add_element_position(wall_grid_id, ND_Point(xx, TERRAIN_Y-1))
         grid.add_element_position(wall_grid_id, ND_Point(xx, TERRAIN_Y+TERRAIN_H+1))
 
-    #
     snk_idx: int
     snk: tuple[str, ND_Point, ND_Color, int, int, str, Optional[tuple[str, str, str, str]]]
     for (snk_idx, snk) in enumerate(init_snakes):
 
-        #
+
         snake: Snake = Snake( pseudo=snk[0], init_position=snk[1], color=snk[2], init_size=snk[3] )
         snake.last_update = time.time()
 
-        #
+
         win.main_app.global_vars_dict_set("snakes", snk_idx, snake)
 
 
         # Snake head
-        #
         sprite_head: nd.ND_AnimatedSprite = nd.ND_AnimatedSprite(
             window=win,
             elt_id=f"snake_{snk_idx}_head",
@@ -176,10 +166,9 @@ def on_bt_click_init_game(win: nd.ND_Window) -> None:
         )
         sprite_head.transformations.rotation = 270
         sprite_head.transformations.color_modulation = snake.color
-        #
         snake.sprites["head"] = (sprite_head, grid.add_element_to_grid(sprite_head, []))
 
-        #
+        # Snake tail
         sprite_tail: nd.ND_Sprite_of_AtlasTexture = nd.ND_Sprite_of_AtlasTexture(
             window=win,
             elt_id=f"snake_{snk_idx}_tail",
@@ -190,7 +179,7 @@ def on_bt_click_init_game(win: nd.ND_Window) -> None:
         sprite_tail.transformations.color_modulation = snake.color
         snake.sprites["tail"] = (sprite_tail, grid.add_element_to_grid(sprite_tail, []))
 
-        #
+        # Snake body
         sprite_body: nd.ND_Sprite_of_AtlasTexture = nd.ND_Sprite_of_AtlasTexture(
             window=win,
             elt_id=f"snake_{snk_idx}_body",
@@ -201,7 +190,7 @@ def on_bt_click_init_game(win: nd.ND_Window) -> None:
         sprite_body.transformations.color_modulation = snake.color
         snake.sprites["body"] = (sprite_body, grid.add_element_to_grid(sprite_body, []))
 
-        #
+        # Snake body (corner edition)
         sprite_body_corner: nd.ND_Sprite_of_AtlasTexture = nd.ND_Sprite_of_AtlasTexture(
             window=win,
             elt_id=f"snake_{snk_idx}_body_corner",
@@ -230,16 +219,16 @@ def on_bt_click_init_game(win: nd.ND_Window) -> None:
 
         #
         if snk[5] == "human" and snk[6] is not None:
-            #
+    
             win.main_app.add_function_to_event_fns_queue(snk[6][0],
                 lambda main_app, snk_idx=snk_idx: event_set_snake_direction(main_app, ND_Point(0, -1), snk_idx))
-            #
+
             win.main_app.add_function_to_event_fns_queue(snk[6][1],
                 lambda main_app, snk_idx=snk_idx: event_set_snake_direction(main_app, ND_Point(-1, 0), snk_idx))
-            #
+
             win.main_app.add_function_to_event_fns_queue(snk[6][2],
                 lambda main_app, snk_idx=snk_idx: event_set_snake_direction(main_app, ND_Point(0, 1), snk_idx))
-            #
+
             win.main_app.add_function_to_event_fns_queue(snk[6][3],
                 lambda main_app, snk_idx=snk_idx: event_set_snake_direction(main_app, ND_Point(1, 0), snk_idx))
 
@@ -248,9 +237,9 @@ def on_bt_click_init_game(win: nd.ND_Window) -> None:
     # Init apples
     p: Optional[ND_Point]
     for _ in range(nb_init_apples):
-        #
+
         p = grid.get_empty_case_in_range(TERRAIN_X, TERRAIN_X + TERRAIN_W, TERRAIN_Y, TERRAIN_Y + TERRAIN_H)
-        #
+
         if p is not None:
             grid.add_element_position(apple_grid_id, p)
 
@@ -263,24 +252,24 @@ def on_bt_click_init_game(win: nd.ND_Window) -> None:
     win.set_state("game")
 
 
-#
+# Quit the game
 def on_bt_click_quit(win: nd.ND_Window) -> None:
-    #
+
     win.main_app.quit()
 
 
 #
 def update_physic(mainApp: nd.ND_MainApp, delta_time: float) -> None:
-    #
+
     if mainApp.display is None:
         return
-    #
+
     win: Optional[nd.ND_Window] = mainApp.display.windows[MAIN_WINDOW_ID]
-    #
+
     if win is None or win.state != "game":
         return
 
-    #
+
     grid: Optional[nd.ND_RectGrid] = mainApp.global_vars_get("grid")
     snakes: Optional[dict[int, Snake]] = mainApp.global_vars_get("snakes")
     dead_snakes: Optional[dict[int, Snake]] = mainApp.global_vars_get("dead_snakes")
@@ -288,21 +277,19 @@ def update_physic(mainApp: nd.ND_MainApp, delta_time: float) -> None:
     wall_grid_id: Optional[int] = mainApp.global_vars_get("wall_grid_id")
     apple_grid_id: Optional[int] = mainApp.global_vars_get("apple_grid_id")
 
-    #
+    # Something is None
     if grid is None or snakes is None or dead_snakes is None or snakes_speed is None or wall_grid_id is None or apple_grid_id is None:
         return
 
-    #
+
     now: float = time.time()
 
-    #
     game_pause: float = cast(float, win.main_app.global_vars_get("game_pause"))
     win.main_app.global_vars_set("game_pause", 0)
 
-    #
+
     snaks_to_die: list[int] = []
 
-    #
     snak: Snake
     for snak_idx, snak in snakes.items():
         #
@@ -473,7 +460,6 @@ def create_main_menu_scene(win: nd.ND_Window) -> nd.ND_Scene:
         on_window_state="main_menu"
     )
 
-    #
     main_menu_container: nd.ND_Container = nd.ND_Container(
         window=win,
         elt_id="main_menu_container",
@@ -481,7 +467,6 @@ def create_main_menu_scene(win: nd.ND_Window) -> nd.ND_Scene:
         element_alignment="col"
     )
 
-    #
     bottom_row_container: nd.ND_Container = nd.ND_Container(
         window=win,
         elt_id="bottom_row_container",
@@ -489,7 +474,6 @@ def create_main_menu_scene(win: nd.ND_Window) -> nd.ND_Scene:
         element_alignment="row"
     )
 
-    #
     bts_container: nd.ND_Container = nd.ND_Container(
         window=win,
         elt_id="bts_container",
@@ -497,7 +481,6 @@ def create_main_menu_scene(win: nd.ND_Window) -> nd.ND_Scene:
         element_alignment="col"
     )
 
-    #
     game_title: nd.ND_Text = nd.ND_Text(
                             window=win,
                             elt_id="game_title",
@@ -508,11 +491,9 @@ def create_main_menu_scene(win: nd.ND_Window) -> nd.ND_Scene:
                             font_color=cl("violet"),
     )
 
-    #
     win.main_app.global_vars_set("main_menu_title", game_title)
     win.main_app.add_function_to_mainloop_fns_queue("physics", animate_main_menu)
 
-    #
     bt_play: nd.ND_Button = nd.ND_Button(
         window=win,
         elt_id="bt_play",
@@ -522,7 +503,7 @@ def create_main_menu_scene(win: nd.ND_Window) -> nd.ND_Scene:
         font_name="FreeSans",
         font_size=35
     )
-    #
+
     bt_train: nd.ND_Button = nd.ND_Button(
         window=win,
         elt_id="bt_train",
@@ -532,7 +513,7 @@ def create_main_menu_scene(win: nd.ND_Window) -> nd.ND_Scene:
         font_name="FreeSans",
         font_size=35
     )
-    #
+
     bt_settings: nd.ND_Button = nd.ND_Button(
         window=win,
         elt_id="bt_settings",
@@ -542,7 +523,7 @@ def create_main_menu_scene(win: nd.ND_Window) -> nd.ND_Scene:
         font_name="FreeSans",
         font_size=35
     )
-    #
+
     bt_quit: nd.ND_Button = nd.ND_Button(
         window=win,
         elt_id="bt_quit",
@@ -553,22 +534,18 @@ def create_main_menu_scene(win: nd.ND_Window) -> nd.ND_Scene:
         font_size=35
     )
 
-    #
     bts_container.add_element(bt_play)
     bts_container.add_element(bt_train)
     bts_container.add_element(bt_settings)
     bts_container.add_element(bt_quit)
 
-    #
     main_menu_container.add_element(game_title)
     main_menu_container.add_element(bottom_row_container)
-    #
+
     bottom_row_container.add_element(bts_container)
 
-    #
     main_menu_scene.add_element(0, main_menu_container)
 
-    #
     return main_menu_scene
 
 
