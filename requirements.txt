@@ -1,0 +1,10 @@
+glfw
+freetype
+glm
+ctypes
+pygl
+vulkan
+pysdl2
+pygame
+tkinter
+
