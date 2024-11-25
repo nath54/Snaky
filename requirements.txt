@@ -2,7 +2,7 @@ glfw
 glm
 PyOpenGL
 vulkan
-pysdl2
+PySDL2
 pygame
 tk
 
