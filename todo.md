@@ -18,6 +18,7 @@
 ## Graphismes
 
 - [ ] les sssserpents
+- [ ] animation lorsque le serpent mange
 - [ ] design les cadeaux objets
 - [ ] backgrounds
   - [ ] Jardins avec pommes
