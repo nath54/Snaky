@@ -17,6 +17,9 @@
 
 ## Graphismes
 
+- [ ] trouver une meilleure police d'écriture
+- [ ] retravailler l'apparence des boutons / autres éléments d'interface
+- [ ] mettre un background animé pour l'écran principal
 - [ ] les sssserpents
 - [ ] animation lorsque le serpent mange et selon les objets
 - [ ] design les cadeaux objets
