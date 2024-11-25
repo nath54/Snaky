@@ -1,10 +1,8 @@
 glfw
-freetype
 glm
-ctypes
-pygl
+PyOpenGL
 vulkan
 pysdl2
 pygame
-tkinter
+tk
 
