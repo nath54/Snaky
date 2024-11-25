@@ -1,4 +1,6 @@
 
+from typing import Optional
+
 from lib_nadisplay_colors import ND_Color
 from lib_nadisplay_rects import ND_Point
 import lib_nadisplay as nd
@@ -30,13 +32,35 @@ class Snake:
 
 
 #
-def create_map1(mainApp: nd.ND_MainApp, n: int = 30) -> None:
+def create_map1(win: nd.ND_Window, n: int = 30) -> None:
     """
     Garden Map, a large square
 
     Args:
         mainApp (nd.ND_MainApp): _description_
     """
+
+    grid: Optional[nd.ND_RectGrid] = win.main_app.global_vars_get("grid")
+    bg_grid: Optional[nd.ND_RectGrid] = win.main_app.global_vars_get("bg_grid")
+
+    if grid is None or bg_grid is None:
+        return
+
+    #
+    bg_garden_atlas: Optional[nd.ND_AtlasTexture] = win.main_app.global_vars_get("bg_garden_atlas")
+    #
+    if bg_garden_atlas is None:
+        #
+        bg_garden_atlas = nd.ND_AtlasTexture(
+                                window=win,
+                                texture_atlas_path="res/terrain1.png",
+                                tiles_size=ND_Point(32, 32)
+        )
+        #
+        win.main_app.global_vars_set("bg_garden_atlas", bg_garden_atlas)
+
+    #
+    
 
     # TODO
     pass

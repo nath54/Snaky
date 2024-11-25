@@ -24,12 +24,10 @@ import time
 MAIN_WINDOW_ID: int = 0
 
 #
-TERRAIN_X: int = 200
+TERRAIN_X: int = 4
 TERRAIN_Y: int = 4
 TERRAIN_W: int = 20
 TERRAIN_H: int = 20
-TERRAIN_CX: int = (TERRAIN_X + TERRAIN_W) // 2
-TERRAIN_CY: int = (TERRAIN_Y + TERRAIN_H) // 2
 
 
 #
@@ -612,6 +610,9 @@ def create_game_scene(win: nd.ND_Window) -> nd.ND_Scene:
         grid_lines_width=0,
         grid_lines_color=ND_Color(255, 255, 255)
     )
+    #
+    win.main_app.global_vars_set("bg_grid", bg_grid)
+
 
     #
     camera_grid: nd.ND_CameraGrid = nd.ND_CameraGrid(
