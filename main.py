@@ -52,8 +52,6 @@ def event_set_snake_direction(main_app: nd.ND_MainApp, direction: ND_Point, snak
 
 #
 def on_bt_click_init_game(win: nd.ND_Window) -> None:
-    # win.set_state("test")
-    # return
 
     # Cleaning
     win.main_app.global_vars_set("snakes", {})

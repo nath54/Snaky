@@ -24,3 +24,39 @@ class Snake:
         #
         self.sprites: dict[str, tuple[nd.ND_AnimatedSprite | nd.ND_Sprite_of_AtlasTexture, int]] = {}
 
+
+
+
+
+
+#
+def create_map1(mainApp: nd.ND_MainApp, n: int = 30) -> None:
+    """
+    Garden Map, a large square
+
+    Args:
+        mainApp (nd.ND_MainApp): _description_
+    """
+
+    # TODO
+    pass
+
+
+
+
+
+#
+def create_map2(mainApp: nd.ND_MainApp, n: int = 30) -> None:
+    """
+    Donut map, Donut shape
+
+    Args:
+        mainApp (nd.ND_MainApp): _description_
+    """
+
+    # TODO
+    pass
+
+
+
+
