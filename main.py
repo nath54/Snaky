@@ -15,7 +15,7 @@ from lib_nadisplay_sdl import ND_EventsManager_SDL as EventsManagerClass
 # from lib_nadisplay_pygame import ND_Display_Pygame as DisplayClass, ND_Window_Pygame as WindowClass, ND_EventsManager_Pygame as EventsManagerClass  # Working a little
 
 
-from lib_snake import Snake
+from lib_snake import Snake, create_map1
 
 import math
 import time
@@ -24,8 +24,8 @@ import time
 MAIN_WINDOW_ID: int = 0
 
 #
-TERRAIN_X: int = 4
-TERRAIN_Y: int = 4
+TERRAIN_X: int = 0
+TERRAIN_Y: int = 0
 TERRAIN_W: int = 20
 TERRAIN_H: int = 20
 
@@ -100,7 +100,7 @@ def on_bt_click_init_game(win: nd.ND_Window) -> None:
             window=win,
             elt_id="wall_grid",
             position=nd.ND_Position_RectGrid(rect_grid=grid),
-            base_bg_color=cl("dark grey")
+            base_bg_color=cl("black")
         )
         win.main_app.global_vars_set("wall_grid_elt", wall_grid_elt)
 
@@ -134,6 +134,9 @@ def on_bt_click_init_game(win: nd.ND_Window) -> None:
         #
         grid.add_element_position(wall_grid_id, ND_Point(xx, TERRAIN_Y-1))
         grid.add_element_position(wall_grid_id, ND_Point(xx, TERRAIN_Y+TERRAIN_H+1))
+
+    #
+    create_map1(win, TERRAIN_W, TERRAIN_H)
 
     #
     snk_idx: int
@@ -252,7 +255,7 @@ def on_bt_click_init_game(win: nd.ND_Window) -> None:
 
     # center camera on grid area
     cam_grid.move_camera_to_grid_area(
-        nd.ND_Rect(TERRAIN_X, TERRAIN_Y, TERRAIN_W, TERRAIN_H)
+        nd.ND_Rect(TERRAIN_X+1, TERRAIN_Y+1, TERRAIN_W-2, TERRAIN_H-2)
     )
 
     # Setting New State
@@ -633,7 +636,7 @@ def create_game_scene(win: nd.ND_Window) -> nd.ND_Scene:
     #
     win.main_app.add_function_to_event_fns_queue("window_resized",
                 lambda main_app: camera_grid.move_camera_to_grid_area(
-                    nd.ND_Rect(TERRAIN_X, TERRAIN_Y, TERRAIN_W, TERRAIN_H)
+                    nd.ND_Rect(TERRAIN_X+1, TERRAIN_Y+1, TERRAIN_W-1, TERRAIN_H-1)
                 )
     )
 
