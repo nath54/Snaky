@@ -1,5 +1,5 @@
 
-from typing import Callable, Any, Optional, Type
+from typing import Callable, Any, Optional, Type, cast
 
 import time
 
@@ -1290,7 +1290,7 @@ class ND_Scene:
                     scene_id: str,
                     origin: ND_Point,
                     elements_layers: dict[int, dict[str, ND_Elt]] = {},
-                    on_window_state: Optional[str] = None
+                    on_window_state: Optional[str | set[str]] = None
     ) -> None:
 
         # id
@@ -1300,8 +1300,16 @@ class ND_Scene:
         self.origin: ND_Point = origin
 
         #
-        self.on_window_state: Optional[str] = on_window_state
+        self.on_window_state: Optional[str | set[str]] = on_window_state
         self.window: ND_Window = window
+        self.on_window_state_test: Optional[Callable[[Optional[str]], bool]] = None
+        #
+        if self.on_window_state is not None:
+            if isinstance(self.on_window_state, set):
+                self.on_window_state_test = self.test_window_state_set
+            else:
+                self.on_window_state_test = self.test_window_state_str
+
 
         # list of elements sorted by render importance with layers (ascending order)
         self.elements_layers: dict[int, dict[str, ND_Elt]] = elements_layers
@@ -1328,9 +1336,19 @@ class ND_Scene:
         self.layers_keys: list[int] = sorted(list(self.elements_layers.keys()))
 
     #
+    def test_window_state_str(self, win_state: Optional[str]) -> bool:
+        #
+        return win_state != self.on_window_state
+
+    #
+    def test_window_state_set(self, win_state: Optional[str]) -> bool:
+        #
+        return win_state not in cast(set[str], self.on_window_state)
+
+    #
     def handle_event(self, event) -> None:
         #
-        if self.on_window_state is not None and self.window.state != self.on_window_state:
+        if self.on_window_state_test is not None and self.on_window_state_test(self.window.state):
             return
 
         #
@@ -1354,7 +1372,7 @@ class ND_Scene:
     #
     def handle_window_resize(self) -> None:
         #
-        if self.on_window_state is not None and self.window.state != self.on_window_state:
+        if self.on_window_state_test is not None and self.on_window_state_test(self.window.state):
             # TODO: Optimisation
             pass
 
@@ -1407,9 +1425,8 @@ class ND_Scene:
     #
     def render(self) -> None:
         #
-        if self.on_window_state is not None:
-            if self.window.state != self.on_window_state:
-                return
+        if self.on_window_state_test is not None and self.on_window_state_test(self.window.state):
+            return
         #
         layer_key: int
         for layer_key in self.layers_keys:

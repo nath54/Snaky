@@ -267,6 +267,10 @@ def on_bt_click_quit(win: nd.ND_Window) -> None:
     #
     win.main_app.quit()
 
+#
+def on_pause_pressed(win: nd.ND_Window) -> None:
+    #
+    pass
 
 #
 def update_physic(mainApp: nd.ND_MainApp, delta_time: float) -> None:
@@ -579,7 +583,7 @@ def create_game_scene(win: nd.ND_Window) -> nd.ND_Scene:
         scene_id="game",
         origin=ND_Point(0, 0),
         elements_layers = {},
-        on_window_state="game"
+        on_window_state=set(["game", "game_pause"])
     )
 
     #
