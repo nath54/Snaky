@@ -3128,6 +3128,10 @@ class ND_Position_Container(ND_Position):
             h = -1
 
         #
+        if self.w_str == "square" and self.h_str == "square":
+            raise UserWarning("Error: width and height cannot have attribute 'square' !!!")
+
+        #
         super().__init__(0, 0, w, h)
 
         #
@@ -3143,9 +3147,22 @@ class ND_Position_Container(ND_Position):
         if self.w_str is None:
             return self._w
         #
+        elif self.w_str == "square":
+            return self.h
+        #
         w: float = get_percentage_from_str(self.w_str) / 100.0
         #
-        return int(w * self.container.w)
+        width: int = int(w * self.container.w)
+        #
+        if self.positions_constraints:
+            #
+            if self.positions_constraints.min_width and width < self.positions_constraints.min_width:
+                width = self.positions_constraints.min_width
+            #
+            if self.positions_constraints.max_width and width > self.positions_constraints.max_width:
+                width = self.positions_constraints.max_width
+        #
+        return width
 
     #
     @property
@@ -3154,9 +3171,22 @@ class ND_Position_Container(ND_Position):
         if self.h_str is None:
             return self._h
         #
+        elif self.h_str == "square":
+            return self.w
+        #
         h: float = get_percentage_from_str(self.h_str) / 100.0
         #
-        return int(h * self.container.h)
+        height: int = int(h * self.container.h)
+        #
+        if self.positions_constraints:
+            #
+            if self.positions_constraints.min_height and height < self.positions_constraints.min_height:
+                height = self.positions_constraints.min_height
+            #
+            if self.positions_constraints.max_height and height > self.positions_constraints.max_height:
+                height = self.positions_constraints.max_height
+        #
+        return height
 
     #
     def get_margin_left(self, space_around: int = -1) -> int:

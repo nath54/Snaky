@@ -222,10 +222,10 @@ class ND_Position_Constraints:
     If is int, it is pixel value, else if is string, it is "value_float%" where it indicates the percentage of the containers row or column size.
     If the min and max values are both specified and of the same value, it forces the size to be that value.
     """
-    min_width: Optional[int | str] = None
-    max_width: Optional[int | str] = None
-    min_height: Optional[int | str] = None
-    max_height: Optional[int | str] = None
+    min_width: Optional[int] = None
+    max_width: Optional[int] = None
+    min_height: Optional[int] = None
+    max_height: Optional[int] = None
 
 
 #

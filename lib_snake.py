@@ -11,7 +11,7 @@ import lib_nadisplay as nd
 
 class Snake:
     #
-    def __init__(self, pseudo: str, init_position: ND_Point, color: ND_Color, init_direction: ND_Point = ND_Point(1, 0), init_size: int = 4) -> None:
+    def __init__(self, pseudo: str, init_position: ND_Point, color: ND_Color, score_elt: nd.ND_Text, init_direction: ND_Point = ND_Point(1, 0), init_size: int = 4) -> None:
         #
         self.color: ND_Color = color
         self.hidding_size: int = init_size  # Taille cachée qu'il faut ajouter au snake quand il avance
@@ -26,6 +26,7 @@ class Snake:
         self.score: int = 0
         #
         self.pseudo: str = pseudo
+        self.score_elt: nd.ND_Text = score_elt
         #
         self.sprites: dict[str, tuple[nd.ND_AnimatedSprite | nd.ND_Sprite_of_AtlasTexture, int]] = {}
 

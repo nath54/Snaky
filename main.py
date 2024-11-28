@@ -4,7 +4,7 @@ from typing import Optional, cast
 import lib_nadisplay as nd
 
 from lib_nadisplay_colors import cl, ND_Color
-from lib_nadisplay_rects import ND_Point, ND_Position_Margins, ND_Position
+from lib_nadisplay_rects import ND_Point, ND_Position_Margins, ND_Position, ND_Position_Constraints
 
 from lib_nadisplay_sdl_sdlgfx import ND_Display_SDL_SDLGFX as DisplayClass, ND_Window_SDL_SDLGFX as WindowClass
 # from lib_nadisplay_sdl_opengl import ND_Display_SDL_OPENGL as DisplayClass, ND_Window_SDL_OPENGL as WindowClass  # Not working at all
@@ -74,6 +74,7 @@ def on_bt_click_init_game(win: nd.ND_Window) -> None:
     #
     grid: Optional[nd.ND_RectGrid] = win.main_app.global_vars_get("grid")
     cam_grid: Optional[nd.ND_CameraGrid] = win.main_app.global_vars_get("cam_grid")
+    game_infos_container: Optional[nd.ND_Container] = win.main_app.global_vars_get("game_infos_container")
 
     # Apple
     apple_grid_elt: Optional[nd.ND_Sprite] = win.main_app.global_vars_get("apple_grid_elt")
@@ -87,7 +88,19 @@ def on_bt_click_init_game(win: nd.ND_Window) -> None:
     #
     if apple_grid_elt is None or snake_atlas is None:
         raise UserWarning("Error: apple and snakes textures are not correctly initialized !")
+    #
+    if game_infos_container is None:
+        raise UserWarning("Error: no game_infos_container !")
 
+    # On nettoie les scorebox des anciennes parties
+    trash: list[Optional[nd.ND_Container]] = cast(list[Optional[nd.ND_Container]], game_infos_container.elements)
+    game_infos_container.elements = []
+    i: int
+    sb: Optional[nd.ND_Container]
+    for (i, sb) in enumerate(trash):
+        del sb
+        trash[i] = None
+    del trash
 
     # On nettoie la grille
     grid.clean()
@@ -143,8 +156,49 @@ def on_bt_click_init_game(win: nd.ND_Window) -> None:
     snk: tuple[str, ND_Point, ND_Color, int, int, str, Optional[tuple[str, str, str, str]]]
     for (snk_idx, snk) in enumerate(init_snakes):
 
+        # Create score box for snake
+        scorebox_row: nd.ND_Container = nd.ND_Container(
+            window=win,
+            elt_id=f"snake_{snk_idx}_scorebox_row",
+            position=nd.ND_Position_Container("90%", "15%", container=game_infos_container,
+                                position_margins=ND_Position_Margins(margin_left="50%", margin_right="50%", margin_top=15),
+                                position_constraints=ND_Position_Constraints(max_height=40)),
+            element_alignment="row"
+        )
         #
-        snake: Snake = Snake( pseudo=snk[0], init_position=snk[1], color=snk[2], init_size=snk[3] )
+        snake_icon: nd.ND_Sprite = nd.ND_Sprite(window=win,
+                                                elt_id=f"snake_{snk_idx}_scorebox_icon",
+                                                position=nd.ND_Position_Container("square", "100%", container=scorebox_row),
+                                                base_texture="res/snake_icon.png")
+        #
+        snake_icon.transformations = nd.ND_Transformations(color_modulation=snk[2])
+        #
+        snake_name: nd.ND_Text = nd.ND_Text(window=win,
+                                            elt_id=f"snake_{snk_idx}_scorebox_name",
+                                            position=nd.ND_Position_Container("50%", "100%", container=scorebox_row, position_margins=ND_Position_Margins(margin_left=15, margin_right=15)),
+                                            text=snk[0],
+                                            font_name="FreeSans",
+                                            font_size=28,
+                                            font_color=snk[2],
+                                            text_h_align="left")
+        #
+        snake_score: nd.ND_Text = nd.ND_Text(window=win,
+                                            elt_id=f"snake_{snk_idx}_scorebox_score",
+                                            position=nd.ND_Position_Container("20%", "100%", container=scorebox_row),
+                                            text="0",
+                                            font_name="FreeSans",
+                                            font_size=28,
+                                            font_color=snk[2],
+                                            text_h_align="left")
+        #
+        scorebox_row.add_element(snake_icon)
+        scorebox_row.add_element(snake_name)
+        scorebox_row.add_element(snake_score)
+        #
+        game_infos_container.add_element(scorebox_row)
+
+        # Create Snake
+        snake: Snake = Snake( pseudo=snk[0], init_position=snk[1], color=snk[2], init_size=snk[3], score_elt=snake_score )
         snake.last_update = time.time()
 
         #
@@ -267,10 +321,31 @@ def on_bt_click_quit(win: nd.ND_Window) -> None:
     #
     win.main_app.quit()
 
+
 #
-def on_pause_pressed(win: nd.ND_Window) -> None:
+def on_pause_pressed(main_app: nd.ND_MainApp) -> None:
     #
-    pass
+    if main_app.display is None:
+        return
+    #
+    win: Optional[nd.ND_Window] = main_app.display.windows[MAIN_WINDOW_ID]
+    #
+    if not win:
+        return
+    #
+    if win.state == "game":
+        #
+        main_app.global_vars_set("game_pause", time.time())
+        #
+        win.set_state("game_pause")
+    #
+    elif win.state == "game_pause":
+        #
+        gg: float = cast(float, main_app.global_vars_get("game_pause"))
+        main_app.global_vars_set("game_pause", time.time() - gg)
+        #
+        win.set_state("game")
+
 
 #
 def update_physic(mainApp: nd.ND_MainApp, delta_time: float) -> None:
@@ -328,6 +403,7 @@ def update_physic(mainApp: nd.ND_MainApp, delta_time: float) -> None:
                 if elt_id_col == apple_grid_id:
 
                     snak.score += 1
+                    snak.score_elt.text = str(snak.score)
                     snak.hidding_size += 1
 
                     # On rajoute une nouvelle pomme
@@ -583,7 +659,7 @@ def create_game_scene(win: nd.ND_Window) -> nd.ND_Scene:
         scene_id="game",
         origin=ND_Point(0, 0),
         elements_layers = {},
-        on_window_state=set(["game", "game_pause"])
+        on_window_state=set(["game", "game_pause", "end_menu"])
     )
 
     #
@@ -672,15 +748,18 @@ def create_game_scene(win: nd.ND_Window) -> nd.ND_Scene:
     )
 
     #
-    game_infos: nd.ND_Container = nd.ND_Container(
+    game_infos_container: nd.ND_Container = nd.ND_Container(
         window=win,
         elt_id="game_infos",
         position=nd.ND_Position_MultiLayer(multilayer=multilayer_infos),
+        element_alignment="col"
     )
+    #
+    win.main_app.global_vars_set("game_infos_container", game_infos_container)
 
     #
     multilayer_infos.add_element(0, background_infos)
-    multilayer_infos.add_element(1, game_infos)
+    multilayer_infos.add_element(1, game_infos_container)
 
     #
     scene.add_element(0, game_row_container)
@@ -722,6 +801,9 @@ def create_game_scene(win: nd.ND_Window) -> nd.ND_Scene:
     #
     win.main_app.global_vars_set("apple_grid_elt", coin)
     win.main_app.global_vars_set("snake_atlas", snake_atlas)
+
+    #
+    win.main_app.add_function_to_event_fns_queue("keydown_p", on_pause_pressed)
 
     #
     return scene
