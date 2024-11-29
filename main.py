@@ -15,7 +15,7 @@ from lib_nadisplay_sdl import ND_EventsManager_SDL as EventsManagerClass
 # from lib_nadisplay_pygame import ND_Display_Pygame as DisplayClass, ND_Window_Pygame as WindowClass, ND_EventsManager_Pygame as EventsManagerClass  # Working a little
 
 
-from lib_snake import Snake, create_map1
+from lib_snake import Snake, create_map1, snake_skin_1, snake_skin_2
 
 import math
 import time
@@ -27,8 +27,8 @@ MAIN_WINDOW_ID: int = 0
 #
 TERRAIN_X: int = 0
 TERRAIN_Y: int = 0
-TERRAIN_W: int = 20
-TERRAIN_H: int = 20
+TERRAIN_W: int = 10
+TERRAIN_H: int = 10
 
 
 #
@@ -62,12 +62,12 @@ def on_bt_click_init_game(win: nd.ND_Window) -> None:
 
     # Getting Settings
     # (x, y, cl, size, id, player, (key_up, key_left, key_bottom, key_right))
-    a: Optional[list[tuple[str, ND_Point, ND_Color, int, int, str, Optional[tuple[str, str, str, str]]]]] = win.main_app.global_vars_get("init_snakes")
+    a: Optional[list[tuple[str, ND_Point, ND_Color, int, int, int, str, Optional[tuple[str, str, str, str]]]]] = win.main_app.global_vars_get("init_snakes")
     #
-    init_snakes: list[tuple[str, ND_Point, ND_Color, int, int, str, Optional[tuple[str, str, str, str]]]] = \
+    init_snakes: list[tuple[str, ND_Point, ND_Color, int, int, int, str, Optional[tuple[str, str, str, str]]]] = \
         a if a is not None else [
-            ("humain1", ND_Point(TERRAIN_X + TERRAIN_W // 3, TERRAIN_Y + (TERRAIN_H * 2) //3), ND_Color(255, 0, 0), 4, 0, "human", ("keydown_z", "keydown_q", "keydown_s", "keydown_d")),
-            ("humain2", ND_Point(TERRAIN_X + (TERRAIN_W * 2) // 3, TERRAIN_Y + TERRAIN_H //3), ND_Color(0, 255, 0), 4, 0, "human", ("keydown_up arrow", "keydown_left arrow", "keydown_down arrow", "keydown_right arrow")),
+            ("humain1", ND_Point(TERRAIN_X + TERRAIN_W // 3, TERRAIN_Y + (TERRAIN_H * 2) //3), ND_Color(255, 0, 0), 4, 0, 2, "human", ("keydown_z", "keydown_q", "keydown_s", "keydown_d")),
+            ("humain2", ND_Point(TERRAIN_X + (TERRAIN_W * 2) // 3, TERRAIN_Y + TERRAIN_H //3), ND_Color(0, 255, 0), 4, 0, 2, "human", ("keydown_up arrow", "keydown_left arrow", "keydown_down arrow", "keydown_right arrow")),
             # ("humain3", ND_Point(TERRAIN_X + TERRAIN_W // 3, TERRAIN_Y + TERRAIN_H //3), ND_Color(0, 0, 255), 4, 0, "human", ("keydown_u", "keydown_h", "keydown_j", "keydown_k"))
         ]
     #
@@ -89,15 +89,12 @@ def on_bt_click_init_game(win: nd.ND_Window) -> None:
     food_2_elt: Optional[nd.ND_Elt] = win.main_app.global_vars_get(food_2_elt_name)
     food_3_elt: Optional[nd.ND_Elt] = win.main_app.global_vars_get(food_3_elt_name)
 
-    # Snake Atlas
-    snake_atlas: Optional[nd.ND_AtlasTexture] = win.main_app.global_vars_get("snake_atlas")
-
     #
     if grid is None or cam_grid is None:
         raise UserWarning("Error: no grid, cannot initialise the game !")
     #
-    if snake_atlas is None or food_1_elt is None or food_2_elt is None or food_3_elt is None:
-        raise UserWarning("Error: Snakes and/or Food textures are not correctly initialized !")
+    if food_1_elt is None or food_2_elt is None or food_3_elt is None:
+        raise UserWarning("Error: Food textures are not correctly initialized !")
     #
     if game_infos_container is None:
         raise UserWarning("Error: no game_infos_container !")
@@ -167,7 +164,7 @@ def on_bt_click_init_game(win: nd.ND_Window) -> None:
 
     #
     snk_idx: int
-    snk: tuple[str, ND_Point, ND_Color, int, int, str, Optional[tuple[str, str, str, str]]]
+    snk: tuple[str, ND_Point, ND_Color, int, int, int, str, Optional[tuple[str, str, str, str]]]
     for (snk_idx, snk) in enumerate(init_snakes):
 
         # Create score box for snake
@@ -216,66 +213,14 @@ def on_bt_click_init_game(win: nd.ND_Window) -> None:
         #
         win.main_app.global_vars_dict_set("snakes", snk_idx, snake)
 
-
-        # Snake head
         #
-        sprite_head: nd.ND_AnimatedSprite = nd.ND_AnimatedSprite(
-            window=win,
-            elt_id=f"snake_{snk_idx}_head",
-            position=nd.ND_Position_RectGrid(rect_grid=grid),
-            animations={
-                "": [
-                    nd.ND_Sprite_of_AtlasTexture(
-                        window=win,
-                        elt_id=f"snake_{snk_idx}_head_{i}",
-                        position=ND_Position(),
-                        atlas_texture=snake_atlas,
-                        tile_x=i, tile_y=1
-                    )
-
-                    for i in range(3)
-                ]
-            },
-            animations_speed={},
-            default_animation_speed=0.5
-        )
-        sprite_head.transformations.rotation = 270
-        sprite_head.transformations.color_modulation = snake.color
+        if snk[5] == 1:
+            #
+            snake_skin_1(win, snake, snk_idx, grid)
         #
-        snake.sprites["head"] = (sprite_head, grid.add_element_to_grid(sprite_head, []))
-
-        #
-        sprite_tail: nd.ND_Sprite_of_AtlasTexture = nd.ND_Sprite_of_AtlasTexture(
-            window=win,
-            elt_id=f"snake_{snk_idx}_tail",
-            position=nd.ND_Position_RectGrid(rect_grid=grid),
-            atlas_texture=snake_atlas,
-            tile_x=0, tile_y=0
-        )
-        sprite_tail.transformations.color_modulation = snake.color
-        snake.sprites["tail"] = (sprite_tail, grid.add_element_to_grid(sprite_tail, []))
-
-        #
-        sprite_body: nd.ND_Sprite_of_AtlasTexture = nd.ND_Sprite_of_AtlasTexture(
-            window=win,
-            elt_id=f"snake_{snk_idx}_body",
-            position=nd.ND_Position_RectGrid(rect_grid=grid),
-            atlas_texture=snake_atlas,
-            tile_x=1, tile_y=0
-        )
-        sprite_body.transformations.color_modulation = snake.color
-        snake.sprites["body"] = (sprite_body, grid.add_element_to_grid(sprite_body, []))
-
-        #
-        sprite_body_corner: nd.ND_Sprite_of_AtlasTexture = nd.ND_Sprite_of_AtlasTexture(
-            window=win,
-            elt_id=f"snake_{snk_idx}_body_corner",
-            position=nd.ND_Position_RectGrid(rect_grid=grid),
-            atlas_texture=snake_atlas,
-            tile_x=2, tile_y=0
-        )
-        sprite_body_corner.transformations.color_modulation = snake.color
-        snake.sprites["body_corner"] = (sprite_body_corner, grid.add_element_to_grid(sprite_body_corner, []))
+        elif snk[5] == 2:
+            #
+            snake_skin_2(win, snake, snk_idx, grid)
 
         #
         dir_angle: int = min(0, snake.direction.x) * 180 + 90 * snake.direction.y
@@ -294,18 +239,18 @@ def on_bt_click_init_game(win: nd.ND_Window) -> None:
         grid.set_transformations_to_position(pos_tail, nd.ND_Transformations(rotation=dir_angle))
 
         #
-        if snk[5] == "human" and snk[6] is not None:
+        if snk[6] == "human" and snk[7] is not None:
             #
-            win.main_app.add_function_to_event_fns_queue(snk[6][0],
+            win.main_app.add_function_to_event_fns_queue(snk[7][0],
                 lambda main_app, snk_idx=snk_idx: event_set_snake_direction(main_app, ND_Point(0, -1), snk_idx))
             #
-            win.main_app.add_function_to_event_fns_queue(snk[6][1],
+            win.main_app.add_function_to_event_fns_queue(snk[7][1],
                 lambda main_app, snk_idx=snk_idx: event_set_snake_direction(main_app, ND_Point(-1, 0), snk_idx))
             #
-            win.main_app.add_function_to_event_fns_queue(snk[6][2],
+            win.main_app.add_function_to_event_fns_queue(snk[7][2],
                 lambda main_app, snk_idx=snk_idx: event_set_snake_direction(main_app, ND_Point(0, 1), snk_idx))
             #
-            win.main_app.add_function_to_event_fns_queue(snk[6][3],
+            win.main_app.add_function_to_event_fns_queue(snk[7][3],
                 lambda main_app, snk_idx=snk_idx: event_set_snake_direction(main_app, ND_Point(1, 0), snk_idx))
 
         # TODO: bots
@@ -857,12 +802,6 @@ def create_game_scene(win: nd.ND_Window) -> nd.ND_Scene:
     coin_1.transformations = ND_Transformations(color_modulation=cl("copper"))
     coin_2.transformations = ND_Transformations(color_modulation=cl("silver"))
     coin_3.transformations = ND_Transformations(color_modulation=cl("gold web golden"))
-    #
-    snake_atlas: nd.ND_AtlasTexture = nd.ND_AtlasTexture(
-        window=win,
-        texture_atlas_path="res/sprites/snakes_sprites4.png",
-        tiles_size=ND_Point(32, 32)
-    )
 
     #
     win.main_app.global_vars_set("coin_3_elt", coin_3)
@@ -872,8 +811,6 @@ def create_game_scene(win: nd.ND_Window) -> nd.ND_Scene:
     win.main_app.global_vars_set("food_3_elt_name", "coin_3_elt")
     win.main_app.global_vars_set("food_2_elt_name", "coin_2_elt")
     win.main_app.global_vars_set("food_1_elt_name", "coin_1_elt")
-    #
-    win.main_app.global_vars_set("snake_atlas", snake_atlas)
 
     #
     win.main_app.add_function_to_event_fns_queue("keydown_p", on_pause_pressed)

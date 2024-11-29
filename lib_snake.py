@@ -5,7 +5,7 @@ import random
 import math
 
 from lib_nadisplay_colors import ND_Color
-from lib_nadisplay_rects import ND_Point
+from lib_nadisplay_rects import ND_Point, ND_Position
 import lib_nadisplay as nd
 
 
@@ -177,5 +177,205 @@ def create_map2(mainApp: nd.ND_MainApp, n: int = 30) -> None:
     pass
 
 
+
+
+def snake_skin_1(win: nd.ND_Window, snake: Snake, snk_idx: int, grid: nd.ND_RectGrid) -> None:
+
+    #
+    snake_atlas: Optional[nd.ND_AtlasTexture] = win.main_app.global_vars_get("snake_atlas")
+
+    if snake_atlas is None:
+        #
+        snake_atlas = nd.ND_AtlasTexture(
+            window=win,
+            texture_atlas_path="res/sprites/snakes_sprites4.png",
+            tiles_size=ND_Point(32, 32)
+        )
+        #
+        win.main_app.global_vars_set("snake_atlas", snake_atlas)
+
+
+    # Snake head
+    #
+    sprite_head: nd.ND_AnimatedSprite = nd.ND_AnimatedSprite(
+        window=win,
+        elt_id=f"snake_{snk_idx}_head",
+        position=nd.ND_Position_RectGrid(rect_grid=grid),
+        animations={
+            "": [
+                nd.ND_Sprite_of_AtlasTexture(
+                    window=win,
+                    elt_id=f"snake_{snk_idx}_head_{i}",
+                    position=ND_Position(),
+                    atlas_texture=snake_atlas,
+                    tile_x=i, tile_y=1
+                )
+
+                for i in range(3)
+            ]
+        },
+        animations_speed={},
+        default_animation_speed=0.5
+    )
+    sprite_head.transformations.rotation = 270
+    sprite_head.transformations.color_modulation = snake.color
+    #
+    snake.sprites["head"] = (sprite_head, grid.add_element_to_grid(sprite_head, []))
+
+    #
+    sprite_tail: nd.ND_Sprite_of_AtlasTexture = nd.ND_Sprite_of_AtlasTexture(
+        window=win,
+        elt_id=f"snake_{snk_idx}_tail",
+        position=nd.ND_Position_RectGrid(rect_grid=grid),
+        atlas_texture=snake_atlas,
+        tile_x=0, tile_y=0
+    )
+    sprite_tail.transformations.color_modulation = snake.color
+    snake.sprites["tail"] = (sprite_tail, grid.add_element_to_grid(sprite_tail, []))
+
+    #
+    sprite_body: nd.ND_Sprite_of_AtlasTexture = nd.ND_Sprite_of_AtlasTexture(
+        window=win,
+        elt_id=f"snake_{snk_idx}_body",
+        position=nd.ND_Position_RectGrid(rect_grid=grid),
+        atlas_texture=snake_atlas,
+        tile_x=1, tile_y=0
+    )
+    sprite_body.transformations.color_modulation = snake.color
+    snake.sprites["body"] = (sprite_body, grid.add_element_to_grid(sprite_body, []))
+
+    #
+    sprite_body_corner: nd.ND_Sprite_of_AtlasTexture = nd.ND_Sprite_of_AtlasTexture(
+        window=win,
+        elt_id=f"snake_{snk_idx}_body_corner",
+        position=nd.ND_Position_RectGrid(rect_grid=grid),
+        atlas_texture=snake_atlas,
+        tile_x=2, tile_y=0
+    )
+    sprite_body_corner.transformations.color_modulation = snake.color
+    snake.sprites["body_corner"] = (sprite_body_corner, grid.add_element_to_grid(sprite_body_corner, []))
+
+
+
+def snake_skin_2(win: nd.ND_Window, snake: Snake, snk_idx: int, grid: nd.ND_RectGrid) -> None:
+
+    #
+    anim_speed: float = 0.2
+
+    #
+    worm_atlas: Optional[nd.ND_AtlasTexture] = win.main_app.global_vars_get("worm_atlas")
+
+    if worm_atlas is None:
+        #
+        worm_atlas = nd.ND_AtlasTexture(
+            window=win,
+            texture_atlas_path="res/sprites/worm.png",
+            tiles_size=ND_Point(32, 32)
+        )
+        #
+        win.main_app.global_vars_set("worm_atlas", worm_atlas)
+
+
+    # Snake head
+    #
+    sprite_head: nd.ND_AnimatedSprite = nd.ND_AnimatedSprite(
+        window=win,
+        elt_id=f"snake_{snk_idx}_head",
+        position=nd.ND_Position_RectGrid(rect_grid=grid),
+        animations={
+            "": [
+                nd.ND_Sprite_of_AtlasTexture(
+                    window=win,
+                    elt_id=f"snake_{snk_idx}_head_{i}",
+                    position=ND_Position(),
+                    atlas_texture=worm_atlas,
+                    tile_x=i, tile_y=2
+                )
+
+                for i in range(3)
+            ]
+        },
+        animations_speed={},
+        default_animation_speed=anim_speed
+    )
+    sprite_head.transformations.rotation = 270
+    # sprite_head.transformations.color_modulation = snake.color
+    #
+    snake.sprites["head"] = (sprite_head, grid.add_element_to_grid(sprite_head, []))
+
+    #
+    sprite_tail: nd.ND_AnimatedSprite = nd.ND_AnimatedSprite(
+        window=win,
+        elt_id=f"snake_{snk_idx}_tail",
+        position=nd.ND_Position_RectGrid(rect_grid=grid),
+        animations={
+            "": [
+                nd.ND_Sprite_of_AtlasTexture(
+                    window=win,
+                    elt_id=f"snake_{snk_idx}_tail_{i}",
+                    position=ND_Position(),
+                    atlas_texture=worm_atlas,
+                    tile_x=i, tile_y=0
+                )
+
+                for i in range(3)
+            ]
+        },
+        animations_speed={},
+        default_animation_speed=anim_speed
+    )
+    sprite_tail.transformations.rotation = 270
+    # sprite_tail.transformations.color_modulation = snake.color
+    snake.sprites["tail"] = (sprite_tail, grid.add_element_to_grid(sprite_tail, []))
+
+    #
+    sprite_body: nd.ND_AnimatedSprite = nd.ND_AnimatedSprite(
+        window=win,
+        elt_id=f"snake_{snk_idx}_body",
+        position=nd.ND_Position_RectGrid(rect_grid=grid),
+        animations={
+            "": [
+                nd.ND_Sprite_of_AtlasTexture(
+                    window=win,
+                    elt_id=f"snake_{snk_idx}_body_{i}",
+                    position=ND_Position(),
+                    atlas_texture=worm_atlas,
+                    tile_x=i, tile_y=1
+                )
+
+                for i in range(3)
+            ]
+        },
+        animations_speed={},
+        default_animation_speed=anim_speed
+    )
+    sprite_body.transformations.rotation = 270
+    # sprite_body.transformations.color_modulation = snake.color
+    snake.sprites["body"] = (sprite_body, grid.add_element_to_grid(sprite_body, []))
+
+    #
+    sprite_body_corner: nd.ND_AnimatedSprite = nd.ND_AnimatedSprite(
+        window=win,
+        elt_id=f"snake_{snk_idx}_body_corner",
+        position=nd.ND_Position_RectGrid(rect_grid=grid),
+        animations={
+            "": [
+                nd.ND_Sprite_of_AtlasTexture(
+                    window=win,
+                    elt_id=f"snake_{snk_idx}_body_corner_{i}",
+                    position=ND_Position(),
+                    atlas_texture=worm_atlas,
+                    tile_x=3, tile_y=i
+                )
+
+                for i in range(3)
+            ]
+        },
+        animations_speed={},
+        default_animation_speed=anim_speed
+    )
+    sprite_body_corner.transformations.rotation = 0
+    # sprite_body_corner.transformations.color_modulation = snake.color
+    snake.sprites["body_corner"] = (sprite_body_corner, grid.add_element_to_grid(sprite_body_corner, []))
 
 
