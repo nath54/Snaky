@@ -3,7 +3,7 @@ from typing import Optional, cast
 
 import lib_nadisplay as nd
 
-from lib_nadisplay_colors import cl, ND_Color
+from lib_nadisplay_colors import cl, ND_Color, ND_Transformations
 from lib_nadisplay_rects import ND_Point, ND_Position_Margins, ND_Position, ND_Position_Constraints
 
 from lib_nadisplay_sdl_sdlgfx import ND_Display_SDL_SDLGFX as DisplayClass, ND_Window_SDL_SDLGFX as WindowClass
@@ -19,6 +19,7 @@ from lib_snake import Snake, create_map1
 
 import math
 import time
+import random
 
 #
 MAIN_WINDOW_ID: int = 0
@@ -76,8 +77,17 @@ def on_bt_click_init_game(win: nd.ND_Window) -> None:
     cam_grid: Optional[nd.ND_CameraGrid] = win.main_app.global_vars_get("cam_grid")
     game_infos_container: Optional[nd.ND_Container] = win.main_app.global_vars_get("game_infos_container")
 
-    # Apple
-    apple_grid_elt: Optional[nd.ND_Sprite] = win.main_app.global_vars_get("apple_grid_elt")
+    # Food
+    food_1_elt_name: Optional[str] = win.main_app.global_vars_get("food_1_elt_name")
+    food_2_elt_name: Optional[str] = win.main_app.global_vars_get("food_2_elt_name")
+    food_3_elt_name: Optional[str] = win.main_app.global_vars_get("food_3_elt_name")
+    #
+    if food_1_elt_name is None or food_2_elt_name is None or food_3_elt_name is None:
+        raise UserWarning("Error: no food elt to use !")
+    #
+    food_1_elt: Optional[nd.ND_Elt] = win.main_app.global_vars_get(food_1_elt_name)
+    food_2_elt: Optional[nd.ND_Elt] = win.main_app.global_vars_get(food_2_elt_name)
+    food_3_elt: Optional[nd.ND_Elt] = win.main_app.global_vars_get(food_3_elt_name)
 
     # Snake Atlas
     snake_atlas: Optional[nd.ND_AtlasTexture] = win.main_app.global_vars_get("snake_atlas")
@@ -86,8 +96,8 @@ def on_bt_click_init_game(win: nd.ND_Window) -> None:
     if grid is None or cam_grid is None:
         raise UserWarning("Error: no grid, cannot initialise the game !")
     #
-    if apple_grid_elt is None or snake_atlas is None:
-        raise UserWarning("Error: apple and snakes textures are not correctly initialized !")
+    if snake_atlas is None or food_1_elt is None or food_2_elt is None or food_3_elt is None:
+        raise UserWarning("Error: Snakes and/or Food textures are not correctly initialized !")
     #
     if game_infos_container is None:
         raise UserWarning("Error: no game_infos_container !")
@@ -124,10 +134,14 @@ def on_bt_click_init_game(win: nd.ND_Window) -> None:
     win.main_app.global_vars_set("wall_grid_id", wall_grid_id)
 
     #
-    apple_grid_id: int = grid.add_element_to_grid(apple_grid_elt, [])
+    food_1_grid_id: int = grid.add_element_to_grid(food_1_elt, [])
+    food_2_grid_id: int = grid.add_element_to_grid(food_2_elt, [])
+    food_3_grid_id: int = grid.add_element_to_grid(food_3_elt, [])
 
     #
-    win.main_app.global_vars_set("apple_grid_id", apple_grid_id)
+    win.main_app.global_vars_set("food_1_grid_id", food_1_grid_id)
+    win.main_app.global_vars_set("food_2_grid_id", food_2_grid_id)
+    win.main_app.global_vars_set("food_3_grid_id", food_3_grid_id)
 
 
     # New Game
@@ -296,14 +310,17 @@ def on_bt_click_init_game(win: nd.ND_Window) -> None:
 
         # TODO: bots
 
-    # Init apples
+    # Init Food
     p: Optional[ND_Point]
     for _ in range(nb_init_apples):
         #
         p = grid.get_empty_case_in_range(TERRAIN_X, TERRAIN_X + TERRAIN_W, TERRAIN_Y, TERRAIN_Y + TERRAIN_H)
         #
         if p is not None:
-            grid.add_element_position(apple_grid_id, p)
+            #
+            food_grid_id: int = random.choice([food_1_grid_id, food_2_grid_id, food_3_grid_id])
+            #
+            grid.add_element_position(food_grid_id, p)
 
     # center camera on grid area
     cam_grid.move_camera_to_grid_area(
@@ -363,6 +380,7 @@ def update_physic(mainApp: nd.ND_MainApp, delta_time: float) -> None:
     snakes_speed: Optional[float] = mainApp.global_vars_get("snakes_speed")
     wall_grid_id: Optional[int] = mainApp.global_vars_get("wall_grid_id")
     apple_grid_id: Optional[int] = mainApp.global_vars_get("apple_grid_id")
+    # TODO
 
     #
     if grid is None or snakes is None or dead_snakes is None or snakes_speed is None or wall_grid_id is None or apple_grid_id is None:
@@ -760,10 +778,52 @@ def create_game_scene(win: nd.ND_Window) -> nd.ND_Scene:
     #
     coin_atlas: nd.ND_AtlasTexture = nd.ND_AtlasTexture(
         window=win,
-        texture_atlas_path="res/sprites/coin.png",
+        texture_atlas_path="res/sprites/coin_grayscale.png",
         tiles_size=ND_Point(31, 31)
     )
-    coin: nd.ND_AnimatedSprite = nd.ND_AnimatedSprite(
+    coin_3: nd.ND_AnimatedSprite = nd.ND_AnimatedSprite(
+        window=win,
+        elt_id="spinning coin",
+        position=nd.ND_Position_RectGrid(rect_grid=grid),
+        animations={
+            "spinning": [
+                nd.ND_Sprite_of_AtlasTexture(
+                    window=win,
+                    elt_id=f"spinning_coin_anim_{i}",
+                    position=ND_Position(),
+                    atlas_texture=coin_atlas,
+                    tile_x=i, tile_y=0
+                )
+
+                for i in range(8)
+            ]
+        },
+        animations_speed={},
+        default_animation_speed=0.1,
+        default_animation="spinning"
+    )
+    coin_2: nd.ND_AnimatedSprite = nd.ND_AnimatedSprite(
+        window=win,
+        elt_id="spinning coin",
+        position=nd.ND_Position_RectGrid(rect_grid=grid),
+        animations={
+            "spinning": [
+                nd.ND_Sprite_of_AtlasTexture(
+                    window=win,
+                    elt_id=f"spinning_coin_anim_{i}",
+                    position=ND_Position(),
+                    atlas_texture=coin_atlas,
+                    tile_x=i, tile_y=0
+                )
+
+                for i in range(8)
+            ]
+        },
+        animations_speed={},
+        default_animation_speed=0.1,
+        default_animation="spinning"
+    )
+    coin_1: nd.ND_AnimatedSprite = nd.ND_AnimatedSprite(
         window=win,
         elt_id="spinning coin",
         position=nd.ND_Position_RectGrid(rect_grid=grid),
@@ -785,6 +845,10 @@ def create_game_scene(win: nd.ND_Window) -> nd.ND_Scene:
         default_animation="spinning"
     )
     #
+    coin_1.transformations = ND_Transformations(color_modulation=cl("copper"))
+    coin_2.transformations = ND_Transformations(color_modulation=cl("silver"))
+    coin_3.transformations = ND_Transformations(color_modulation=cl("gold metallic"))
+    #
     snake_atlas: nd.ND_AtlasTexture = nd.ND_AtlasTexture(
         window=win,
         texture_atlas_path="res/sprites/snakes_sprites4.png",
@@ -792,7 +856,14 @@ def create_game_scene(win: nd.ND_Window) -> nd.ND_Scene:
     )
 
     #
-    win.main_app.global_vars_set("apple_grid_elt", coin)
+    win.main_app.global_vars_set("coin_3_elt", coin_3)
+    win.main_app.global_vars_set("coin_2_elt", coin_2)
+    win.main_app.global_vars_set("coin_1_elt", coin_1)
+    #
+    win.main_app.global_vars_set("food_3_elt_name", "coin_3_elt")
+    win.main_app.global_vars_set("food_2_elt_name", "coin_2_elt")
+    win.main_app.global_vars_set("food_1_elt_name", "coin_1_elt")
+    #
     win.main_app.global_vars_set("snake_atlas", snake_atlas)
 
     #
