@@ -177,7 +177,6 @@ def on_bt_click_init_game(win: nd.ND_Window) -> None:
                                             elt_id=f"snake_{snk_idx}_scorebox_name",
                                             position=nd.ND_Position_Container("50%", "100%", container=scorebox_row, position_margins=ND_Position_Margins(margin_left=15, margin_right=15)),
                                             text=snk[0],
-                                            font_name="FreeSans",
                                             font_size=28,
                                             font_color=snk[2],
                                             text_h_align="left")
@@ -186,7 +185,6 @@ def on_bt_click_init_game(win: nd.ND_Window) -> None:
                                             elt_id=f"snake_{snk_idx}_scorebox_score",
                                             position=nd.ND_Position_Container("20%", "100%", container=scorebox_row),
                                             text="0",
-                                            font_name="FreeSans",
                                             font_size=28,
                                             font_color=snk[2],
                                             text_h_align="left")
@@ -582,7 +580,6 @@ def create_main_menu_scene(win: nd.ND_Window) -> nd.ND_Scene:
                             elt_id="game_title",
                             position=nd.ND_Position_Container(w="100%", h="20%", container=main_menu_container, position_margins=ND_Position_Margins(margin_top=25, margin_bottom=25)),
                             text="Snaky",
-                            font_name="FreeSans",
                             font_size=50,
                             font_color=cl("violet"),
     )
@@ -598,7 +595,6 @@ def create_main_menu_scene(win: nd.ND_Window) -> nd.ND_Scene:
         position=nd.ND_Position_Container(w=250, h=100, container=bts_container, position_margins=ND_Position_Margins(margin_left="50%", margin_top=25, margin_bottom=25)),
         onclick=on_bt_click_init_game,
         text="Play !",
-        font_name="FreeSans",
         font_size=35
     )
     #
@@ -608,7 +604,6 @@ def create_main_menu_scene(win: nd.ND_Window) -> nd.ND_Scene:
         position=nd.ND_Position_Container(w=250, h=100, container=bts_container, position_margins=ND_Position_Margins(margin_left="50%", margin_top=25, margin_bottom=25)),
         onclick=None,
         text="Train Bots",
-        font_name="FreeSans",
         font_size=35
     )
     #
@@ -618,7 +613,6 @@ def create_main_menu_scene(win: nd.ND_Window) -> nd.ND_Scene:
         position=nd.ND_Position_Container(w=250, h=100, container=bts_container, position_margins=ND_Position_Margins(margin_left="50%", margin_top=25, margin_bottom=25)),
         onclick=None,
         text="Settings",
-        font_name="FreeSans",
         font_size=35
     )
     #
@@ -628,7 +622,6 @@ def create_main_menu_scene(win: nd.ND_Window) -> nd.ND_Scene:
         position=nd.ND_Position_Container(w=250, h=100, container=bts_container, position_margins=ND_Position_Margins(margin_left="50%", margin_top=25, margin_bottom=25)),
         onclick=on_bt_click_quit,
         text="Quit",
-        font_name="FreeSans",
         font_size=35
     )
 
@@ -842,8 +835,7 @@ def create_end_menu(win: nd.ND_Window) -> nd.ND_Scene:
                             elt_id="game_title",
                             position=nd.ND_Position_Container(w="100%", h="33%", container=end_menu_container, position_margins=ND_Position_Margins(margin_top=25, margin_bottom=25)),
                             text="The game has finished !",
-                            font_name="FreeSans",
-                            font_size=20,
+                            font_size=40,
                             font_color=cl("red"),
     )
 
@@ -854,7 +846,6 @@ def create_end_menu(win: nd.ND_Window) -> nd.ND_Scene:
         position=nd.ND_Position_Container(w=150, h=75, container=bts_container, position_margins=ND_Position_Margins(margin_left="50%", margin_top=25, margin_bottom=25)),
         onclick=on_bt_click_init_game,
         text="Play again !",
-        font_name="FreeSans",
         font_size=20
     )
 
@@ -865,7 +856,6 @@ def create_end_menu(win: nd.ND_Window) -> nd.ND_Scene:
         position=nd.ND_Position_Container(w=150, h=75, container=bts_container, position_margins=ND_Position_Margins(margin_left="50%", margin_top=25, margin_bottom=25)),
         onclick=on_bt_click_quit,
         text="Quit !",
-        font_name="FreeSans",
         font_size=20
     )
 
@@ -896,6 +886,12 @@ if __name__ == "__main__":
     #
     if app.display is None:
         exit(1)
+
+    # Init fonts
+    app.display.add_font("res/fonts/aAsianNinja.otf", "AsianNinja")
+    app.display.add_font("res/fonts/HIROMISAKE.ttf", "Hiromisake")
+    app.display.add_font("res/fonts/Korean_Calligraphy.ttf", "KoreanCalligraphy")
+    app.display.default_font = "KoreanCalligraphy"
 
     #
     win_id: int = app.display.create_window({
