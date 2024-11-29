@@ -36,7 +36,7 @@ def run():
         return -1
 
     # Load the texture atlas
-    img_path = b"res/snakes_sprites.png"  # Update this to your texture atlas file
+    img_path = b"res/sprites/snakes_sprites.png"  # Update this to your texture atlas file
     surface = sdl2.sdlimage.IMG_Load(img_path)
     if not surface:
         print(f"sdlimage.Load_IMG Error: {sdl2.SDL_GetError().decode()}")

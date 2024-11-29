@@ -169,7 +169,7 @@ def on_bt_click_init_game(win: nd.ND_Window) -> None:
         snake_icon: nd.ND_Sprite = nd.ND_Sprite(window=win,
                                                 elt_id=f"snake_{snk_idx}_scorebox_icon",
                                                 position=nd.ND_Position_Container("square", "100%", container=scorebox_row),
-                                                base_texture="res/snake_icon.png")
+                                                base_texture="res/sprites/snake_icon.png")
         #
         snake_icon.transformations = nd.ND_Transformations(color_modulation=snk[2])
         #
@@ -767,7 +767,7 @@ def create_game_scene(win: nd.ND_Window) -> nd.ND_Scene:
     #
     coin_atlas: nd.ND_AtlasTexture = nd.ND_AtlasTexture(
         window=win,
-        texture_atlas_path="res/coin.png",
+        texture_atlas_path="res/sprites/coin.png",
         tiles_size=ND_Point(31, 31)
     )
     coin: nd.ND_AnimatedSprite = nd.ND_AnimatedSprite(
@@ -794,7 +794,7 @@ def create_game_scene(win: nd.ND_Window) -> nd.ND_Scene:
     #
     snake_atlas: nd.ND_AtlasTexture = nd.ND_AtlasTexture(
         window=win,
-        texture_atlas_path="res/snakes_sprites4.png",
+        texture_atlas_path="res/sprites/snakes_sprites4.png",
         tiles_size=ND_Point(32, 32)
     )
 

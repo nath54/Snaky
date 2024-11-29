@@ -554,6 +554,7 @@ class ND_Display:
         #
         self.font_names: dict[str, str] = {}
         self.ttf_fonts: dict[str, dict[int, object]] = {}
+        self.default_font: str = "FreeSans"
         #
         self.windows: dict[int, Optional[ND_Window]] = {}
         self.thread_create_window: Lock = Lock()
@@ -740,7 +741,7 @@ class ND_Window:
         return
 
     #
-    def prepare_text_to_render(self, text: str, color: ND_Color, font_name: str, font_size: int) -> int:
+    def prepare_text_to_render(self, text: str, color: ND_Color, font_size: int, font_name: Optional[str] = None) -> int:
         #
         return -1
 
@@ -770,7 +771,8 @@ class ND_Window:
         return
 
     #
-    def draw_text(self, txt: str, x: int, y: int, font: str, font_size: int, font_color: ND_Color) -> None:
+    def draw_text(self, txt: str, x: int, y: int, font_size: int, font_color: ND_Color, font: Optional[str] = None) -> None:
+        #
         return
 
     #
@@ -1445,7 +1447,7 @@ class ND_Text(ND_Elt):
             elt_id: str,
             position: ND_Position,
             text: str,
-            font_name: str,
+            font_name: Optional[str] = None,
             font_size: int = 24,
             font_color: ND_Color = cl("gray"),
             text_wrap: bool = False,
@@ -1456,7 +1458,7 @@ class ND_Text(ND_Elt):
         #
         super().__init__(window=window, elt_id=elt_id, position=position)
         self.text: str = text
-        self.font_name: str = font_name
+        self.font_name: Optional[str] = font_name
         self.font_size: int = font_size
         self.font_color: ND_Color = font_color
         #
@@ -1916,8 +1918,8 @@ class ND_Button(ND_Clickable):
             position: ND_Position,
             onclick: Optional[Callable],
             text: str,
-            font_name: str,
-            font_size: int,
+            font_name: Optional[str] = None,
+            font_size: int = 24,
             border_radius: int = 5,
             border: bool = True,
             base_bg_color: Optional[ND_Color] = None,
@@ -1934,7 +1936,7 @@ class ND_Button(ND_Clickable):
         #
         super().__init__(window=window, elt_id=elt_id, position=position, onclick=onclick)
         self.text: str = text
-        self.font_name: str = font_name
+        self.font_name: Optional[str] = font_name
         self.font_size: int = font_size
         self.base_bg_color: ND_Color = base_bg_color if base_bg_color is not None else cl("gray")
         self.base_fg_color: ND_Color = base_fg_color if base_fg_color is not None else cl("black")

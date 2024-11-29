@@ -53,7 +53,7 @@ def create_map1(win: nd.ND_Window, tx: int = 30, ty: int = 30) -> None:
         #
         bg_garden_atlas = nd.ND_AtlasTexture(
                                 window=win,
-                                texture_atlas_path="res/terrain1.png",
+                                texture_atlas_path="res/sprites/terrain1.png",
                                 tiles_size=ND_Point(32, 32)
         )
         #
