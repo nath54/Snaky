@@ -379,11 +379,14 @@ def update_physic(mainApp: nd.ND_MainApp, delta_time: float) -> None:
     dead_snakes: Optional[dict[int, Snake]] = mainApp.global_vars_get("dead_snakes")
     snakes_speed: Optional[float] = mainApp.global_vars_get("snakes_speed")
     wall_grid_id: Optional[int] = mainApp.global_vars_get("wall_grid_id")
-    apple_grid_id: Optional[int] = mainApp.global_vars_get("apple_grid_id")
-    # TODO
+    food_1_grid_id: Optional[int] = mainApp.global_vars_get("food_1_grid_id")
+    food_2_grid_id: Optional[int] = mainApp.global_vars_get("food_2_grid_id")
+    food_3_grid_id: Optional[int] = mainApp.global_vars_get("food_3_grid_id")
 
     #
-    if grid is None or snakes is None or dead_snakes is None or snakes_speed is None or wall_grid_id is None or apple_grid_id is None:
+    if grid is None or snakes is None or dead_snakes is None or\
+       snakes_speed is None or wall_grid_id is None or\
+       food_1_grid_id is None or food_2_grid_id is None or food_3_grid_id is None:
         return
 
     #
@@ -415,10 +418,13 @@ def update_physic(mainApp: nd.ND_MainApp, delta_time: float) -> None:
 
             #
             if elt_id_col is not None:
+                #
+                foods: list[int] = [food_1_grid_id, food_2_grid_id, food_3_grid_id]
+                #
+                fi: int = foods.index(elt_id_col) if elt_id_col in foods else -1
+                if fi != -1:
 
-                if elt_id_col == apple_grid_id:
-
-                    snak.score += 1
+                    snak.score += fi + 1
                     snak.score_elt.text = str(snak.score)
                     snak.hidding_size += 1
 
@@ -426,7 +432,10 @@ def update_physic(mainApp: nd.ND_MainApp, delta_time: float) -> None:
                     p: Optional[ND_Point] = grid.get_empty_case_in_range(TERRAIN_X, TERRAIN_X + TERRAIN_W, TERRAIN_Y, TERRAIN_Y + TERRAIN_H)
                     #
                     if p is not None:
-                        grid.add_element_position(apple_grid_id, p)
+                        #
+                        food_grid_id: int = random.choice([food_1_grid_id, food_2_grid_id, food_3_grid_id])
+                        #
+                        grid.add_element_position(food_grid_id, p)
 
                 else:
 
@@ -847,7 +856,7 @@ def create_game_scene(win: nd.ND_Window) -> nd.ND_Scene:
     #
     coin_1.transformations = ND_Transformations(color_modulation=cl("copper"))
     coin_2.transformations = ND_Transformations(color_modulation=cl("silver"))
-    coin_3.transformations = ND_Transformations(color_modulation=cl("gold metallic"))
+    coin_3.transformations = ND_Transformations(color_modulation=cl("gold web golden"))
     #
     snake_atlas: nd.ND_AtlasTexture = nd.ND_AtlasTexture(
         window=win,
