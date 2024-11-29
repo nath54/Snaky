@@ -5,7 +5,7 @@ from threading import Lock
 
 import os
 
-import numpy as np
+import numpy as np  # type: ignore
 
 import sdl2  # type: ignore
 import sdl2.sdlttf as sdlttf  # type: ignore
@@ -23,6 +23,7 @@ import OpenGL.GL as gl  # type: ignore
 import ctypes
 
 from lib_nadisplay_colors import ND_Color
+from lib_nadisplay_colors import ND_Transformations
 from lib_nadisplay_rects import ND_Rect, ND_Point
 from lib_nadisplay import ND_MainApp, ND_Display, ND_Window, ND_Scene
 from lib_nadisplay_sdl import to_sdl_color, get_display_info
@@ -91,6 +92,7 @@ class ND_Display_SDL_OPENGL(ND_Display):
         #
         self.font_names: dict[str, str] = {}
         self.ttf_fonts: dict[str, dict[int, sdlttf.TTF_OpenFont]] = {}
+        self.default_font: str = "FreeSans"
         #
         self.windows: dict[int, Optional[ND_Window]] = {}
         self.thread_create_window: Lock = Lock()
@@ -505,7 +507,11 @@ class ND_Window_SDL_OPENGL(ND_Window):
 
 
     #
-    def prepare_text_to_render(self, text: str, color: ND_Color, font_name: str, font_size: int) -> int:
+    def prepare_text_to_render(self, text: str, color: ND_Color, font_size: int, font_name: Optional[str] = None) -> int:
+
+        #
+        if font_name is None:
+            font_name = self.display.default_font
 
         # Get font
         font: Optional[sdlttf.TTF_OpenFont] = self.display.get_font(font_name, font_size)
@@ -609,12 +615,15 @@ class ND_Window_SDL_OPENGL(ND_Window):
 
 
     #
-    def draw_text(self, txt: str, x: int, y: int, font: str, font_size: int, font_color: ND_Color) -> None:
+    def draw_text(self, txt: str, x: int, y: int, font_size: int, font_color: ND_Color, font: Optional[str] = None) -> None:
+        #
+        if font is None:
+            font = self.display.default_font
         #
         tid: str = f"{txt}_|||_{font}_|||_{font_size}_|||_{font_color}"
         #
         if tid not in self.prepared_font_textures:
-            self.prepared_font_textures[tid] = self.prepare_text_to_render(txt, font_color, font, font_size)
+            self.prepared_font_textures[tid] = self.prepare_text_to_render(text=txt, color=font_color, font_name=font, font_size=font_size)
         #
         tsize: ND_Point = self.get_prepared_texture_size(self.prepared_font_textures[tid])
         self.render_prepared_texture(self.prepared_font_textures[tid], x, y, tsize.x, tsize.y)

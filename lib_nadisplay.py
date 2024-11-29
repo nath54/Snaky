@@ -1,5 +1,5 @@
 
-from typing import Callable, Any, Optional, Type
+from typing import Callable, Any, Optional, Type, cast
 
 import time
 
@@ -554,6 +554,7 @@ class ND_Display:
         #
         self.font_names: dict[str, str] = {}
         self.ttf_fonts: dict[str, dict[int, object]] = {}
+        self.default_font: str = "FreeSans"
         #
         self.windows: dict[int, Optional[ND_Window]] = {}
         self.thread_create_window: Lock = Lock()
@@ -740,7 +741,7 @@ class ND_Window:
         return
 
     #
-    def prepare_text_to_render(self, text: str, color: ND_Color, font_name: str, font_size: int) -> int:
+    def prepare_text_to_render(self, text: str, color: ND_Color, font_size: int, font_name: Optional[str] = None) -> int:
         #
         return -1
 
@@ -770,7 +771,8 @@ class ND_Window:
         return
 
     #
-    def draw_text(self, txt: str, x: int, y: int, font: str, font_size: int, font_color: ND_Color) -> None:
+    def draw_text(self, txt: str, x: int, y: int, font_size: int, font_color: ND_Color, font: Optional[str] = None) -> None:
+        #
         return
 
     #
@@ -1290,7 +1292,7 @@ class ND_Scene:
                     scene_id: str,
                     origin: ND_Point,
                     elements_layers: dict[int, dict[str, ND_Elt]] = {},
-                    on_window_state: Optional[str] = None
+                    on_window_state: Optional[str | set[str]] = None
     ) -> None:
 
         # id
@@ -1300,8 +1302,16 @@ class ND_Scene:
         self.origin: ND_Point = origin
 
         #
-        self.on_window_state: Optional[str] = on_window_state
+        self.on_window_state: Optional[str | set[str]] = on_window_state
         self.window: ND_Window = window
+        self.on_window_state_test: Optional[Callable[[Optional[str]], bool]] = None
+        #
+        if self.on_window_state is not None:
+            if isinstance(self.on_window_state, set):
+                self.on_window_state_test = self.test_window_state_set
+            else:
+                self.on_window_state_test = self.test_window_state_str
+
 
         # list of elements sorted by render importance with layers (ascending order)
         self.elements_layers: dict[int, dict[str, ND_Elt]] = elements_layers
@@ -1328,9 +1338,19 @@ class ND_Scene:
         self.layers_keys: list[int] = sorted(list(self.elements_layers.keys()))
 
     #
+    def test_window_state_str(self, win_state: Optional[str]) -> bool:
+        #
+        return win_state != self.on_window_state
+
+    #
+    def test_window_state_set(self, win_state: Optional[str]) -> bool:
+        #
+        return win_state not in cast(set[str], self.on_window_state)
+
+    #
     def handle_event(self, event) -> None:
         #
-        if self.on_window_state is not None and self.window.state != self.on_window_state:
+        if self.on_window_state_test is not None and self.on_window_state_test(self.window.state):
             return
 
         #
@@ -1354,7 +1374,7 @@ class ND_Scene:
     #
     def handle_window_resize(self) -> None:
         #
-        if self.on_window_state is not None and self.window.state != self.on_window_state:
+        if self.on_window_state_test is not None and self.on_window_state_test(self.window.state):
             # TODO: Optimisation
             pass
 
@@ -1407,9 +1427,8 @@ class ND_Scene:
     #
     def render(self) -> None:
         #
-        if self.on_window_state is not None:
-            if self.window.state != self.on_window_state:
-                return
+        if self.on_window_state_test is not None and self.on_window_state_test(self.window.state):
+            return
         #
         layer_key: int
         for layer_key in self.layers_keys:
@@ -1428,7 +1447,7 @@ class ND_Text(ND_Elt):
             elt_id: str,
             position: ND_Position,
             text: str,
-            font_name: str,
+            font_name: Optional[str] = None,
             font_size: int = 24,
             font_color: ND_Color = cl("gray"),
             text_wrap: bool = False,
@@ -1439,7 +1458,7 @@ class ND_Text(ND_Elt):
         #
         super().__init__(window=window, elt_id=elt_id, position=position)
         self.text: str = text
-        self.font_name: str = font_name
+        self.font_name: Optional[str] = font_name
         self.font_size: int = font_size
         self.font_color: ND_Color = font_color
         #
@@ -1899,8 +1918,8 @@ class ND_Button(ND_Clickable):
             position: ND_Position,
             onclick: Optional[Callable],
             text: str,
-            font_name: str,
-            font_size: int,
+            font_name: Optional[str] = None,
+            font_size: int = 24,
             border_radius: int = 5,
             border: bool = True,
             base_bg_color: Optional[ND_Color] = None,
@@ -1917,7 +1936,7 @@ class ND_Button(ND_Clickable):
         #
         super().__init__(window=window, elt_id=elt_id, position=position, onclick=onclick)
         self.text: str = text
-        self.font_name: str = font_name
+        self.font_name: Optional[str] = font_name
         self.font_size: int = font_size
         self.base_bg_color: ND_Color = base_bg_color if base_bg_color is not None else cl("gray")
         self.base_fg_color: ND_Color = base_fg_color if base_fg_color is not None else cl("black")
@@ -3111,6 +3130,10 @@ class ND_Position_Container(ND_Position):
             h = -1
 
         #
+        if self.w_str == "square" and self.h_str == "square":
+            raise UserWarning("Error: width and height cannot have attribute 'square' !!!")
+
+        #
         super().__init__(0, 0, w, h)
 
         #
@@ -3126,9 +3149,22 @@ class ND_Position_Container(ND_Position):
         if self.w_str is None:
             return self._w
         #
+        elif self.w_str == "square":
+            return self.h
+        #
         w: float = get_percentage_from_str(self.w_str) / 100.0
         #
-        return int(w * self.container.w)
+        width: int = int(w * self.container.w)
+        #
+        if self.positions_constraints:
+            #
+            if self.positions_constraints.min_width and width < self.positions_constraints.min_width:
+                width = self.positions_constraints.min_width
+            #
+            if self.positions_constraints.max_width and width > self.positions_constraints.max_width:
+                width = self.positions_constraints.max_width
+        #
+        return width
 
     #
     @property
@@ -3137,9 +3173,22 @@ class ND_Position_Container(ND_Position):
         if self.h_str is None:
             return self._h
         #
+        elif self.h_str == "square":
+            return self.w
+        #
         h: float = get_percentage_from_str(self.h_str) / 100.0
         #
-        return int(h * self.container.h)
+        height: int = int(h * self.container.h)
+        #
+        if self.positions_constraints:
+            #
+            if self.positions_constraints.min_height and height < self.positions_constraints.min_height:
+                height = self.positions_constraints.min_height
+            #
+            if self.positions_constraints.max_height and height > self.positions_constraints.max_height:
+                height = self.positions_constraints.max_height
+        #
+        return height
 
     #
     def get_margin_left(self, space_around: int = -1) -> int:

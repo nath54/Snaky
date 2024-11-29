@@ -30,7 +30,7 @@ def run():
         return -1
 
     # Load an image using SDL2_image
-    img_path = b"res/apple1.png"  # Update this with the path to your image
+    img_path = b"res/sprites/apple1.png"  # Update this with the path to your image
     surface = sdl2.sdlimage.IMG_Load(img_path)
     if not surface:
         print(f"SDL_LoadBMP Error: {sdl2.SDL_GetError().decode()}")

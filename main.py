@@ -3,8 +3,8 @@ from typing import Optional, cast
 
 import lib_nadisplay as nd
 
-from lib_nadisplay_colors import cl, ND_Color
-from lib_nadisplay_rects import ND_Point, ND_Position_Margins, ND_Position
+from lib_nadisplay_colors import cl, ND_Color, ND_Transformations
+from lib_nadisplay_rects import ND_Point, ND_Position_Margins, ND_Position, ND_Position_Constraints
 
 from lib_nadisplay_sdl_sdlgfx import ND_Display_SDL_SDLGFX as DisplayClass, ND_Window_SDL_SDLGFX as WindowClass
 # from lib_nadisplay_sdl_opengl import ND_Display_SDL_OPENGL as DisplayClass, ND_Window_SDL_OPENGL as WindowClass  # Not working at all
@@ -15,17 +15,18 @@ from lib_nadisplay_sdl import ND_EventsManager_SDL as EventsManagerClass
 # from lib_nadisplay_pygame import ND_Display_Pygame as DisplayClass, ND_Window_Pygame as WindowClass, ND_EventsManager_Pygame as EventsManagerClass  # Working a little
 
 
-from lib_snake import Snake
+from lib_snake import Snake, create_map1
 
 import math
 import time
+import random
 
 #
 MAIN_WINDOW_ID: int = 0
 
 #
-TERRAIN_X: int = 4
-TERRAIN_Y: int = 4
+TERRAIN_X: int = 0
+TERRAIN_Y: int = 0
 TERRAIN_W: int = 20
 TERRAIN_H: int = 20
 
@@ -71,9 +72,19 @@ def on_bt_click_init_game(win: nd.ND_Window) -> None:
 
     grid: Optional[nd.ND_RectGrid] = win.main_app.global_vars_get("grid")
     cam_grid: Optional[nd.ND_CameraGrid] = win.main_app.global_vars_get("cam_grid")
+    game_infos_container: Optional[nd.ND_Container] = win.main_app.global_vars_get("game_infos_container")
 
-    # Apple
-    apple_grid_elt: Optional[nd.ND_Sprite] = win.main_app.global_vars_get("apple_grid_elt")
+    # Food
+    food_1_elt_name: Optional[str] = win.main_app.global_vars_get("food_1_elt_name")
+    food_2_elt_name: Optional[str] = win.main_app.global_vars_get("food_2_elt_name")
+    food_3_elt_name: Optional[str] = win.main_app.global_vars_get("food_3_elt_name")
+    #
+    if food_1_elt_name is None or food_2_elt_name is None or food_3_elt_name is None:
+        raise UserWarning("Error: no food elt to use !")
+    #
+    food_1_elt: Optional[nd.ND_Elt] = win.main_app.global_vars_get(food_1_elt_name)
+    food_2_elt: Optional[nd.ND_Elt] = win.main_app.global_vars_get(food_2_elt_name)
+    food_3_elt: Optional[nd.ND_Elt] = win.main_app.global_vars_get(food_3_elt_name)
 
     # Snake Atlas
     snake_atlas: Optional[nd.ND_AtlasTexture] = win.main_app.global_vars_get("snake_atlas")
@@ -81,10 +92,22 @@ def on_bt_click_init_game(win: nd.ND_Window) -> None:
     # Errors
     if grid is None or cam_grid is None:
         raise UserWarning("Error: no grid, cannot initialise the game !")
-    
-    if apple_grid_elt is None or snake_atlas is None:
-        raise UserWarning("Error: apple and snakes textures are not correctly initialized !")
+    #
+    if snake_atlas is None or food_1_elt is None or food_2_elt is None or food_3_elt is None:
+        raise UserWarning("Error: Snakes and/or Food textures are not correctly initialized !")
+    #
+    if game_infos_container is None:
+        raise UserWarning("Error: no game_infos_container !")
 
+    # On nettoie les scorebox des anciennes parties
+    trash: list[Optional[nd.ND_Container]] = cast(list[Optional[nd.ND_Container]], game_infos_container.elements)
+    game_infos_container.elements = []
+    i: int
+    sb: Optional[nd.ND_Container]
+    for (i, sb) in enumerate(trash):
+        del sb
+        trash[i] = None
+    del trash
 
     grid.clean()
 
@@ -96,7 +119,7 @@ def on_bt_click_init_game(win: nd.ND_Window) -> None:
             window=win,
             elt_id="wall_grid",
             position=nd.ND_Position_RectGrid(rect_grid=grid),
-            base_bg_color=cl("dark grey")
+            base_bg_color=cl("black")
         )
         win.main_app.global_vars_set("wall_grid_elt", wall_grid_elt)
 
@@ -104,9 +127,15 @@ def on_bt_click_init_game(win: nd.ND_Window) -> None:
 
     win.main_app.global_vars_set("wall_grid_id", wall_grid_id)
 
-    apple_grid_id: int = grid.add_element_to_grid(apple_grid_elt, [])
+    #
+    food_1_grid_id: int = grid.add_element_to_grid(food_1_elt, [])
+    food_2_grid_id: int = grid.add_element_to_grid(food_2_elt, [])
+    food_3_grid_id: int = grid.add_element_to_grid(food_3_elt, [])
 
-    win.main_app.global_vars_set("apple_grid_id", apple_grid_id)
+    #
+    win.main_app.global_vars_set("food_1_grid_id", food_1_grid_id)
+    win.main_app.global_vars_set("food_2_grid_id", food_2_grid_id)
+    win.main_app.global_vars_set("food_3_grid_id", food_3_grid_id)
 
 
     # New Game
@@ -127,12 +156,55 @@ def on_bt_click_init_game(win: nd.ND_Window) -> None:
         grid.add_element_position(wall_grid_id, ND_Point(xx, TERRAIN_Y-1))
         grid.add_element_position(wall_grid_id, ND_Point(xx, TERRAIN_Y+TERRAIN_H+1))
 
+    #
+    create_map1(win, TERRAIN_W, TERRAIN_H)
+
+    #
     snk_idx: int
     snk: tuple[str, ND_Point, ND_Color, int, int, str, Optional[tuple[str, str, str, str]]]
     for (snk_idx, snk) in enumerate(init_snakes):
 
+        # Create score box for snake
+        scorebox_row: nd.ND_Container = nd.ND_Container(
+            window=win,
+            elt_id=f"snake_{snk_idx}_scorebox_row",
+            position=nd.ND_Position_Container("90%", "15%", container=game_infos_container,
+                                position_margins=ND_Position_Margins(margin_left="50%", margin_right="50%", margin_top=15),
+                                position_constraints=ND_Position_Constraints(max_height=40)),
+            element_alignment="row"
+        )
+        #
+        snake_icon: nd.ND_Sprite = nd.ND_Sprite(window=win,
+                                                elt_id=f"snake_{snk_idx}_scorebox_icon",
+                                                position=nd.ND_Position_Container("square", "100%", container=scorebox_row),
+                                                base_texture="res/sprites/snake_icon.png")
+        #
+        snake_icon.transformations = nd.ND_Transformations(color_modulation=snk[2])
+        #
+        snake_name: nd.ND_Text = nd.ND_Text(window=win,
+                                            elt_id=f"snake_{snk_idx}_scorebox_name",
+                                            position=nd.ND_Position_Container("50%", "100%", container=scorebox_row, position_margins=ND_Position_Margins(margin_left=15, margin_right=15)),
+                                            text=snk[0],
+                                            font_size=28,
+                                            font_color=snk[2],
+                                            text_h_align="left")
+        #
+        snake_score: nd.ND_Text = nd.ND_Text(window=win,
+                                            elt_id=f"snake_{snk_idx}_scorebox_score",
+                                            position=nd.ND_Position_Container("20%", "100%", container=scorebox_row),
+                                            text="0",
+                                            font_size=28,
+                                            font_color=snk[2],
+                                            text_h_align="left")
+        #
+        scorebox_row.add_element(snake_icon)
+        scorebox_row.add_element(snake_name)
+        scorebox_row.add_element(snake_score)
+        #
+        game_infos_container.add_element(scorebox_row)
 
-        snake: Snake = Snake( pseudo=snk[0], init_position=snk[1], color=snk[2], init_size=snk[3] )
+        # Create Snake
+        snake: Snake = Snake( pseudo=snk[0], init_position=snk[1], color=snk[2], init_size=snk[3], score_elt=snake_score )
         snake.last_update = time.time()
 
 
@@ -230,18 +302,21 @@ def on_bt_click_init_game(win: nd.ND_Window) -> None:
 
         # TODO: bots
 
-    # Init apples
+    # Init Food
     p: Optional[ND_Point]
     for _ in range(nb_init_apples):
 
         p = grid.get_empty_case_in_range(TERRAIN_X, TERRAIN_X + TERRAIN_W, TERRAIN_Y, TERRAIN_Y + TERRAIN_H)
 
         if p is not None:
-            grid.add_element_position(apple_grid_id, p)
+            #
+            food_grid_id: int = random.choice([food_1_grid_id, food_2_grid_id, food_3_grid_id])
+            #
+            grid.add_element_position(food_grid_id, p)
 
     # center camera on grid area
     cam_grid.move_camera_to_grid_area(
-        nd.ND_Rect(TERRAIN_X, TERRAIN_Y, TERRAIN_W, TERRAIN_H)
+        nd.ND_Rect(TERRAIN_X+1, TERRAIN_Y+1, TERRAIN_W-2, TERRAIN_H-2)
     )
 
     # Setting New State
@@ -252,6 +327,31 @@ def on_bt_click_init_game(win: nd.ND_Window) -> None:
 def on_bt_click_quit(win: nd.ND_Window) -> None:
 
     win.main_app.quit()
+
+
+#
+def on_pause_pressed(main_app: nd.ND_MainApp) -> None:
+    #
+    if main_app.display is None:
+        return
+    #
+    win: Optional[nd.ND_Window] = main_app.display.windows[MAIN_WINDOW_ID]
+    #
+    if not win:
+        return
+    #
+    if win.state == "game":
+        #
+        main_app.global_vars_set("game_pause", time.time())
+        #
+        win.set_state("game_pause")
+    #
+    elif win.state == "game_pause":
+        #
+        gg: float = cast(float, main_app.global_vars_get("game_pause"))
+        main_app.global_vars_set("game_pause", time.time() - gg)
+        #
+        win.set_state("game")
 
 
 #
@@ -271,10 +371,14 @@ def update_physic(mainApp: nd.ND_MainApp, delta_time: float) -> None:
     dead_snakes: Optional[dict[int, Snake]] = mainApp.global_vars_get("dead_snakes")
     snakes_speed: Optional[float] = mainApp.global_vars_get("snakes_speed")
     wall_grid_id: Optional[int] = mainApp.global_vars_get("wall_grid_id")
-    apple_grid_id: Optional[int] = mainApp.global_vars_get("apple_grid_id")
+    food_1_grid_id: Optional[int] = mainApp.global_vars_get("food_1_grid_id")
+    food_2_grid_id: Optional[int] = mainApp.global_vars_get("food_2_grid_id")
+    food_3_grid_id: Optional[int] = mainApp.global_vars_get("food_3_grid_id")
 
-    # Something is None
-    if grid is None or snakes is None or dead_snakes is None or snakes_speed is None or wall_grid_id is None or apple_grid_id is None:
+    #
+    if grid is None or snakes is None or dead_snakes is None or\
+       snakes_speed is None or wall_grid_id is None or\
+       food_1_grid_id is None or food_2_grid_id is None or food_3_grid_id is None:
         return
 
 
@@ -304,17 +408,24 @@ def update_physic(mainApp: nd.ND_MainApp, delta_time: float) -> None:
 
             #
             if elt_id_col is not None:
+                #
+                foods: list[int] = [food_1_grid_id, food_2_grid_id, food_3_grid_id]
+                #
+                fi: int = foods.index(elt_id_col) if elt_id_col in foods else -1
+                if fi != -1:
 
-                if elt_id_col == apple_grid_id:
-
-                    snak.score += 1
+                    snak.score += fi + 1
+                    snak.score_elt.text = str(snak.score)
                     snak.hidding_size += 1
 
                     # On rajoute une nouvelle pomme
                     p: Optional[ND_Point] = grid.get_empty_case_in_range(TERRAIN_X, TERRAIN_X + TERRAIN_W, TERRAIN_Y, TERRAIN_Y + TERRAIN_H)
                     #
                     if p is not None:
-                        grid.add_element_position(apple_grid_id, p)
+                        #
+                        food_grid_id: int = random.choice([food_1_grid_id, food_2_grid_id, food_3_grid_id])
+                        #
+                        grid.add_element_position(food_grid_id, p)
 
                 else:
 
@@ -482,7 +593,6 @@ def create_main_menu_scene(win: nd.ND_Window) -> nd.ND_Scene:
                             elt_id="game_title",
                             position=nd.ND_Position_Container(w="100%", h="20%", container=main_menu_container, position_margins=ND_Position_Margins(margin_top=25, margin_bottom=25)),
                             text="Snaky",
-                            font_name="FreeSans",
                             font_size=50,
                             font_color=cl("violet"),
     )
@@ -496,7 +606,6 @@ def create_main_menu_scene(win: nd.ND_Window) -> nd.ND_Scene:
         position=nd.ND_Position_Container(w=250, h=100, container=bts_container, position_margins=ND_Position_Margins(margin_left="50%", margin_top=25, margin_bottom=25)),
         onclick=on_bt_click_init_game,
         text="Play !",
-        font_name="FreeSans",
         font_size=35
     )
 
@@ -506,7 +615,6 @@ def create_main_menu_scene(win: nd.ND_Window) -> nd.ND_Scene:
         position=nd.ND_Position_Container(w=250, h=100, container=bts_container, position_margins=ND_Position_Margins(margin_left="50%", margin_top=25, margin_bottom=25)),
         onclick=None,
         text="Train Bots",
-        font_name="FreeSans",
         font_size=35
     )
 
@@ -516,7 +624,6 @@ def create_main_menu_scene(win: nd.ND_Window) -> nd.ND_Scene:
         position=nd.ND_Position_Container(w=250, h=100, container=bts_container, position_margins=ND_Position_Margins(margin_left="50%", margin_top=25, margin_bottom=25)),
         onclick=None,
         text="Settings",
-        font_name="FreeSans",
         font_size=35
     )
 
@@ -526,7 +633,6 @@ def create_main_menu_scene(win: nd.ND_Window) -> nd.ND_Scene:
         position=nd.ND_Position_Container(w=250, h=100, container=bts_container, position_margins=ND_Position_Margins(margin_left="50%", margin_top=25, margin_bottom=25)),
         onclick=on_bt_click_quit,
         text="Quit",
-        font_name="FreeSans",
         font_size=35
     )
 
@@ -553,7 +659,7 @@ def create_game_scene(win: nd.ND_Window) -> nd.ND_Scene:
         scene_id="game",
         origin=ND_Point(0, 0),
         elements_layers = {},
-        on_window_state="game"
+        on_window_state=set(["game", "game_pause", "end_menu"])
     )
 
     #
@@ -610,7 +716,7 @@ def create_game_scene(win: nd.ND_Window) -> nd.ND_Scene:
     #
     win.main_app.add_function_to_event_fns_queue("window_resized",
                 lambda main_app: camera_grid.move_camera_to_grid_area(
-                    nd.ND_Rect(TERRAIN_X, TERRAIN_Y, TERRAIN_W, TERRAIN_H)
+                    nd.ND_Rect(TERRAIN_X+1, TERRAIN_Y+1, TERRAIN_W-1, TERRAIN_H-1)
                 )
     )
 
@@ -642,15 +748,18 @@ def create_game_scene(win: nd.ND_Window) -> nd.ND_Scene:
     )
 
     #
-    game_infos: nd.ND_Container = nd.ND_Container(
+    game_infos_container: nd.ND_Container = nd.ND_Container(
         window=win,
         elt_id="game_infos",
         position=nd.ND_Position_MultiLayer(multilayer=multilayer_infos),
+        element_alignment="col"
     )
+    #
+    win.main_app.global_vars_set("game_infos_container", game_infos_container)
 
     #
     multilayer_infos.add_element(0, background_infos)
-    multilayer_infos.add_element(1, game_infos)
+    multilayer_infos.add_element(1, game_infos_container)
 
     #
     scene.add_element(0, game_row_container)
@@ -658,10 +767,52 @@ def create_game_scene(win: nd.ND_Window) -> nd.ND_Scene:
     #
     coin_atlas: nd.ND_AtlasTexture = nd.ND_AtlasTexture(
         window=win,
-        texture_atlas_path="res/coin.png",
+        texture_atlas_path="res/sprites/coin_grayscale.png",
         tiles_size=ND_Point(31, 31)
     )
-    coin: nd.ND_AnimatedSprite = nd.ND_AnimatedSprite(
+    coin_3: nd.ND_AnimatedSprite = nd.ND_AnimatedSprite(
+        window=win,
+        elt_id="spinning coin",
+        position=nd.ND_Position_RectGrid(rect_grid=grid),
+        animations={
+            "spinning": [
+                nd.ND_Sprite_of_AtlasTexture(
+                    window=win,
+                    elt_id=f"spinning_coin_anim_{i}",
+                    position=ND_Position(),
+                    atlas_texture=coin_atlas,
+                    tile_x=i, tile_y=0
+                )
+
+                for i in range(8)
+            ]
+        },
+        animations_speed={},
+        default_animation_speed=0.1,
+        default_animation="spinning"
+    )
+    coin_2: nd.ND_AnimatedSprite = nd.ND_AnimatedSprite(
+        window=win,
+        elt_id="spinning coin",
+        position=nd.ND_Position_RectGrid(rect_grid=grid),
+        animations={
+            "spinning": [
+                nd.ND_Sprite_of_AtlasTexture(
+                    window=win,
+                    elt_id=f"spinning_coin_anim_{i}",
+                    position=ND_Position(),
+                    atlas_texture=coin_atlas,
+                    tile_x=i, tile_y=0
+                )
+
+                for i in range(8)
+            ]
+        },
+        animations_speed={},
+        default_animation_speed=0.1,
+        default_animation="spinning"
+    )
+    coin_1: nd.ND_AnimatedSprite = nd.ND_AnimatedSprite(
         window=win,
         elt_id="spinning coin",
         position=nd.ND_Position_RectGrid(rect_grid=grid),
@@ -683,15 +834,29 @@ def create_game_scene(win: nd.ND_Window) -> nd.ND_Scene:
         default_animation="spinning"
     )
     #
+    coin_1.transformations = ND_Transformations(color_modulation=cl("copper"))
+    coin_2.transformations = ND_Transformations(color_modulation=cl("silver"))
+    coin_3.transformations = ND_Transformations(color_modulation=cl("gold web golden"))
+    #
     snake_atlas: nd.ND_AtlasTexture = nd.ND_AtlasTexture(
         window=win,
-        texture_atlas_path="res/snakes_sprites4.png",
+        texture_atlas_path="res/sprites/snakes_sprites4.png",
         tiles_size=ND_Point(32, 32)
     )
 
     #
-    win.main_app.global_vars_set("apple_grid_elt", coin)
+    win.main_app.global_vars_set("coin_3_elt", coin_3)
+    win.main_app.global_vars_set("coin_2_elt", coin_2)
+    win.main_app.global_vars_set("coin_1_elt", coin_1)
+    #
+    win.main_app.global_vars_set("food_3_elt_name", "coin_3_elt")
+    win.main_app.global_vars_set("food_2_elt_name", "coin_2_elt")
+    win.main_app.global_vars_set("food_1_elt_name", "coin_1_elt")
+    #
     win.main_app.global_vars_set("snake_atlas", snake_atlas)
+
+    #
+    win.main_app.add_function_to_event_fns_queue("keydown_p", on_pause_pressed)
 
     #
     return scene
@@ -730,8 +895,7 @@ def create_end_menu(win: nd.ND_Window) -> nd.ND_Scene:
                             elt_id="game_title",
                             position=nd.ND_Position_Container(w="100%", h="33%", container=end_menu_container, position_margins=ND_Position_Margins(margin_top=25, margin_bottom=25)),
                             text="The game has finished !",
-                            font_name="FreeSans",
-                            font_size=20,
+                            font_size=40,
                             font_color=cl("red"),
     )
 
@@ -742,7 +906,6 @@ def create_end_menu(win: nd.ND_Window) -> nd.ND_Scene:
         position=nd.ND_Position_Container(w=150, h=75, container=bts_container, position_margins=ND_Position_Margins(margin_left="50%", margin_top=25, margin_bottom=25)),
         onclick=on_bt_click_init_game,
         text="Play again !",
-        font_name="FreeSans",
         font_size=20
     )
 
@@ -753,7 +916,6 @@ def create_end_menu(win: nd.ND_Window) -> nd.ND_Scene:
         position=nd.ND_Position_Container(w=150, h=75, container=bts_container, position_margins=ND_Position_Margins(margin_left="50%", margin_top=25, margin_bottom=25)),
         onclick=on_bt_click_quit,
         text="Quit !",
-        font_name="FreeSans",
         font_size=20
     )
 
@@ -784,6 +946,12 @@ if __name__ == "__main__":
     #
     if app.display is None:
         exit(1)
+
+    # Init fonts
+    app.display.add_font("res/fonts/aAsianNinja.otf", "AsianNinja")
+    app.display.add_font("res/fonts/HIROMISAKE.ttf", "Hiromisake")
+    app.display.add_font("res/fonts/Korean_Calligraphy.ttf", "KoreanCalligraphy")
+    app.display.default_font = "KoreanCalligraphy"
 
     #
     win_id: int = app.display.create_window({

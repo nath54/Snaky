@@ -17,7 +17,7 @@ import freetype  # type: ignore
 import glm  # type: ignore
 import ctypes
 
-from lib_nadisplay_colors import ND_Color
+from lib_nadisplay_colors import ND_Color, ND_Transformations
 from lib_nadisplay_rects import ND_Rect, ND_Point
 from lib_nadisplay import ND_MainApp, ND_Display, ND_Window, ND_Scene
 from lib_nadisplay_glfw import get_display_info
@@ -262,6 +262,7 @@ class ND_Display_GLFW_OPENGL(ND_Display):
         #
         self.font_names: dict[str, str] = {}
         self.fonts_renderers: dict[str, dict[int, Optional[FontRenderer]]] = {}
+        self.default_font: str = "FreeSans"
         #
         self.windows: dict[int, Optional[ND_Window]] = {}
         self.thread_create_window: Lock = Lock()
@@ -594,7 +595,10 @@ class ND_Window_GLFW_OPENGL(ND_Window):
 
 
     #
-    def draw_text(self, txt: str, x: int, y: int, font: str, font_size: int, font_color: ND_Color) -> None:
+    def draw_text(self, txt: str, x: int, y: int, font_size: int, font_color: ND_Color, font: Optional[str] = None) -> None:
+        #
+        if font is None:
+            font = self.display.default_font
         #
         font_renderer: Optional[FontRenderer] = cast(Optional[FontRenderer], self.display.get_font(font, font_size))
         #
@@ -1086,12 +1090,12 @@ class ND_Window_GLFW_OPENGL(ND_Window):
         if texture_id not in self.sdl_textures:
             return
         #
-        texture_width, texture_height = self.get_prepared_texture_size(texture_id)
+        ts: ND_Point = self.get_prepared_texture_size(texture_id)
 
         gl.glBindTexture(gl.GL_TEXTURE_2D, self.sdl_textures[texture_id])
         gl.glBegin(gl.GL_POLYGON)
         for i in range(len(x_coords)):
-            gl.glTexCoord2f((x_coords[i] + texture_dx) / texture_width, (y_coords[i] + texture_dy) / texture_height)
+            gl.glTexCoord2f((x_coords[i] + texture_dx) / ts.x, (y_coords[i] + texture_dy) / ts.y)
             gl.glVertex2f(x_coords[i], y_coords[i])
         gl.glEnd()
         gl.glBindTexture(gl.GL_TEXTURE_2D, 0)

@@ -9,7 +9,8 @@ import ctypes
 import glfw  # type: ignore
 import vulkan as vk  # type: ignore
 
-from lib_nadisplay import ND_Point
+from lib_nadisplay_rects import ND_Point
+from lib_nadisplay_colors import ND_Transformations
 from lib_nadisplay_colors import ND_Color
 from lib_nadisplay import ND_MainApp, ND_Display, ND_Window, ND_Scene
 from lib_nadisplay_glfw import get_display_info
@@ -30,6 +31,7 @@ class ND_Display_GLFW_VULKAN(ND_Display):
         #
         self.font_names: dict[str, str] = {}
         self.ttf_fonts: dict[str, dict[int, object]] = {}
+        self.default_font: str = "FreeSans"
         #
         self.windows: dict[int, Optional[ND_Window]] = {}
         self.thread_create_window: Lock = Lock()
@@ -323,7 +325,11 @@ class ND_Window_GLFW_VULKAN(ND_Window):
 
 
     #
-    def prepare_text_to_render(self, text: str, color: ND_Color, font_name: str, font_size: int) -> int:
+    def prepare_text_to_render(self, text: str, color: ND_Color, font_size: int, font_name: Optional[str] = None) -> int:
+
+        #
+        if font_name is None:
+            font_name = self.display.default_font
 
         # Get font
         font: Optional[object] = self.display.get_font(font_name, font_size)
@@ -356,8 +362,13 @@ class ND_Window_GLFW_VULKAN(ND_Window):
 
 
     #
-    def draw_text(self, txt: str, x: int, y: int, font: str, font_size: int, font_color: ND_Color) -> None:
+    def draw_text(self, txt: str, x: int, y: int, font_size: int, font_color: ND_Color, font: Optional[str] = None) -> None:
+        #
+        if font is None:
+            font = self.display.default_font
+        #
         # TODO
+        #
         return
 
 
