@@ -4,14 +4,14 @@ from typing import Optional
 import random
 import math
 
-from lib_nadisplay_colors import ND_Color
+from lib_nadisplay_colors import ND_Color, cl
 from lib_nadisplay_rects import ND_Point, ND_Position
 import lib_nadisplay as nd
 
 
 class Snake:
     #
-    def __init__(self, pseudo: str, init_position: ND_Point, color: ND_Color, score_elt: nd.ND_Text, init_direction: ND_Point = ND_Point(1, 0), init_size: int = 4) -> None:
+    def __init__(self, pseudo: str, init_position: ND_Point, color: ND_Color, score_elt: nd.ND_Text, map_area: nd.ND_Rect, init_direction: ND_Point = ND_Point(1, 0), init_size: int = 4) -> None:
         #
         self.color: ND_Color = color
         self.hidding_size: int = init_size  # Taille cachée qu'il faut ajouter au snake quand il avance
@@ -19,6 +19,8 @@ class Snake:
         #
         self.cases: list[ND_Point] = []  # La tête est le premier élément de la liste
         self.cases_angles: list[int] = []
+        #
+        self.map_area: nd.ND_Rect = map_area
         #
         self.last_update: float = 0
         self.last_applied_direction: ND_Point = init_direction
@@ -32,7 +34,46 @@ class Snake:
 
 
 #
-def create_map1(win: nd.ND_Window, tx: int = 30, ty: int = 30) -> None:
+def distribute_points(X: int, Y: int, W: int, H: int, N: int) -> list[ND_Point]:
+    """
+    Distribute N points on a rectangle with integer coordinates.
+
+    Args:
+        W (int): Width of the rectangle.
+        H (int): Height of the rectangle.
+        N (int): Number of points to distribute.
+
+    Returns:
+        List[Tuple[int, int]]: List of (x, y) coordinates.
+    """
+    # Compute optimal grid dimensions
+    aspect_ratio: float = W / H
+    C: int = math.ceil(math.sqrt(N * aspect_ratio))
+    R: int = math.ceil(N / C)
+
+    # Ensure the grid fits within the rectangle
+    C = min(C, W)
+    R = min(R, H)
+
+    # Compute the points
+    points: list[ND_Point] = []
+    x_spacing = W / C
+    y_spacing = H / R
+
+    for r in range(R):
+        for c in range(C):
+            if len(points) < N:
+                # Round coordinates to nearest integers
+                x = round(c * x_spacing + x_spacing / 2)
+                y = round(r * y_spacing + y_spacing / 2)
+                points.append(ND_Point(x + X, y + Y))
+
+    return points
+
+
+
+#
+def create_map1(win: nd.ND_Window, tx: int, ty: int, map_mode: str, nb_snakes: int) -> tuple[list[nd.ND_Rect], list[ND_Point]]:
     """
     Garden Map, a large square
 
@@ -40,14 +81,29 @@ def create_map1(win: nd.ND_Window, tx: int = 30, ty: int = 30) -> None:
         mainApp (nd.ND_MainApp): _description_
     """
 
-    grid: Optional[nd.ND_RectGrid] = win.main_app.global_vars_get("grid")
-    bg_grid: Optional[nd.ND_RectGrid] = win.main_app.global_vars_get("bg_grid")
+    grid: nd.ND_RectGrid = win.main_app.global_vars_get("grid")
+    bg_grid: nd.ND_RectGrid = win.main_app.global_vars_get("bg_grid")
 
-    if grid is None or bg_grid is None:
-        return
+    # Wall grid
+    wall_grid_elt: Optional[nd.ND_Rectangle] = win.main_app.global_vars_get_optional("wall_grid_elt")
+
+    if not wall_grid_elt:
+        wall_grid_elt = nd.ND_Rectangle(
+            window=win,
+            elt_id="wall_grid",
+            position=nd.ND_Position_RectGrid(rect_grid=grid),
+            base_bg_color=cl("black")
+        )
+        win.main_app.global_vars_set("wall_grid_elt", wall_grid_elt)
 
     #
-    bg_garden_atlas: Optional[nd.ND_AtlasTexture] = win.main_app.global_vars_get("bg_garden_atlas")
+    wall_grid_id: int = grid.add_element_to_grid(wall_grid_elt, [])
+
+    #
+    win.main_app.global_vars_set("wall_grid_id", wall_grid_id)
+
+    # Bg Garden Atlas
+    bg_garden_atlas: Optional[nd.ND_AtlasTexture] = win.main_app.global_vars_get_optional("bg_garden_atlas")
     #
     if bg_garden_atlas is None:
         #
@@ -59,8 +115,8 @@ def create_map1(win: nd.ND_Window, tx: int = 30, ty: int = 30) -> None:
         #
         win.main_app.global_vars_set("bg_garden_atlas", bg_garden_atlas)
 
-    #
-    bg_garden_sprites_dict: Optional[dict[str, tuple[nd.ND_Sprite_of_AtlasTexture, int]]] = win.main_app.global_vars_get("bg_garden_sprites_dict")
+    #None
+    bg_garden_sprites_dict: Optional[dict[str, tuple[nd.ND_Sprite_of_AtlasTexture, int]]] = win.main_app.global_vars_get_optional("bg_garden_sprites_dict")
     #
     if bg_garden_sprites_dict is None:
         #
@@ -114,58 +170,98 @@ def create_map1(win: nd.ND_Window, tx: int = 30, ty: int = 30) -> None:
         if sprite_pos_id not in bg_garden_sprites_dict:
             bg_garden_sprites_dict[sprite_pos_id] = create_sprite_of_bg_garden(sprite_pos_id, *SPRITE_POSITIONS[sprite_pos_id])
 
+
+    def create_map_square(map_start_x: int, map_start_y: int, map_end_x: int, map_end_y: int) -> None:
+        #
+        x: int
+        y: int
+
+        # Bordure gauche
+        bg_grid.add_element_position(bg_garden_sprites_dict["left_border"][1],
+                                    [ND_Point(map_start_x, y) for y in range(map_start_y, map_end_y)] )
+        # Bordure droite
+        bg_grid.add_element_position(bg_garden_sprites_dict["right_border"][1],
+                                    [ND_Point(map_end_x, y) for y in range(map_start_y, map_end_y)] )
+        # Bordure haut
+        bg_grid.add_element_position(bg_garden_sprites_dict["top_border"][1],
+                                    [ND_Point(x, map_start_y) for x in range(map_start_x, map_end_x)] )
+        # Bordure bas
+        bg_grid.add_element_position(bg_garden_sprites_dict["bottom_border"][1],
+                                    [ND_Point(x, map_end_y) for x in range(map_start_x, map_end_x)] )
+        # Coins
+        bg_grid.add_element_position(bg_garden_sprites_dict["top_left_corner"][1],
+                                    ND_Point(map_start_x, map_start_y))
+        bg_grid.add_element_position(bg_garden_sprites_dict["top_right_corner"][1],
+                                    ND_Point(map_end_x, map_start_y))
+        bg_grid.add_element_position(bg_garden_sprites_dict["bottom_left_corner"][1],
+                                    ND_Point(map_start_x, map_end_y))
+        bg_grid.add_element_position(bg_garden_sprites_dict["bottom_right_corner"][1],
+                                    ND_Point(map_end_x, map_end_y))
+
+        """
+        e^x - 1 = 3
+        <=> e^x = 4
+        <=> x = ln(4)
+        """
+
+        # Remplir le carré aléatoirement avec moins de chance d'avoir les sprites avec pleins de fleurs.
+        for x in range(map_start_x+1, map_end_x):
+            for y in range(map_start_y+1, map_end_y):
+                #
+                a: float = random.uniform(0, 1)
+                b: int = random.randint(1, 3)
+                #
+                grass_niv: int = math.floor( math.exp(a * math.log(4)) - 1)
+                #
+                bg_grid.add_element_position(bg_garden_sprites_dict[f"fill_niv_{grass_niv}_{b}"][1],
+                                            ND_Point(x, y))
+
+
+        # Remplir les murs
+        #
+        for y in range(map_start_y-1, map_end_y+1):
+            #
+            grid.add_element_position(wall_grid_id, ND_Point(map_start_x-1, y))
+            grid.add_element_position(wall_grid_id, ND_Point(map_end_x+1, y))
+
+        #
+        for x in range(map_start_x-1, map_end_x+2):
+            #
+            grid.add_element_position(wall_grid_id, ND_Point(x, map_start_y-1))
+            grid.add_element_position(wall_grid_id, ND_Point(x, map_end_y+1))
+
+
     #
-    map_start_x: int = 0
-    map_start_y: int = 0
-    map_end_x: int = tx
-    map_end_y: int = ty
-    x: int
-    y: int
+    snak_init_positions: list[ND_Point] = []
+    maps_areas: list[nd.ND_Rect] = []
 
-    # Bordure gauche
-    bg_grid.add_element_position(bg_garden_sprites_dict["left_border"][1],
-                                 [ND_Point(map_start_x, y) for y in range(map_start_y, map_end_y)] )
-    # Bordure droite
-    bg_grid.add_element_position(bg_garden_sprites_dict["right_border"][1],
-                                 [ND_Point(map_end_x, y) for y in range(map_start_y, map_end_y)] )
-    # Bordure haut
-    bg_grid.add_element_position(bg_garden_sprites_dict["top_border"][1],
-                                 [ND_Point(x, map_start_y) for x in range(map_start_x, map_end_x)] )
-    # Bordure bas
-    bg_grid.add_element_position(bg_garden_sprites_dict["bottom_border"][1],
-                                 [ND_Point(x, map_end_y) for x in range(map_start_x, map_end_x)] )
-    # Coins
-    bg_grid.add_element_position(bg_garden_sprites_dict["top_left_corner"][1],
-                                 ND_Point(map_start_x, map_start_y))
-    bg_grid.add_element_position(bg_garden_sprites_dict["top_right_corner"][1],
-                                 ND_Point(map_end_x, map_start_y))
-    bg_grid.add_element_position(bg_garden_sprites_dict["bottom_left_corner"][1],
-                                 ND_Point(map_start_x, map_end_y))
-    bg_grid.add_element_position(bg_garden_sprites_dict["bottom_right_corner"][1],
-                                 ND_Point(map_end_x, map_end_y))
+    #
+    if map_mode == "together":
 
-    """
-    e^x - 1 = 3
-    <=> e^x = 4
-    <=> x = ln(4)
-    """
+        maps_areas.append( nd.ND_Rect(0, 0, tx, ty) )
 
-    # Remplir le carré aléatoirement avec moins de chance d'avoir les sprites avec pleins de fleurs.
-    for x in range(map_start_x+1, map_end_x):
-        for y in range(map_start_y+1, map_end_y):
-            #
-            a: float = random.uniform(0, 1)
-            b: int = random.randint(1, 3)
-            #
-            grass_niv: int = math.floor( math.exp(a * math.log(4)) - 1)
-            #
-            bg_grid.add_element_position(bg_garden_sprites_dict[f"fill_niv_{grass_niv}_{b}"][1],
-                                         ND_Point(x, y))
+        create_map_square(0, 0, tx, ty)
 
+        return maps_areas, distribute_points(0, 0, tx, ty, nb_snakes)
+
+
+    #
+    elif map_mode == "separete_far":
+
+        # TODO
+        pass
+
+    elif map_mode == "separate_close":
+
+        # TODO
+        pass
+
+
+    return maps_areas, snak_init_positions
 
 
 #
-def create_map2(mainApp: nd.ND_MainApp, n: int = 30) -> None:
+def create_map2(win: nd.ND_Window, tx: int, ty: int, map_mode: str, nb_snakes: int) -> tuple[list[nd.ND_Rect], list[ND_Point]]:
     """
     Donut map, Donut shape
 
@@ -176,13 +272,16 @@ def create_map2(mainApp: nd.ND_MainApp, n: int = 30) -> None:
     # TODO
     pass
 
+    # TODO
+    return [], []
+
 
 
 
 def snake_skin_1(win: nd.ND_Window, snake: Snake, snk_idx: int, grid: nd.ND_RectGrid) -> None:
 
     #
-    snake_atlas: Optional[nd.ND_AtlasTexture] = win.main_app.global_vars_get("snake_atlas")
+    snake_atlas: Optional[nd.ND_AtlasTexture] = win.main_app.global_vars_get_optional("snake_atlas")
 
     if snake_atlas is None:
         #
@@ -263,7 +362,7 @@ def snake_skin_2(win: nd.ND_Window, snake: Snake, snk_idx: int, grid: nd.ND_Rect
     anim_speed: float = 0.2
 
     #
-    worm_atlas: Optional[nd.ND_AtlasTexture] = win.main_app.global_vars_get("worm_atlas")
+    worm_atlas: Optional[nd.ND_AtlasTexture] = win.main_app.global_vars_get_optional("worm_atlas")
 
     if worm_atlas is None:
         #

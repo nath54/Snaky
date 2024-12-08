@@ -1,5 +1,6 @@
 
 from typing import Callable, Any, Optional, Type, cast
+from lib_type_not_node import NotNone
 
 import time
 
@@ -128,11 +129,27 @@ class ND_MainApp:
         self.global_vars_creation_mut.release()
 
     #
-    def global_vars_get(self, var_name: str, default_value: Any = None) -> Any:
+    def global_vars_get_optional(self, var_name: str) -> Optional[Any]:
         #
         if var_name in self.global_vars:
             return self.global_vars[var_name]
-        return default_value
+        return None
+
+    # If is in global vars, returns it, else return default_value, all the cases, that is not None
+    def global_vars_get_default(self, var_name: str, default_value: Any) -> Any:
+        #
+        if var_name in self.global_vars:
+            return self.global_vars[var_name]
+        #
+        raise IndexError(f"CRITICAL ERROR !\nGlobal Vars Error: Index {var_name} not found in global variables !")
+
+    # Get Not None
+    def global_vars_get(self, var_name: str) -> Any:
+        #
+        if var_name in self.global_vars:
+            return self.global_vars[var_name]
+        #
+        raise IndexError(f"CRITICAL ERROR !\nGlobal Vars Error: Index {var_name} not found in global variables !")
 
     #
     def global_vars_set(self, var_name: str, var_value: Any, if_not_exists: str = "create") -> None:
