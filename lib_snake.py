@@ -11,7 +11,7 @@ import lib_nadisplay as nd
 
 class Snake:
     #
-    def __init__(self, pseudo: str, init_position: ND_Point, color: ND_Color, score_elt: nd.ND_Text, map_area: nd.ND_Rect, init_direction: ND_Point = ND_Point(1, 0), init_size: int = 4) -> None:
+    def __init__(self, pseudo: str, init_position: ND_Point, color: ND_Color, score_elt: nd.ND_Text, map_area: nd.ND_Rect, speed: float, init_direction: ND_Point = ND_Point(1, 0), init_size: int = 4) -> None:
         #
         self.color: ND_Color = color
         self.hidding_size: int = init_size  # Taille cachée qu'il faut ajouter au snake quand il avance
@@ -22,6 +22,7 @@ class Snake:
         #
         self.map_area: nd.ND_Rect = map_area
         #
+        self.speed: float = speed
         self.last_update: float = 0
         self.last_applied_direction: ND_Point = init_direction
         #
@@ -78,7 +79,7 @@ def create_map1(win: nd.ND_Window, tx: int, ty: int, map_mode: str, nb_snakes: i
     Garden Map, a large square
 
     Args:
-        mainApp (nd.ND_MainApp): _description_
+        main_app (nd.ND_MainApp): _description_
     """
 
     grid: nd.ND_RectGrid = win.main_app.global_vars_get("grid")
@@ -266,7 +267,7 @@ def create_map2(win: nd.ND_Window, tx: int, ty: int, map_mode: str, nb_snakes: i
     Donut map, Donut shape
 
     Args:
-        mainApp (nd.ND_MainApp): _description_
+        main_app (nd.ND_MainApp): _description_
     """
 
     # TODO

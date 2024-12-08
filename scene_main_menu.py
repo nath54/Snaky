@@ -36,10 +36,10 @@ def event_set_snake_direction(main_app: nd.ND_MainApp, direction: ND_Point, snak
 
 
 #
-def animate_main_menu(mainApp: nd.ND_MainApp, delta_time: float) -> None:
+def animate_main_menu(main_app: nd.ND_MainApp, delta_time: float) -> None:
     #
-    game_title: Optional[nd.ND_Text] = mainApp.global_vars_get_optional("main_menu_title")
-    t: float = mainApp.get_time_msec()
+    game_title: Optional[nd.ND_Text] = main_app.global_vars_get_optional("main_menu_title")
+    t: float = main_app.get_time_msec()
     #
     if game_title is not None:
         #
@@ -49,10 +49,10 @@ def animate_main_menu(mainApp: nd.ND_MainApp, delta_time: float) -> None:
         #
         game_title.text = "Snaky" + "." * ( round(((math.sin(0.00002 * t ) + 1) / 2 ) * 255) % 4)
     #
-    if False and mainApp.display is not None:
+    if False and main_app.display is not None:
         #
         game_window: Optional[nd.ND_Window] = None
-        for win in mainApp.display.windows.values():
+        for win in main_app.display.windows.values():
             #
             if win is not None:
                 game_window = win
@@ -74,9 +74,9 @@ def center_game_camera(main_app: nd.ND_MainApp) -> None:
     cam_mode: str = main_app.global_vars_get_default("cam_mode", "fixed")
     cam_grid: nd.ND_CameraGrid = main_app.global_vars_get("cam_grid")
 
-    maps_area: Optional[list[nd.ND_Rect]] = main_app.global_vars_get_optional("maps_area")
+    maps_areas: Optional[list[nd.ND_Rect]] = main_app.global_vars_get_optional("maps_areas")
     #
-    if not maps_area:
+    if not maps_areas:
         return
 
     #
@@ -86,11 +86,11 @@ def center_game_camera(main_app: nd.ND_MainApp) -> None:
         if map_mode == "together":
 
             #
-            rect_area = maps_area[0]
+            rect_area = maps_areas[0]
 
             # center camera on grid area
             cam_grid.move_camera_to_grid_area(
-                nd.ND_Rect(rect_area.x+1, rect_area.y+1, rect_area.w-2, rect_area.h-2)
+                nd.ND_Rect(rect_area.x+1, rect_area.y+1, rect_area.w-1, rect_area.h-1)
             )
 
         #
@@ -122,7 +122,6 @@ def on_bt_click_init_game(win: nd.ND_Window) -> None:
     # Cleaning
     win.main_app.global_vars_set("snakes", {})
     win.main_app.global_vars_set("dead_snakes", {})
-    win.main_app.global_vars_set("snakes_speed", 0.215)  # Time between each snakes update
     win.main_app.global_vars_set("game_pause", 0.0)
     win.main_app.global_vars_set("game_debut_pause", 0.0)
 
@@ -135,10 +134,9 @@ def on_bt_click_init_game(win: nd.ND_Window) -> None:
     """
 
     map_mode: str = win.main_app.global_vars_get_default("map_mode", "together")
-    cam_mode: str = win.main_app.global_vars_get_default("cam_mode", "fixed")
     terrain_w: int = win.main_app.global_vars_get_default("terrain_w", 30)
     terrain_h: int = win.main_app.global_vars_get_default("terrain_h", 30)
-
+    snakes_speed: float = win.main_app.global_vars_get_default("snakes_speed", 0.15) # Time between each snakes update
 
     # Getting Settings
     # (x, y, cl, size, id, player, (key_up, key_left, key_bottom, key_right))
@@ -154,7 +152,6 @@ def on_bt_click_init_game(win: nd.ND_Window) -> None:
     nb_init_apples: int = 3
     #
     grid: nd.ND_RectGrid = win.main_app.global_vars_get("grid")
-    cam_grid: nd.ND_CameraGrid = win.main_app.global_vars_get("cam_grid")
     game_infos_container: nd.ND_Container = win.main_app.global_vars_get("game_infos_container")
 
     # On nettoie les scorebox des anciennes parties
@@ -177,8 +174,10 @@ def on_bt_click_init_game(win: nd.ND_Window) -> None:
 
     #
     init_snake_positions: list[ND_Point]
-    maps_area: list[nd.ND_Rect]
-    maps_area, init_snake_positions = create_map1(win, terrain_w, terrain_h, map_mode, len(init_snakes))
+    maps_areas: list[nd.ND_Rect]
+    maps_areas, init_snake_positions = create_map1(win, terrain_w, terrain_h, map_mode, len(init_snakes))
+
+    win.main_app.global_vars_set("maps_areas", maps_areas)
 
     #
     snk_idx: int
@@ -226,8 +225,8 @@ def on_bt_click_init_game(win: nd.ND_Window) -> None:
 
         # Create Snake
         init_pos: ND_Point = init_snake_positions[snk_idx]
-        map_area: nd.ND_Rect = maps_area[0] if map_mode == "together" else maps_area[snk_idx]
-        snake: Snake = Snake( pseudo=snk[0], init_position=init_pos, color=snk[1], init_size=snk[2], score_elt=snake_score, map_area=map_area )
+        map_area: nd.ND_Rect = maps_areas[0] if map_mode == "together" else maps_areas[snk_idx]
+        snake: Snake = Snake( pseudo=snk[0], init_position=init_pos, color=snk[1], init_size=snk[2], score_elt=snake_score, map_area=map_area, speed=snakes_speed )
         snake.last_update = time.time()
 
         #
@@ -298,7 +297,7 @@ def on_bt_click_init_game(win: nd.ND_Window) -> None:
 
     # Init Food
     rect_area: nd.ND_Rect
-    for rect_area in maps_area:
+    for rect_area in maps_areas:
         p: Optional[ND_Point]
         for _ in range(nb_init_apples):
             #
