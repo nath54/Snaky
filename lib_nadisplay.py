@@ -1,6 +1,5 @@
 
 from typing import Callable, Any, Optional, Type, cast
-from lib_type_not_node import NotNone
 
 import time
 
