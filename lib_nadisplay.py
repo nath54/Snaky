@@ -141,7 +141,7 @@ class ND_MainApp:
         if var_name in self.global_vars:
             return self.global_vars[var_name]
         #
-        raise IndexError(f"CRITICAL ERROR !\nGlobal Vars Error: Index {var_name} not found in global variables !")
+        return default_value
 
     # Get Not None
     def global_vars_get(self, var_name: str) -> Any:

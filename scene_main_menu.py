@@ -142,7 +142,7 @@ def on_bt_click_init_game(win: nd.ND_Window) -> None:
 
     # Getting Settings
     # (x, y, cl, size, id, player, (key_up, key_left, key_bottom, key_right))
-    a: Optional[list[tuple[str, ND_Color, int, int, int, str, Optional[tuple[str, str, str, str]]]]] = win.main_app.global_vars_get("init_snakes")
+    a: Optional[list[tuple[str, ND_Color, int, int, int, str, Optional[tuple[str, str, str, str]]]]] = win.main_app.global_vars_get_optional("init_snakes")
     #
     init_snakes: list[tuple[str, ND_Color, int, int, int, str, Optional[tuple[str, str, str, str]]]] = \
         a if a is not None else [
