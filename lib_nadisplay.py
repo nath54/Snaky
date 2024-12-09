@@ -211,6 +211,28 @@ class ND_MainApp:
         return var_name in self.global_vars
 
     #
+    def get_element(self, window_id: int, scene_id: str, elt_id: str) -> Optional["ND_Elt"]:
+        #
+        if not self.display:
+            return None
+        #
+        if window_id not in self.display.windows:
+            return None
+        #
+        win: Optional[ND_Window] = self.display.windows[window_id]
+        #
+        if not win:
+            return None
+        #
+        if scene_id not in win.scenes:
+            return None
+        #
+        if elt_id not in win.scenes[scene_id].elements_by_id:
+            return None
+        #
+        return win.scenes[scene_id].elements_by_id[elt_id]
+
+    #
     def add_function_to_mainloop_fns_queue(self, mainloop_name: str, function: Callable) -> None:
         #
         with self.mainloop_queue_fns_mutex:
@@ -2346,6 +2368,9 @@ class ND_Container(ND_Elt):
         ##
         self.content_width = row_width
         #
+        if isinstance(self.position, ND_Position_Container) and self.position.is_w_auto():
+            self.position._w = self.content_width
+        #
         crt_y: int = self.y
         space_left: int = 0
 
@@ -2483,6 +2508,13 @@ class ND_Container(ND_Elt):
         #
         crt_x: int = self.x
         space_left: int = 0
+
+
+        ##
+        self.content_height = col_height
+        #
+        if isinstance(self.position, ND_Position_Container) and self.position.is_h_auto():
+            self.position._h = col_height
 
         # Second pass
         #
@@ -3159,11 +3191,22 @@ class ND_Position_Container(ND_Position):
         self.position_margins: Optional[ND_Position_Margins] = position_margins
 
     #
+    def is_w_auto(self) -> bool:
+        return self.w_str == "auto"
+
+    #
+    def is_h_auto(self) -> bool:
+        return self.h_str == "auto"
+
+    #
     @property
     def w(self) -> int:
         #
         if self.w_str is None:
             return self._w
+        #
+        elif self.w_str == "auto":
+            return max(self._w, 0)
         #
         elif self.w_str == "square":
             return self.h
@@ -3188,6 +3231,9 @@ class ND_Position_Container(ND_Position):
         #
         if self.h_str is None:
             return self._h
+        #
+        elif self.h_str == "auto":
+            return max(self._h, 0)
         #
         elif self.h_str == "square":
             return self.w
