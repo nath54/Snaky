@@ -115,6 +115,11 @@ def center_game_camera(main_app: nd.ND_MainApp) -> None:
     pass
 
 
+#
+def on_bt_play_clicked(win: nd.ND_Window) -> None:
+    #
+    win.set_state("game_setup")
+
 
 #
 def on_bt_click_init_game(win: nd.ND_Window) -> None:
@@ -145,7 +150,7 @@ def on_bt_click_init_game(win: nd.ND_Window) -> None:
     init_snakes: list[tuple[str, ND_Color, int, int, int, str, Optional[tuple[str, str, str, str]]]] = \
         a if a is not None else [
             ("humain1", ND_Color(255, 0, 0), 4, 0, 1, "human", ("keydown_z", "keydown_q", "keydown_s", "keydown_d")),
-            ("humain2", ND_Color(0, 255, 0), 4, 0, 2, "human", ("keydown_up arrow", "keydown_left arrow", "keydown_down arrow", "keydown_right arrow")),
+            ("humain2", ND_Color(0, 255, 0), 4, 0, 1, "human", ("keydown_up arrow", "keydown_left arrow", "keydown_down arrow", "keydown_right arrow")),
             # ("humain3", ND_Point(TERRAIN_X + TERRAIN_W // 3, TERRAIN_Y + TERRAIN_H //3), ND_Color(0, 0, 255), 4, 0, "human", ("keydown_u", "keydown_h", "keydown_j", "keydown_k"))
         ]
     #
@@ -381,7 +386,7 @@ def create_main_menu_scene(win: nd.ND_Window) -> None:
         window=win,
         elt_id="bt_play",
         position=nd.ND_Position_Container(w=250, h=100, container=bts_container, position_margins=ND_Position_Margins(margin_left="50%", margin_top=25, margin_bottom=25)),
-        onclick=on_bt_click_init_game,
+        onclick=on_bt_play_clicked,
         text="Play !",
         font_size=35
     )
