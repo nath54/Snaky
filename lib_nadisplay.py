@@ -1573,7 +1573,8 @@ class ND_Clickable(ND_Elt):
             window: ND_Window,
             elt_id: str,
             position: ND_Position,
-            onclick: Optional[Callable] = None
+            onclick: Optional[Callable] = None,
+            active: bool = True
         ) -> None:
 
         #
@@ -1581,9 +1582,14 @@ class ND_Clickable(ND_Elt):
         self.onclick: Optional[Callable] = onclick
         self.state: str = "normal"  # Can be "normal", "hover", or "clicked"
         #
+        self.active: bool = active
 
     #
     def handle_event(self, event: nd_event.ND_Event) -> None:
+        #
+        if not self.active:
+            self.state = "normal"
+            return
         #
         if isinstance(event, nd_event.ND_EventMouseMotion):
             #
@@ -1618,6 +1624,7 @@ class ND_Rectangle(ND_Clickable):
             border_radius: int = 5,
             border: bool = True,
             onclick: Optional[Callable] = None,
+            mouse_active: bool = True,
             base_bg_color: Optional[ND_Color] = None,
             base_fg_color: Optional[ND_Color] = None,
             base_bg_texture: Optional[int | str] = None,
@@ -1630,7 +1637,7 @@ class ND_Rectangle(ND_Clickable):
         ) -> None:
 
         #
-        super().__init__(window=window, elt_id=elt_id, position=position, onclick=onclick)
+        super().__init__(window=window, elt_id=elt_id, position=position, onclick=onclick, active=mouse_active)
         self.base_bg_color: ND_Color = base_bg_color if base_bg_color is not None else cl("gray")
         self.base_fg_color: ND_Color = base_fg_color if base_fg_color is not None else cl("black")
         self.base_bg_texture: Optional[int] = self.window.prepare_image_to_render(base_bg_texture) if isinstance(base_bg_texture, str) else base_bg_texture
@@ -1688,13 +1695,14 @@ class ND_Sprite(ND_Clickable):
             elt_id: str,
             position: ND_Position,
             onclick: Optional[Callable] = None,
+            mouse_active: bool = True,
             base_texture: Optional[int | str] = None,
             hover_texture: Optional[int | str] = None,
             clicked_texture: Optional[int | str] = None
         ) -> None:
 
         #
-        super().__init__(window=window, elt_id=elt_id, position=position, onclick=onclick)
+        super().__init__(window=window, elt_id=elt_id, position=position, onclick=onclick, active=mouse_active)
         self.base_texture: Optional[int | str] = base_texture
         self.hover_texture: Optional[int | str] = self.window.prepare_image_to_render(hover_texture) if isinstance(hover_texture, str) else hover_texture
         self.clicked_texture: Optional[int | str] = self.window.prepare_image_to_render(clicked_texture) if isinstance(clicked_texture, str) else clicked_texture
@@ -1956,6 +1964,7 @@ class ND_Button(ND_Clickable):
             position: ND_Position,
             onclick: Optional[Callable],
             text: str,
+            mouse_active: bool = True,
             font_name: Optional[str] = None,
             font_size: int = 24,
             border_radius: int = 5,
@@ -1972,7 +1981,7 @@ class ND_Button(ND_Clickable):
         ) -> None:
 
         #
-        super().__init__(window=window, elt_id=elt_id, position=position, onclick=onclick)
+        super().__init__(window=window, elt_id=elt_id, position=position, onclick=onclick, active=mouse_active)
         self.text: str = text
         self.font_name: Optional[str] = font_name
         self.font_size: int = font_size

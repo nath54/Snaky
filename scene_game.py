@@ -322,7 +322,8 @@ def create_game_scene(win: nd.ND_Window) -> None:
         position=nd.ND_Position_MultiLayer(multilayer=multilayer_infos),
         base_bg_color = cl((30, 1, 20)),
         hover_bg_color = cl((32, 3, 22)),
-        clicked_bg_color = cl((28, 0, 18))
+        clicked_bg_color = cl((28, 0, 18)),
+        mouse_active=False
     )
 
     #

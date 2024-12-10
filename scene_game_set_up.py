@@ -210,7 +210,8 @@ def create_game_setup_scene(win: nd.ND_Window) -> None:
         elt_id="map_left_arrow",
         position=nd.ND_Position_Container(w=20, h="90%", container=map_change_row, position_margins=ND_Position_Margins(margin_left="50%", margin_top="50%", margin_bottom="50%", margin_right="50%")),
         onclick=None,
-        text="<"
+        text="<",
+        font_name="FreeSans"
     )
     map_change_row.add_element(map_left_arrow)
 
@@ -219,7 +220,8 @@ def create_game_setup_scene(win: nd.ND_Window) -> None:
         window=win,
         elt_id="map_icon",
         position=nd.ND_Position_Container(w="50%", h="square", container=map_change_row, position_margins=ND_Position_Margins(margin_left="50%", margin_top="50%", margin_bottom="50%", margin_right="50%")),
-        base_bg_color=cl("dark green")
+        base_bg_color=cl("dark green"),
+        mouse_active=False
     )
     map_change_row.add_element(map_icon)
 
@@ -229,7 +231,8 @@ def create_game_setup_scene(win: nd.ND_Window) -> None:
         elt_id="map_right_arrow",
         position=nd.ND_Position_Container(w=20, h="90%", container=map_change_row, position_margins=ND_Position_Margins(margin_left="50%", margin_top="50%", margin_bottom="50%", margin_right="50%")),
         onclick=None,
-        text=">"
+        text=">",
+        font_name="FreeSans"
     )
     map_change_row.add_element(map_right_arrow)
 
@@ -298,7 +301,7 @@ def create_game_setup_scene(win: nd.ND_Window) -> None:
     bt_game_settings: nd.ND_Button = nd.ND_Button(
         window=win,
         elt_id="bt_game_settings",
-        position=nd.ND_Position_Container(w=150, h=40, container=footer_container, position_margins=ND_Position_Margins(margin_left="50%", margin_top="50%", margin_bottom="50%", margin_right="50%")),
+        position=nd.ND_Position_Container(w=200, h=40, container=footer_container, position_margins=ND_Position_Margins(margin_left="50%", margin_top="50%", margin_bottom="50%", margin_right="50%")),
         onclick=on_bt_game_settings_click,
         text="game settings"
     )
