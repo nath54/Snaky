@@ -151,6 +151,8 @@ def create_game_setup_scene(win: nd.ND_Window) -> None:
     )
     main_players_container.add_element(players_container)
 
+    # TODO: add players
+
     #
     bt_add_player: nd.ND_Button = nd.ND_Button(
         window=win,
