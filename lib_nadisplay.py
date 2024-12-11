@@ -2063,6 +2063,11 @@ class ND_H_ScrollBar(ND_Elt):
         self.fg_cl: ND_Color = fg_cl
 
     #
+    def get_scroll_ratio(self) -> float:
+        #
+        return self.scroll_position / float(self.content_width)
+
+    #
     @property
     def thumb_width(self) -> int:
         return max(20, int(self.w * (self.w / self.content_width)))
@@ -2128,6 +2133,11 @@ class ND_V_ScrollBar(ND_Elt):
         self.scroll_position = 0
         self.dragging = False
 
+    #
+    def get_scroll_ratio(self) -> float:
+        #
+        return self.scroll_position / float(self.content_height)
+
     @property
     def thumb_height(self) -> int:
         return max(20, int(self.w * (self.w / self.content_height)))
@@ -2162,110 +2172,152 @@ class ND_V_ScrollBar(ND_Elt):
                 self.scroll_position = max(0, min(self.content_height - self.h,
                                                   int(relative_y * self.content_height / self.h)))
 
+
 #
 class ND_LineEdit(ND_Elt):
-    #
     def __init__(
-            self,
-            window: ND_Window,
-            elt_id: str,
-            position: ND_Position,
-            text: str = "",
-            place_holder: str = "",
-            mouse_active: bool = True,
-            font_name: Optional[str] = None,
-            font_size: int = 24,
-            border_radius: int = 5,
-            border: bool = True,
-            base_bg_color: Optional[ND_Color] = None,
-            base_fg_color: Optional[ND_Color] = None,
-            hover_bg_color: Optional[ND_Color] = None,
-            hover_fg_color: Optional[ND_Color] = None,
-            clicked_bg_color: Optional[ND_Color] = None,
-            clicked_fg_color: Optional[ND_Color] = None,
-
+        self,
+        window: ND_Window,
+        elt_id: str,
+        position: ND_Position,
+        text: str = "",
+        place_holder: str = "",
+        mouse_active: bool = True,
+        font_name: Optional[str] = None,
+        font_size: int = 24,
+        border_radius: int = 5,
+        border: bool = True,
+        base_bg_color: Optional[ND_Color] = None,
+        base_fg_color: Optional[ND_Color] = None,
+        hover_bg_color: Optional[ND_Color] = None,
+        hover_fg_color: Optional[ND_Color] = None,
+        clicked_bg_color: Optional[ND_Color] = None,
+        clicked_fg_color: Optional[ND_Color] = None,
     ) -> None:
-        #
         super().__init__(window=window, elt_id=elt_id, position=position)
-        #
         self.state: str = "normal"
-        #
         self.text: str = text
+        self.place_holder: str = place_holder
         self.font_name: Optional[str] = font_name
         self.font_size: int = font_size
-        self.base_bg_color: ND_Color = base_bg_color if base_bg_color is not None else cl("gray")
-        self.base_fg_color: ND_Color = base_fg_color if base_fg_color is not None else cl("black")
-        self.hover_bg_color: ND_Color = hover_bg_color if hover_bg_color is not None else cl("dark gray")
-        self.hover_fg_color: ND_Color = hover_fg_color if hover_fg_color is not None else cl("black")
-        self.clicked_bg_color: ND_Color = clicked_bg_color if clicked_bg_color is not None else cl("very dark gray")
-        self.clicked_fg_color: ND_Color = clicked_fg_color if clicked_fg_color is not None else cl("black")
-        #
+        self.base_bg_color: ND_Color = base_bg_color if base_bg_color else cl("gray")
+        self.base_fg_color: ND_Color = base_fg_color if base_fg_color else cl("black")
+        self.hover_bg_color: ND_Color = hover_bg_color if hover_bg_color else cl("dark gray")
+        self.hover_fg_color: ND_Color = hover_fg_color if hover_fg_color else cl("black")
+        self.clicked_bg_color: ND_Color = clicked_bg_color if clicked_bg_color else cl("very dark gray")
+        self.clicked_fg_color: ND_Color = clicked_fg_color if clicked_fg_color else cl("black")
         self.border: bool = border
         self.border_radius: int = border_radius
-        #
-        self.base_text_w: int = 0
-        self.base_text_h: int = 0
-        #
-        self.base_text_w, self.base_text_h = get_font_size(self.text, self.font_size, font_ratio=0.5)
-        #
-        self.cursor: int = 0
+        self.cursor: int = len(text)
         self.cursor_width: int = 2
         self.cursor_height: int = self.font_size
-        self.cursor_visible: int = 0
-        self.cursor_last_state_change: float = time.time()
-        self.cursor_change_speed: float = 0.1
-        self.cursor_color: Optional[ND_Color] = None  # Font color if none
-        #
-        # TODO: H_Scrollbar
+        self.focused: bool = False
 
-    #
-    def on_key_press(self) -> None:
-        # TODO
-        pass
-
+        # Scrollbar-related
+        self.scrollbar_height: int = 10
+        self.full_text_width: int = 0
+        self.scroll_offset: int = 0
+        self.scrollbar: ND_H_ScrollBar = ND_H_ScrollBar(
+            window = self.window,
+            elt_id = f"scrollbar_{self.elt_id}",
+            position = ND_Position(self.x, self.y + self.h - self.scrollbar_height, self.w, self.scrollbar_height),
+            content_width = len(self.text if self.text else self.place_holder) * self.font_size
+        )
 
     #
     def render(self) -> None:
-        #
         if not self.visible:
             return
 
-        #
-        x, y = self.x, self.y
+        # Determine background and text color based on the state
+        bg_color = self.base_bg_color
+        fg_color = self.base_fg_color
+        if self.state == "hover":
+            bg_color = self.hover_bg_color
+            fg_color = self.hover_fg_color
+        elif self.state == "clicked":
+            bg_color = self.clicked_bg_color
+            fg_color = self.clicked_fg_color
 
-        #
-        bg_color: ND_Color
-        fg_color: ND_Color
-
-        # Getting the right colors along the state
-        if self.state == "normal":
-            bg_color, fg_color = self.base_bg_color, self.base_fg_color
-        elif self.state == "hover":
-            bg_color, fg_color = self.hover_bg_color, self.hover_fg_color
-        else:  # clicked
-            bg_color, fg_color = self.clicked_bg_color, self.clicked_fg_color
-
-        # Drawing the background rect color
-        if not self.border and self.border_radius <= 0:
-            self.window.draw_filled_rect(x, y, self.w, self.h, bg_color)
-        elif not self.border:
-            self.window.draw_rounded_rect(x, y, self.w, self.h, self.border_radius, bg_color, cl((0, 0, 0, 0)))
+        # Draw the background rectangle
+        if self.border:
+            self.window.draw_rounded_rect(
+                self.x, self.y, self.w, self.h, self.border_radius, bg_color, fg_color
+            )
         else:
-            self.window.draw_rounded_rect(x, y, self.w, self.h, self.border_radius, bg_color, fg_color)
+            self.window.draw_filled_rect(self.x, self.y, self.w, self.h, bg_color)
 
-        # TODO: move the camera along the scrollbar
+        # Determine the visible portion of the text
+        render_text = self.text if self.text else self.place_holder
+        text_color = fg_color if self.text else cl("light gray")
 
-        #
+        self.full_text_width = len(render_text) * self.font_size
+        visible_text = render_text
+
+        if self.full_text_width > self.w:
+            while len(visible_text) * self.font_size > self.w:
+                visible_text = visible_text[1:]
+
+        # Render the text
         self.window.draw_text(
-                txt=self.text,
-                x=x + (self.w - self.base_text_w) // 2,
-                y=y + (self.h - self.base_text_h) // 2,
-                font=self.font_name,
-                font_size=self.font_size,
-                font_color=fg_color
+            txt=visible_text,
+            x=self.x + 5 - self.scroll_offset,
+            y=self.y + (self.h - self.cursor_height) // 2,
+            font_size=self.font_size,
+            font_color=text_color,
+            font=self.font_name,
         )
 
-        # TODO: draw cursor and cursor visibility change
+        # Render the cursor if focused
+        if self.focused and len(self.text) >= self.cursor:
+            cursor_x = self.x + 5 + len(self.text[: self.cursor]) * self.font_size - self.scroll_offset
+            self.window.draw_filled_rect(cursor_x, self.y + 5, self.cursor_width, self.cursor_height, fg_color)
+
+        # Render horizontal scrollbar if necessary
+        if self.full_text_width > self.w:
+            self.scrollbar.render()
+
+    #
+    def handle_event(self, event: nd_event.ND_Event) -> None:
+        if isinstance(event, nd_event.ND_EventMouse):
+            if event.x >= self.x and event.x <= self.x + self.w and event.y >= self.y and event.y <= self.y + self.h:
+                if isinstance(event, nd_event.ND_EventMouseButtonDown):
+                    self.state = "clicked"
+                    self.focused = True
+                elif isinstance(event, nd_event.ND_EventMouseMotion):
+                    self.state = "hover"
+            elif isinstance(event, nd_event.ND_EventMouseButtonDown):
+                self.state = "normal"
+                self.focused = False
+
+            # Delegate scrollbar events
+            if self.full_text_width > self.w:
+                self.scrollbar.handle_event(event)
+                self.scroll_offset = int(self.scrollbar.get_scroll_ratio() * (self.full_text_width - self.w))
+
+        elif isinstance(event, nd_event.ND_EventKeyboard) and self.focused:
+            if event.key == "Escape":
+                self.state = "normal"
+                self.focused = False
+            if event.key == "Backspace" and self.cursor > 0:
+                self.text = self.text[: self.cursor - 1] + self.text[self.cursor :]
+                self.cursor -= 1
+            elif event.key == "Left" and self.cursor > 0:
+                self.cursor -= 1
+            elif event.key == "Right" and self.cursor < len(self.text):
+                self.cursor += 1
+                text_width = len(self.text[:self.cursor]) * self.font_size
+                if text_width - self.scroll_offset > self.w:
+                    self.scroll_offset = text_width - self.w
+            elif len(event.key) == 1:
+                self.text = self.text[: self.cursor] + event.key + self.text[self.cursor :]
+                self.cursor += 1
+
+            # Update scrollbar position
+            if self.full_text_width > self.w:
+                self.scrollbar.scroll_position = self.scroll_offset / (self.full_text_width - self.w)
+
+        self.window.update_display()
 
 
 # ND_Container class implementation
