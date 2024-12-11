@@ -381,12 +381,20 @@ class ND_Window_SDL_SDLGFX(ND_Window):
 
         # Create rendered text surface
         surface = sdlttf.TTF_RenderText_Blended(font, text.encode('utf-8'), to_sdl_color(color))
+        #
+        if not surface:
+            print(f"Warning error : sdlttf.TTF_RenderText_Blended couldn't not create a surface for the font : {font} and the text {text} !")
+            return -1
 
         width: int = surface.contents.w
         height: int = surface.contents.h
 
         # Convert surface into texture
         texture = sdl2.SDL_CreateTextureFromSurface(self.renderer, surface)
+        #
+        if not texture:
+            print(f"Warning error : sdl2.SDL_CreateTextureFromSurface couldn't not create a texture for the surface : {surface} that was rendered with the font {font} and the text {text} !")
+            return -1
 
         #
         texture_id: int = -1

@@ -62,6 +62,36 @@ def on_bt_back_clicked(win: nd.ND_Window) -> None:
 
 
 #
+def on_bt_map_size_clicked(win: nd.ND_Window) -> None:
+    #
+    MAIN_WINDOW_ID: int = win.main_app.global_vars_get("MAIN_WINDOW_ID")
+    #
+    map_width_multilayer: Optional[nd.ND_MultiLayer] = cast(Optional[nd.ND_MultiLayer], win.main_app.get_element(MAIN_WINDOW_ID, "game_setup", "map_width_multilayer") )
+    map_height_multilayer: Optional[nd.ND_MultiLayer] = cast(Optional[nd.ND_MultiLayer], win.main_app.get_element(MAIN_WINDOW_ID, "game_setup", "map_height_multilayer") )
+    #
+    if map_width_multilayer is None or map_height_multilayer is None:
+        return
+    #
+    map_width_bt: nd.ND_Button = cast(nd.ND_Button, map_width_multilayer.elements_by_id["map_width_bt"])
+    map_height_bt: nd.ND_Button = cast(nd.ND_Button, map_width_multilayer.elements_by_id["map_height_bt"])
+    #
+    map_width_line_edit: nd.ND_LineEdit = cast(nd.ND_LineEdit, map_width_multilayer.elements_by_id["map_width_line_edit"])
+    map_height_line_edit: nd.ND_LineEdit = cast(nd.ND_LineEdit, map_width_multilayer.elements_by_id["map_height_line_edit"])
+    #
+    map_width_bt.visible = False
+    map_height_bt.visible = False
+    #
+    map_width_line_edit.visible = True
+    map_height_line_edit.visible = True
+    #
+
+    # TODO: cacher le bouton de reset, rendre visible le bouton de validation et le bouton d'annulation
+
+
+
+
+
+#
 def create_game_setup_scene(win: nd.ND_Window) -> None:
     #
     game_setup_scene: nd.ND_Scene = nd.ND_Scene(
@@ -246,14 +276,34 @@ def create_game_setup_scene(win: nd.ND_Window) -> None:
     main_maps_container.add_element(map_size_row)
 
     #
+    map_width_multilayer: nd.ND_MultiLayer = nd.ND_MultiLayer(
+        window=win,
+        elt_id="map_width_multilayer",
+        position=nd.ND_Position_Container(100, 40, container=map_size_row, position_margins=ND_Position_Margins(margin_left="100%", margin_top="50%", margin_bottom="50%", margin_right=5)),
+        elements_layers={}
+    )
+    map_size_row.add_element(map_width_multilayer)
+    #
     map_width_bt: nd.ND_Button = nd.ND_Button(
         window=win,
         elt_id="map_width_bt",
-        position=nd.ND_Position_Container(100, 40, container=map_size_row, position_margins=ND_Position_Margins(margin_left="100%", margin_top="50%", margin_bottom="50%", margin_right=5)),
+        position=nd.ND_Position_MultiLayer(multilayer=map_width_multilayer, w="100%", h="100%"),
         onclick=None,
         text="30"
     )
-    map_size_row.add_element(map_width_bt)
+    map_width_multilayer.add_element(1, map_width_bt)
+    #
+    map_width_line_edit: nd.ND_LineEdit = nd.ND_LineEdit(
+        window=win,
+        elt_id="map_width_line_edit",
+        position=nd.ND_Position_MultiLayer(multilayer=map_width_multilayer, w="100%", h="100%"),
+        text="30",
+        place_holder="map width",
+        font_size=25
+    )
+    map_width_line_edit.visible = False
+    #
+    map_width_multilayer.add_element(0, map_width_line_edit)
 
     #
     map_size_cross_text: nd.ND_Text = nd.ND_Text(
@@ -265,14 +315,35 @@ def create_game_setup_scene(win: nd.ND_Window) -> None:
     map_size_row.add_element(map_size_cross_text)
 
     #
+    map_height_multilayer: nd.ND_MultiLayer = nd.ND_MultiLayer(
+        window=win,
+        elt_id="map_height_multilayer",
+        position=nd.ND_Position_Container(w=100, h=40, container=map_size_row, position_margins=ND_Position_Margins(margin_left=5, margin_top="50%", margin_bottom="50%", margin_right="100%")),
+        elements_layers={}
+    )
+    map_size_row.add_element(map_height_multilayer)
+    #
     map_height_bt: nd.ND_Button = nd.ND_Button(
         window=win,
         elt_id="map_height_bt",
-        position=nd.ND_Position_Container(w=100, h=40, container=map_size_row, position_margins=ND_Position_Margins(margin_left=5, margin_top="50%", margin_bottom="50%", margin_right="100%")),
+        position=nd.ND_Position_MultiLayer(multilayer=map_height_multilayer, w="100%", h="100%"),
         onclick=None,
         text="30"
     )
-    map_size_row.add_element(map_height_bt)
+    print(f"DEBUG | {map_height_multilayer.elements_layers}")
+    map_height_multilayer.add_element(1, map_height_bt)
+    #
+    map_height_line_edit: nd.ND_LineEdit = nd.ND_LineEdit(
+        window=win,
+        elt_id="map_height_line_edit",
+        position=nd.ND_Position_MultiLayer(multilayer=map_height_multilayer, w="100%", h="100%"),
+        text="30",
+        place_holder="map height",
+        font_size=25
+    )
+    map_height_line_edit.visible = False
+    # #
+    # map_height_multilayer.add_element(0, map_height_line_edit)
 
     #
     map_reset_size_bt: nd.ND_Button = nd.ND_Button(
