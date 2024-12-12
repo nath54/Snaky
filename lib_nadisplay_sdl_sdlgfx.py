@@ -596,6 +596,9 @@ class ND_Window_SDL_SDLGFX(ND_Window):
         if font is None:
             font = self.display.default_font
         #
+        if not txt:
+            return
+        #
         tid: str = f"{txt}_|||_{font}_|||_{font_size}_|||_{font_color}"
         #
         if tid not in self.prepared_font_textures:

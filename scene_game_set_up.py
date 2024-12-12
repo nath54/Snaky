@@ -303,7 +303,7 @@ def create_game_setup_scene(win: nd.ND_Window) -> None:
     )
     map_width_line_edit.visible = False
     #
-    map_width_multilayer.add_element(0, map_width_line_edit)
+    # map_width_multilayer.add_element(0, map_width_line_edit)
 
     #
     map_size_cross_text: nd.ND_Text = nd.ND_Text(
