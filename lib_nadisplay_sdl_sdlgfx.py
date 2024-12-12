@@ -121,6 +121,16 @@ class ND_Display_SDL_SDLGFX(ND_Display):
             #
             w.destroy_window()
 
+        # Destroy fonts
+        font: str
+        font_size: int
+        ttf_fonts_keys: list[str] = list(self.ttf_fonts.keys())
+        for font in ttf_fonts_keys:
+            font_sizes_keys: list[int] = list(self.ttf_fonts[font].keys())
+            for font_size in font_sizes_keys:
+                sdlttf.TTF_CloseFont(self.ttf_fonts[font][font_size])
+                del self.ttf_fonts[font][font_size]
+
         #
         sdlttf.TTF_Quit()
         sdl2.SDL_Quit()
@@ -395,9 +405,6 @@ class ND_Window_SDL_SDLGFX(ND_Window):
         if not texture:
             print(f"Warning error : sdl2.SDL_CreateTextureFromSurface couldn't not create a texture for the surface : {surface} that was rendered with the font {font} and the text {text} !")
             return -1
-
-        #
-
 
         #
         texture_id: int = -1
