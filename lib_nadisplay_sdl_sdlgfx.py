@@ -293,7 +293,6 @@ class ND_Window_SDL_SDLGFX(ND_Window):
         self.textures_dimensions: dict[int, tuple[int, int]] = {}
         self.texture_moduled: set[int] = set()
         self.sdl_textures: dict[int, object] = {}
-        self.sdl_textures_surfaces: dict[int, object] = {}
         self.mutex_sdl_textures: Lock = Lock()
         #
         self.prepared_font_textures: dict[str, int] = {}
@@ -391,10 +390,14 @@ class ND_Window_SDL_SDLGFX(ND_Window):
 
         # Convert surface into texture
         texture = sdl2.SDL_CreateTextureFromSurface(self.renderer, surface)
+        sdl2.SDL_FreeSurface(surface)
         #
         if not texture:
             print(f"Warning error : sdl2.SDL_CreateTextureFromSurface couldn't not create a texture for the surface : {surface} that was rendered with the font {font} and the text {text} !")
             return -1
+
+        #
+
 
         #
         texture_id: int = -1
@@ -404,7 +407,6 @@ class ND_Window_SDL_SDLGFX(ND_Window):
             self.next_texture_id += 1
             #
             self.sdl_textures[texture_id] = texture
-            self.sdl_textures_surfaces[texture_id] = surface
             self.textures_dimensions[texture_id] = (width, height)
 
         #
@@ -441,7 +443,6 @@ class ND_Window_SDL_SDLGFX(ND_Window):
             self.next_texture_id += 1
             #
             self.sdl_textures[texture_id] = texture
-            self.sdl_textures_surfaces[texture_id] = image_surface
             self.textures_dimensions[texture_id] = (width, height)
 
         #
@@ -586,8 +587,8 @@ class ND_Window_SDL_SDLGFX(ND_Window):
         with self.mutex_sdl_textures:
             if texture_id in self.sdl_textures:
                 sdl2.SDL_DestroyTexture(self.sdl_textures[texture_id])
-                sdl2.SDL_FreeSurface(self.sdl_textures_surfaces[texture_id])
                 del self.sdl_textures[texture_id]
+                del self.textures_dimensions[texture_id]
 
 
     #
