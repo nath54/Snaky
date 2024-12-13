@@ -12,6 +12,8 @@ import sdl2.sdlimage as sdlimage  # type: ignore
 import sdl2.sdlgfx as sdlgfx  # type: ignore
 import ctypes
 
+from ctypes import c_int, byref
+
 from lib_nadisplay_colors import ND_Color, ND_Transformations
 from lib_nadisplay_rects import ND_Rect, ND_Point
 from lib_nadisplay import ND_MainApp, ND_Display, ND_Window, ND_Scene
@@ -614,6 +616,52 @@ class ND_Window_SDL_SDLGFX(ND_Window):
         #
         tsize: ND_Point = self.get_prepared_texture_size(self.prepared_font_textures[tid])
         self.render_prepared_texture(self.prepared_font_textures[tid], x, y, tsize.x, tsize.y)
+
+        # TODO: render directly text instead of creating texture, and etc...
+
+
+    #
+    def get_text_size_with_font(self, txt: str, font_size: int, font_name: Optional[str] = None) -> ND_Point:
+        #
+        if font_name is None:
+            font_name = self.display.default_font
+        #
+        if not txt:
+            return ND_Point(0, 0)
+
+        #
+        font: Optional[sdlttf.TTF_OpenFont] = self.display.get_font(font_name, font_size)
+
+        #
+        if not font:
+            return ND_Point(-1, -1)
+
+        #
+        text_w, text_h = c_int(0), c_int(0)
+        sdlttf.TTF_SizeText(font, txt.encode("utf-8"), byref(text_w), byref(text_h))
+        text_size = [x.value for x in (text_w, text_h)]
+        return ND_Point(*text_size)
+
+    #
+    def get_count_of_renderable_chars_fitting_given_width(self, txt: str, given_width: int, font_size: int, font_name: Optional[str] = None) -> Optional[tuple[int, int]]:
+        #
+        if font_name is None:
+            font_name = self.display.default_font
+        #
+        if not txt:
+            return 0, 0
+
+        #
+        font: Optional[sdlttf.TTF_OpenFont] = self.display.get_font(font_name, font_size)
+
+        #
+        if not font:
+            return None
+
+        #
+        extent, count = c_int(0), c_int(0)
+        sdlttf.TTF_SizeText(font, txt.encode("utf-8"), byref(extent), byref(count))
+        return extent.value, count.value
 
 
     #
