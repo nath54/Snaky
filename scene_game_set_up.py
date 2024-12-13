@@ -65,8 +65,6 @@ def on_bt_back_clicked(win: nd.ND_Window) -> None:
 #
 def on_bt_map_size_change_clicked(win: nd.ND_Window) -> None:
     #
-    print("DEBUG | change")
-    #
     MAIN_WINDOW_ID: int = win.main_app.global_vars_get("MAIN_WINDOW_ID")
     #
     map_width_multilayer: Optional[nd.ND_MultiLayer] = cast(Optional[nd.ND_MultiLayer], win.main_app.get_element(MAIN_WINDOW_ID, "game_setup", "map_width_multilayer") )
@@ -95,12 +93,9 @@ def on_bt_map_size_change_clicked(win: nd.ND_Window) -> None:
     #
     map_reset_size_bt.visible = False
     map_utils_edit_size_row.visible = True
-    #
-    print("DEBUG | change done")
+
 
 def on_bt_map_size_validate_clicked(win: nd.ND_Window) -> None:
-    #
-    print("DEBUG | change -> ok")
     #
     MAIN_WINDOW_ID: int = win.main_app.global_vars_get("MAIN_WINDOW_ID")
     #
@@ -119,8 +114,19 @@ def on_bt_map_size_validate_clicked(win: nd.ND_Window) -> None:
     map_width_bt.visible = True
     map_height_bt.visible = True
     #
-    map_width_bt.text = map_width_line_edit.text
-    map_height_bt.text = map_height_line_edit.text
+    new_w: str = map_width_line_edit.text
+    if not all([c >= '0' and c <= '9' for c in new_w]):
+        new_w = "30"
+    #
+    new_h: str = map_height_line_edit.text
+    if not all([c >= '0' and c <= '9' for c in new_h]):
+        new_h = "30"
+    #
+    map_width_bt.text = new_w
+    map_height_bt.text = new_h
+    #
+    win.main_app.global_vars_set("terrain_w", int(new_w))
+    win.main_app.global_vars_set("terrain_h", int(new_h))
     #
     map_width_line_edit.visible = False
     map_height_line_edit.visible = False
@@ -134,8 +140,6 @@ def on_bt_map_size_validate_clicked(win: nd.ND_Window) -> None:
 
 
 def on_bt_map_size_cancel_clicked(win: nd.ND_Window) -> None:
-    #
-    print("DEBUG | change -> cancel")
     #
     MAIN_WINDOW_ID: int = win.main_app.global_vars_get("MAIN_WINDOW_ID")
     #
@@ -168,8 +172,6 @@ def on_bt_map_size_cancel_clicked(win: nd.ND_Window) -> None:
 
 
 def on_bt_map_size_reset_clicked(win: nd.ND_Window) -> None:
-    #
-    print("DEBUG | reset")
     #
     MAIN_WINDOW_ID: int = win.main_app.global_vars_get("MAIN_WINDOW_ID")
     #
@@ -397,7 +399,7 @@ def create_game_setup_scene(win: nd.ND_Window) -> None:
         elt_id="map_width_bt",
         position=nd.ND_Position_MultiLayer(multilayer=map_width_multilayer, w="100%", h="100%"),
         onclick=on_bt_map_size_change_clicked,
-        text="30"
+        text=str(win.main_app.global_vars_get_default("terrain_w", 30))
     )
     map_width_multilayer.add_element(1, map_width_bt)
     #
@@ -405,7 +407,7 @@ def create_game_setup_scene(win: nd.ND_Window) -> None:
         window=win,
         elt_id="map_width_line_edit",
         position=nd.ND_Position_MultiLayer(multilayer=map_width_multilayer, w="100%", h="100%"),
-        text="30",
+        text=str(win.main_app.global_vars_get_default("terrain_h", 30)),
         place_holder="map width",
         font_size=25
     )

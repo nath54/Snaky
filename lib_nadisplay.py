@@ -977,6 +977,16 @@ class ND_Window:
         return
 
     #
+    def get_text_size_with_font(self, txt: str, font_size: int, font_name: Optional[str] = None) -> ND_Point:
+        #
+        return ND_Point(0, 0)
+
+    #
+    def get_count_of_renderable_chars_fitting_given_width(self, txt: str, given_width: int, font_size: int, font_name: Optional[str] = None) -> Optional[tuple[int, int]]:
+        #
+        return 0, 0
+
+    #
     def draw_pixel(self, x: int, y: int, color: ND_Color) -> None:
         #
         return
@@ -2449,12 +2459,14 @@ class ND_LineEdit(ND_Elt):
         render_text = self.text if self.text else self.place_holder
         text_color = fg_color if self.text else cl("light gray")
 
-        self.full_text_width = len(render_text) * self.font_size
+        self.full_text_width = self.window.get_text_size_with_font(render_text, self.font_size, self.font_name).x
         visible_text = render_text
 
+        visible_text_width: int = self.full_text_width
         if self.full_text_width > self.w:
-            while len(visible_text) * self.font_size > self.w:
+            while visible_text_width > self.w:
                 visible_text = visible_text[1:]
+                visible_text_width = self.window.get_text_size_with_font(visible_text, self.font_size, self.font_name).x
 
         # Render the text
         self.window.draw_text(
@@ -2468,7 +2480,10 @@ class ND_LineEdit(ND_Elt):
 
         # Render the cursor if focused
         if self.focused and len(self.text) >= self.cursor:
-            cursor_x = self.x + 5 + len(self.text[: self.cursor]) * self.font_size - self.scroll_offset
+
+            txt_before_cursor_width: int = self.window.get_text_size_with_font(self.text[: self.cursor], self.font_size, self.font_name).x
+
+            cursor_x = self.x + 5 + txt_before_cursor_width - self.scroll_offset
             self.window.draw_filled_rect(cursor_x, self.y + 5, self.cursor_width, self.cursor_height, fg_color)
 
         # Render horizontal scrollbar if necessary
@@ -2491,6 +2506,8 @@ class ND_LineEdit(ND_Elt):
             elif isinstance(event, nd_event.ND_EventMouseButtonDown):
                 self.state = "normal"
                 self.focused = False
+            else:
+                self.state = "normal"
 
             # Delegate scrollbar events
             if self.full_text_width > self.w:
@@ -2504,9 +2521,9 @@ class ND_LineEdit(ND_Elt):
             if event.key == "backspace" and self.cursor > 0:
                 self.text = self.text[: self.cursor - 1] + self.text[self.cursor :]
                 self.cursor -= 1
-            elif event.key == "left" and self.cursor > 0:
+            elif event.key == "left arrow" and self.cursor > 0:
                 self.cursor -= 1
-            elif event.key == "right" and self.cursor < len(self.text):
+            elif event.key == "right arrow" and self.cursor < len(self.text):
                 self.cursor += 1
                 text_width = len(self.text[:self.cursor]) * self.font_size
                 if text_width - self.scroll_offset > self.w:
@@ -3266,7 +3283,7 @@ class ND_CameraGrid(ND_Elt):
         #
 
     #
-    def move_camera_to_grid_area(self, grid_area: ND_Rect) -> None:
+    def move_camera_to_grid_area(self, grid_area: ND_Rect, force_square_tiles: bool = True) -> None:
         #
         if not self.grids_to_render:
             return
@@ -3277,6 +3294,10 @@ class ND_CameraGrid(ND_Elt):
         self.zoom_x = float(self.w) / float((grid_area.w+3) * (self.grids_to_render[0].grid_tx+self.grid_lines_width))
         self.zoom_y = float(self.h) / float((grid_area.h+3) * (self.grids_to_render[0].grid_ty+self.grid_lines_width))
         #
+        if force_square_tiles:
+            mz: float = min(self.zoom_x, self.zoom_y)
+            self.zoom_x = mz
+            self.zoom_y = mz
 
 
 #
