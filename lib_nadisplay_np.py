@@ -1,5 +1,6 @@
 
-import numpy as np
+import numpy as np  # type:ignore
+
 
 
 def get_rendering_buffer(xpos: float, ypos: float, w: float, h: float, zfix: float = 0.0) -> np.ndarray:

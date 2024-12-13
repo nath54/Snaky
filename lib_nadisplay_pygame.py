@@ -31,6 +31,8 @@ class ND_Display_Pygame(ND_Display):
         # TODO: super()
         # super().__init__()
         #
+        self.main_not_threading: bool = False
+        self.events_thread_in_main_thread: bool = True
         self.display_thread_in_main_thread: bool = True
         #
         self.WindowClass: Type[ND_Window] = WindowClass

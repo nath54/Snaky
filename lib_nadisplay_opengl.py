@@ -3,6 +3,7 @@
 import OpenGL.GL as gl  # type: ignore
 
 
+
 #
 def compile_gl_shader(source: str, shader_type: gl.GLenum | int) -> int:
     """
@@ -57,7 +58,6 @@ def create_gl_shader_program(vertex_src: str, fragment_src: str) -> int:
     except RuntimeError as e:
         print(f"Error in shader program creation: {e}")
         return 0
-
 
 
 def create_and_validate_gl_shader_program(vertex_shader_src: str, fragment_shader_src: str) -> int:

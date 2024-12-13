@@ -28,6 +28,8 @@ class ND_Display_SDL_SDLGFX(ND_Display):
         # TODO: super()
         # super().__init__()
         #
+        self.main_not_threading: bool = True
+        self.events_thread_in_main_thread: bool = True
         self.display_thread_in_main_thread: bool = True
         #
         self.WindowClass: Type[ND_Window] = WindowClass
@@ -378,7 +380,8 @@ class ND_Window_SDL_SDLGFX(ND_Window):
 
     #
     def prepare_text_to_render(self, text: str, color: ND_Color, font_size: int, font_name: Optional[str] = None) -> int:
-
+        #
+        return -1
         #
         if font_name is None:
             font_name = self.display.default_font
@@ -424,6 +427,9 @@ class ND_Window_SDL_SDLGFX(ND_Window):
 
     #
     def prepare_image_to_render(self, img_path: str) -> int:
+
+        #
+        # return -1
 
         # Chargement de l'image
         image_surface = sdlimage.IMG_Load(img_path.encode('utf-8'))
@@ -603,6 +609,8 @@ class ND_Window_SDL_SDLGFX(ND_Window):
     #
     def draw_text(self, txt: str, x: int, y: int, font_size: int, font_color: ND_Color, font_name: Optional[str] = None) -> None:
         #
+        # return  # There are other parts of the code that cause malloc / realloc errors, because still getting without rendering any text
+        #
         if font_name is None:
             font_name = self.display.default_font
         #
@@ -629,7 +637,7 @@ class ND_Window_SDL_SDLGFX(ND_Window):
         surface: sdl2.SDL_Surface = sdlttf.TTF_RenderUTF8_Blended(font, txt.encode("utf-8"), to_sdl_color(font_color))
         #
         if not surface:
-            print(f"Warning error : sdlttf.TTF_RenderUTF8_Blended couldn't not create a surface for the font : {font} and the text {text} !")
+            print(f"Warning error : sdlttf.TTF_RenderUTF8_Blended couldn't not create a surface for the font : {font} and the text {txt} !")
             return
         #
         width: int = surface.contents.w
@@ -643,7 +651,6 @@ class ND_Window_SDL_SDLGFX(ND_Window):
             return
         #
         sdl2.SDL_RenderCopy(self.renderer, texture, None, sdl2.SDL_Rect(x, y, width, height))
-
 
 
     #
@@ -667,6 +674,7 @@ class ND_Window_SDL_SDLGFX(ND_Window):
         sdlttf.TTF_SizeText(font, txt.encode("utf-8"), byref(text_w), byref(text_h))
         text_size = [x.value for x in (text_w, text_h)]
         return ND_Point(*text_size)
+
 
     #
     def get_count_of_renderable_chars_fitting_given_width(self, txt: str, given_width: int, font_size: int, font_name: Optional[str] = None) -> Optional[tuple[int, int]]:

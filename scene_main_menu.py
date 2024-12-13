@@ -15,6 +15,7 @@ from lib_snake import Snake, create_map1, snake_skin_1, snake_skin_2
 
 
 
+
 #
 def event_set_snake_direction(main_app: nd.ND_MainApp, direction: ND_Point, snake_idx: int) -> None:
     #

@@ -14,6 +14,8 @@ import lib_nadisplay_events as nd_event
 from lib_nadisplay_colors import ND_Color, cl, ND_Transformations
 from lib_nadisplay_rects import ND_Rect, ND_Point, ND_Position, ND_Position_Constraints, ND_Position_Margins
 
+
+
 #
 def clamp(value: Any, mini: Any, maxi: Any) -> Any:
     if value < mini:
@@ -62,6 +64,7 @@ class ND_MainApp:
         self.current_fps: int = 0
         #
         self.is_running: bool = False
+        self.is_threading: bool = True
         #
         self.display: Optional["ND_Display"] = DisplayClass(self, WindowClass=WindowClass)
         #
@@ -90,7 +93,8 @@ class ND_MainApp:
         #
         self.is_running = False
         #
-        self.waiting_all_threads()
+        if self.is_threading:
+            self.waiting_all_threads()
 
     #
     def get_time_msec(self) -> float:
@@ -368,13 +372,13 @@ class ND_MainApp:
         return ""
 
     #
-    def manage_events(self) -> None:
+    def manage_events(self) -> bool:
         #
         event: Optional[nd_event.ND_Event] = self.events_manager.poll_next_event()
 
         #
         if event is None:
-            return
+            return False
 
         #
         event_name: str = ""
@@ -384,7 +388,7 @@ class ND_MainApp:
             #
             self.quit()
             #
-            return
+            return True
 
         #
         elif isinstance(event, nd_event.ND_EventKeyDown) and event.key != "":
@@ -398,7 +402,7 @@ class ND_MainApp:
         elif isinstance(event, nd_event.ND_EventWindow):
             #
             if isinstance(event, nd_event.ND_EventWindowShown) or isinstance(event, nd_event.ND_EventWindowHidden):
-                return
+                return True
             #
             event_name = self.handle_windows_event(event)
 
@@ -415,10 +419,10 @@ class ND_MainApp:
             for fn in self.events_functions[event_name]:
                 fn(self)
         #
+        return True
 
     #
     def events_thread(self) -> None:
-
         #
         while self.is_running:
             #
@@ -426,6 +430,13 @@ class ND_MainApp:
 
     #
     def start_events_thread(self) -> None:
+        #
+        if not self.is_threading:
+            return
+        #
+        if self.display is not None and not self.display.events_thread_in_main_thread:
+            return
+        #
         self.create_thread( self.events_thread, thread_name = "events_threads")
         print(f" - thread {self.threads[-1]} for events created")
 
@@ -474,6 +485,9 @@ class ND_MainApp:
     #
     def create_all_threads(self) -> None:
         #
+        if not self.is_threading:
+            return
+        #
         print("\nBegin to start threads\n")
 
         # Display thread
@@ -506,6 +520,9 @@ class ND_MainApp:
     #
     def create_thread(self, fn_to_call: Callable, fn_to_call_args: list[Any] = [], thread_name: str = "unknown thread") -> int:
         #
+        if not self.is_threading:
+            return -1
+        #
         id_thread: int = -1
 
         #
@@ -525,6 +542,9 @@ class ND_MainApp:
 
     #
     def waiting_all_threads(self) -> None:
+        #
+        if not self.is_threading:
+            return
         #
         print("\nWaiting for threads to finish...\n")
 
@@ -553,6 +573,87 @@ class ND_MainApp:
         print("\nAll threads joined\n")
 
     #
+    def mainloop_without_threads(self) -> None:
+        #
+        start_time: float = 0.0
+        elapsed_time: float = 0.0
+        delay: float = 0.0  # Delay with first frame
+
+        #
+        while self.is_running:
+            #
+            elapsed_time = self.get_time_msec()
+            if start_time != 0:
+                delay = elapsed_time - start_time
+                if delay != 0:
+                    self.current_fps = int(1.0 / delay)
+            #
+            start_time = elapsed_time    # Start of the frame in milliseconds
+
+            # Manage events
+            max_events_per_frame: int = 200
+            current_events_per_frame: int = 0
+            while self.manage_events() and current_events_per_frame < max_events_per_frame:
+                current_events_per_frame += 1
+
+            # Manage all the other mainloop runs
+            queue_name: str
+            fn: Callable[[ND_MainApp, float], None]
+            for queue_name in self.mainloop_queue_functions:
+                for fn in self.mainloop_queue_functions[queue_name]:
+                    fn(self, elapsed_time)
+
+            #
+            if self.display is not None:
+                #
+                self.display.update_display()
+
+            # Calculate the time taken for this frame
+            elapsed_time = self.get_time_msec() - start_time
+
+            # If the frame was rendered faster than the target duration, delay
+            if elapsed_time < self.frame_duration_display:
+                self.wait_time_msec(self.frame_duration_display - elapsed_time)
+
+    #
+    def mainloop_threads_display_and_events(self) -> None:
+        #
+        start_time: float = 0.0
+        elapsed_time: float = 0.0
+        delay: float = 0.0  # Delay with first frame
+
+        #
+        while self.is_running:
+            #
+            elapsed_time = self.get_time_msec()
+            if start_time != 0:
+                delay = elapsed_time - start_time
+                if delay != 0:
+                    self.current_fps = int(1.0 / delay)
+                print(f"Fps : {self.current_fps}")
+            #
+            start_time = elapsed_time    # Start of the frame in milliseconds
+
+            # Manage events
+            max_events_per_frame: int = 200
+            current_events_per_frame: int = 0
+            while self.manage_events() and current_events_per_frame < max_events_per_frame:
+                current_events_per_frame += 1
+
+            #
+            if self.display is not None:
+                #
+                self.display.update_display()
+
+            # Calculate the time taken for this frame
+            elapsed_time = self.get_time_msec() - start_time
+
+            # If the frame was rendered faster than the target duration, delay
+            if elapsed_time < self.frame_duration_display:
+                self.wait_time_msec(self.frame_duration_display - elapsed_time)
+
+
+    #
     def run(self) -> None:
         #
         atexit.register(self.atexit)
@@ -563,12 +664,26 @@ class ND_MainApp:
         #
         self.start_init_queue_functions()
         #
-        self.create_all_threads()
+        if self.display is not None and not self.display.main_not_threading:
+            self.is_threading = False
+        self.is_threading = False
         #
-        if self.display is not None and self.display.display_thread_in_main_thread:
-            self.display_thread()
+        if self.is_threading:
+            self.create_all_threads()
         #
-        self.waiting_all_threads()
+        if self.display is not None:
+            if not self.display.main_not_threading:
+                if self.display.display_thread_in_main_thread and not self.display.events_thread_in_main_thread:
+                    self.display_thread()
+                elif not self.display.display_thread_in_main_thread and self.display.events_thread_in_main_thread:
+                    self.events_thread()
+                elif not self.display.display_thread_in_main_thread and self.display.events_thread_in_main_thread:
+                    self.mainloop_threads_display_and_events()
+            else:
+                self.mainloop_without_threads()
+        #
+        if self.is_threading:
+            self.waiting_all_threads()
 
     #
     def quit(self) -> None:
@@ -586,6 +701,8 @@ class ND_Display:
     #
     def __init__(self, main_app: ND_MainApp, WindowClass: Type["ND_Window"]) -> None:
         #
+        self.main_not_threading: bool = False
+        self.events_thread_in_main_thread: bool = False
         self.display_thread_in_main_thread: bool = False
         #
         self.main_app: ND_MainApp = main_app
@@ -1013,7 +1130,24 @@ class ND_Elt:
         self.position: ND_Position = position
         #
         self.visible: bool = True
+        self._visible: bool = True
         self.clickable: bool = True
+
+    #
+    @property
+    def visible(self) -> bool:
+        #
+        if isinstance(self.position, ND_Position_Container):
+            return self.position.container.visible
+        elif isinstance(self.position, ND_Position_MultiLayer):
+            return self.position.multilayer.visible
+        else:
+            return self._visible
+
+    #
+    @visible.setter
+    def visible(self, value: bool) -> None:
+        self._visible = value
 
     #
     def render(self) -> None:
@@ -1588,6 +1722,14 @@ class ND_Clickable(ND_Elt):
 
     #
     def handle_event(self, event: nd_event.ND_Event) -> None:
+        #
+        if not self.visible:
+            self.state = "normal"
+            return
+        #
+        if not self.clickable:
+            self.state = "normal"
+            return
         #
         if not self.active:
             self.state = "normal"

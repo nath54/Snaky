@@ -23,6 +23,8 @@ class ND_Display_GLFW_VULKAN(ND_Display):
     #
     def __init__(self, main_app: ND_MainApp, WindowClass: Type[ND_Window]) -> None:
         #
+        self.main_not_threading: bool = False
+        self.events_thread_in_main_thread: bool = True
         self.display_thread_in_main_thread: bool = False
         #
         self.WindowClass: Type[ND_Window] = WindowClass

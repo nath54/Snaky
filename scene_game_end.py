@@ -11,6 +11,7 @@ import lib_nadisplay as nd
 from scene_main_menu import on_bt_click_init_game, on_bt_click_quit
 
 
+
 #
 def create_end_menu(win: nd.ND_Window) -> None:
     #

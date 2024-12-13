@@ -14,6 +14,7 @@ from scene_main_menu import center_game_camera
 import random
 import time
 
+
 #
 def on_pause_pressed(main_app: nd.ND_MainApp) -> None:
     #

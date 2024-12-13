@@ -1,0 +1,40 @@
+UserWarning: Using SDL2 binaries from pysdl2-dll 2.30.2
+ - thread <Thread(Thread-1 (thread_wrap_fn), initial)> for events created
+
+Beginning of the app...
+
+
+Begin to exec all init functions in order
+
+
+All Init functions called
+
+
+
+
+==============
+
+==============
+
+
+Not threading !!!
+
+
+==============
+
+==============
+
+
+
+Traceback (most recent call last):
+  File "/home/nathan/github/Snaky/main.py", line 71, in <module>
+    app.run()
+  File "/home/nathan/github/Snaky/lib_nadisplay.py", line 683, in run
+    self.mainloop_without_threads()
+  File "/home/nathan/github/Snaky/lib_nadisplay.py", line 605, in mainloop_without_threads
+    fn(self, elapsed_time)
+  File "/home/nathan/github/Snaky/scene_game.py", line 69, in update_physic
+    win: Optional[nd.ND_Window] = main_app.display.windows[MAIN_WINDOW_ID]
+                                  ~~~~~~~~~~~~~~~~~~~~~~~~^^^^^^^^^^^^^^^^
+KeyError: 0
+At exit catched

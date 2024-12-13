@@ -9,6 +9,7 @@ from lib_nadisplay_rects import ND_Point, ND_Position
 import lib_nadisplay as nd
 
 
+
 class Snake:
     #
     def __init__(self, pseudo: str, init_position: ND_Point, color: ND_Color, score_elt: nd.ND_Text, map_area: nd.ND_Rect, speed: float, init_direction: ND_Point = ND_Point(1, 0), init_size: int = 4) -> None:
@@ -278,7 +279,6 @@ def create_map2(win: nd.ND_Window, tx: int, ty: int, map_mode: str, nb_snakes: i
 
 
 
-
 def snake_skin_1(win: nd.ND_Window, snake: Snake, snk_idx: int, grid: nd.ND_RectGrid) -> None:
 
     #
@@ -354,7 +354,6 @@ def snake_skin_1(win: nd.ND_Window, snake: Snake, snk_idx: int, grid: nd.ND_Rect
     )
     sprite_body_corner.transformations.color_modulation = snake.color
     snake.sprites["body_corner"] = (sprite_body_corner, grid.add_element_to_grid(sprite_body_corner, []))
-
 
 
 def snake_skin_2(win: nd.ND_Window, snake: Snake, snk_idx: int, grid: nd.ND_RectGrid) -> None:
