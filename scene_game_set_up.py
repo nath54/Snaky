@@ -76,10 +76,10 @@ def on_bt_map_size_change_clicked(win: nd.ND_Window) -> None:
         return
     #
     map_width_bt: nd.ND_Button = cast(nd.ND_Button, map_width_multilayer.elements_by_id["map_width_bt"])
-    map_height_bt: nd.ND_Button = cast(nd.ND_Button, map_width_multilayer.elements_by_id["map_height_bt"])
+    map_height_bt: nd.ND_Button = cast(nd.ND_Button, map_height_multilayer.elements_by_id["map_height_bt"])
     #
     map_width_line_edit: nd.ND_LineEdit = cast(nd.ND_LineEdit, map_width_multilayer.elements_by_id["map_width_line_edit"])
-    map_height_line_edit: nd.ND_LineEdit = cast(nd.ND_LineEdit, map_width_multilayer.elements_by_id["map_height_line_edit"])
+    map_height_line_edit: nd.ND_LineEdit = cast(nd.ND_LineEdit, map_height_multilayer.elements_by_id["map_height_line_edit"])
     #
     map_width_bt.visible = False
     map_height_bt.visible = False
@@ -90,8 +90,8 @@ def on_bt_map_size_change_clicked(win: nd.ND_Window) -> None:
     map_width_line_edit.visible = True
     map_height_line_edit.visible = True
     #
-    map_utils_edit_size_row: nd.ND_Container = cast(nd.ND_Container, map_width_multilayer.elements_by_id["map_utils_edit_size_row"])
-    map_reset_size_bt: nd.ND_Button = cast(nd.ND_Button, map_width_multilayer.elements_by_id["map_reset_size_bt"])
+    map_utils_edit_size_row: nd.ND_Container = cast(nd.ND_Container, win.main_app.get_element(MAIN_WINDOW_ID, "game_setup", "map_utils_edit_size_row"))
+    map_reset_size_bt: nd.ND_Button = cast(nd.ND_Button, win.main_app.get_element(MAIN_WINDOW_ID, "game_setup", "map_reset_size_bt"))
     #
     map_reset_size_bt.visible = False
     map_utils_edit_size_row.visible = True
@@ -109,10 +109,10 @@ def on_bt_map_size_validate_clicked(win: nd.ND_Window) -> None:
         return
     #
     map_width_bt: nd.ND_Button = cast(nd.ND_Button, map_width_multilayer.elements_by_id["map_width_bt"])
-    map_height_bt: nd.ND_Button = cast(nd.ND_Button, map_width_multilayer.elements_by_id["map_height_bt"])
+    map_height_bt: nd.ND_Button = cast(nd.ND_Button, map_height_multilayer.elements_by_id["map_height_bt"])
     #
     map_width_line_edit: nd.ND_LineEdit = cast(nd.ND_LineEdit, map_width_multilayer.elements_by_id["map_width_line_edit"])
-    map_height_line_edit: nd.ND_LineEdit = cast(nd.ND_LineEdit, map_width_multilayer.elements_by_id["map_height_line_edit"])
+    map_height_line_edit: nd.ND_LineEdit = cast(nd.ND_LineEdit, map_height_multilayer.elements_by_id["map_height_line_edit"])
     #
     map_width_bt.visible = True
     map_height_bt.visible = True
@@ -123,8 +123,8 @@ def on_bt_map_size_validate_clicked(win: nd.ND_Window) -> None:
     map_width_line_edit.visible = False
     map_height_line_edit.visible = False
     #
-    map_utils_edit_size_row: nd.ND_Container = cast(nd.ND_Container, map_width_multilayer.elements_by_id["map_utils_edit_size_row"])
-    map_reset_size_bt: nd.ND_Button = cast(nd.ND_Button, map_width_multilayer.elements_by_id["map_reset_size_bt"])
+    map_utils_edit_size_row: nd.ND_Container = cast(nd.ND_Container, win.main_app.get_element(MAIN_WINDOW_ID, "game_setup", "map_utils_edit_size_row"))
+    map_reset_size_bt: nd.ND_Button = cast(nd.ND_Button, win.main_app.get_element(MAIN_WINDOW_ID, "game_setup", "map_reset_size_bt"))
     #
     map_reset_size_bt.visible = True
     map_utils_edit_size_row.visible = False
@@ -144,10 +144,10 @@ def on_bt_map_size_cancel_clicked(win: nd.ND_Window) -> None:
         return
     #
     map_width_bt: nd.ND_Button = cast(nd.ND_Button, map_width_multilayer.elements_by_id["map_width_bt"])
-    map_height_bt: nd.ND_Button = cast(nd.ND_Button, map_width_multilayer.elements_by_id["map_height_bt"])
+    map_height_bt: nd.ND_Button = cast(nd.ND_Button, map_height_multilayer.elements_by_id["map_height_bt"])
     #
     map_width_line_edit: nd.ND_LineEdit = cast(nd.ND_LineEdit, map_width_multilayer.elements_by_id["map_width_line_edit"])
-    map_height_line_edit: nd.ND_LineEdit = cast(nd.ND_LineEdit, map_width_multilayer.elements_by_id["map_height_line_edit"])
+    map_height_line_edit: nd.ND_LineEdit = cast(nd.ND_LineEdit, map_height_multilayer.elements_by_id["map_height_line_edit"])
     #
     map_width_bt.visible = True
     map_height_bt.visible = True
@@ -158,8 +158,8 @@ def on_bt_map_size_cancel_clicked(win: nd.ND_Window) -> None:
     map_width_line_edit.visible = False
     map_height_line_edit.visible = False
     #
-    map_utils_edit_size_row: nd.ND_Container = cast(nd.ND_Container, map_width_multilayer.elements_by_id["map_utils_edit_size_row"])
-    map_reset_size_bt: nd.ND_Button = cast(nd.ND_Button, map_width_multilayer.elements_by_id["map_reset_size_bt"])
+    map_utils_edit_size_row: nd.ND_Container = cast(nd.ND_Container, win.main_app.get_element(MAIN_WINDOW_ID, "game_setup", "map_utils_edit_size_row"))
+    map_reset_size_bt: nd.ND_Button = cast(nd.ND_Button, win.main_app.get_element(MAIN_WINDOW_ID, "game_setup", "map_reset_size_bt"))
     #
     map_reset_size_bt.visible = True
     map_utils_edit_size_row.visible = False
@@ -178,10 +178,10 @@ def on_bt_map_size_reset_clicked(win: nd.ND_Window) -> None:
         return
     #
     map_width_bt: nd.ND_Button = cast(nd.ND_Button, map_width_multilayer.elements_by_id["map_width_bt"])
-    map_height_bt: nd.ND_Button = cast(nd.ND_Button, map_width_multilayer.elements_by_id["map_height_bt"])
+    map_height_bt: nd.ND_Button = cast(nd.ND_Button, map_height_multilayer.elements_by_id["map_height_bt"])
     #
     map_width_line_edit: nd.ND_LineEdit = cast(nd.ND_LineEdit, map_width_multilayer.elements_by_id["map_width_line_edit"])
-    map_height_line_edit: nd.ND_LineEdit = cast(nd.ND_LineEdit, map_width_multilayer.elements_by_id["map_height_line_edit"])
+    map_height_line_edit: nd.ND_LineEdit = cast(nd.ND_LineEdit, map_height_multilayer.elements_by_id["map_height_line_edit"])
     #
     map_width_bt.visible = True
     map_height_bt.visible = True
@@ -189,8 +189,8 @@ def on_bt_map_size_reset_clicked(win: nd.ND_Window) -> None:
     map_width_line_edit.visible = False
     map_height_line_edit.visible = False
     #
-    map_utils_edit_size_row: nd.ND_Container = cast(nd.ND_Container, map_width_multilayer.elements_by_id["map_utils_edit_size_row"])
-    map_reset_size_bt: nd.ND_Button = cast(nd.ND_Button, map_width_multilayer.elements_by_id["map_reset_size_bt"])
+    map_utils_edit_size_row: nd.ND_Container = cast(nd.ND_Container, win.main_app.get_element(MAIN_WINDOW_ID, "game_setup", "map_utils_edit_size_row"))
+    map_reset_size_bt: nd.ND_Button = cast(nd.ND_Button, win.main_app.get_element(MAIN_WINDOW_ID, "game_setup", "map_reset_size_bt"))
     #
     map_reset_size_bt.visible = True
     map_utils_edit_size_row.visible = False

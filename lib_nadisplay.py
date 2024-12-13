@@ -231,10 +231,56 @@ class ND_MainApp:
         if scene_id not in win.scenes:
             return None
         #
-        if elt_id not in win.scenes[scene_id].elements_by_id:
-            return None
+        if elt_id in win.scenes[scene_id].elements_by_id:
+            return win.scenes[scene_id].elements_by_id[elt_id]
         #
-        return win.scenes[scene_id].elements_by_id[elt_id]
+        for elt in win.scenes[scene_id].elements_by_id.values():
+            if isinstance(elt, ND_Container):
+                r: Optional[ND_Elt] = self.get_element_recursively_from_container(elt, elt_id)
+                if r is not None:
+                    return r
+            if isinstance(elt, ND_MultiLayer):
+                r = self.get_element_recursively_from_multilayer(elt, elt_id)
+                if r is not None:
+                    return r
+        #
+        return None
+
+    #
+    def get_element_recursively_from_multilayer(self, elt_cont: "ND_MultiLayer", elt_id: str) -> Optional["ND_Elt"]:
+        #
+        if elt_id in elt_cont.elements_by_id:
+            return elt_cont.elements_by_id[elt_id]
+        #
+        for elt in elt_cont.elements_by_id.values():
+            if isinstance(elt, ND_Container):
+                r: Optional[ND_Elt] = self.get_element_recursively_from_container(elt, elt_id)
+                if r is not None:
+                    return r
+            if isinstance(elt, ND_MultiLayer):
+                r = self.get_element_recursively_from_multilayer(elt, elt_id)
+                if r is not None:
+                    return r
+        #
+        return None
+
+    #
+    def get_element_recursively_from_container(self, elt_cont: "ND_Container", elt_id: str) -> Optional["ND_Elt"]:
+        #
+        if elt_id in elt_cont.elements_by_id:
+            return elt_cont.elements_by_id[elt_id]
+        #
+        for elt in elt_cont.elements_by_id.values():
+            if isinstance(elt, ND_Container):
+                r: Optional[ND_Elt] = self.get_element_recursively_from_container(elt, elt_id)
+                if r is not None:
+                    return r
+            if isinstance(elt, ND_MultiLayer):
+                r = self.get_element_recursively_from_multilayer(elt, elt_id)
+                if r is not None:
+                    return r
+        #
+        return None
 
     #
     def add_function_to_mainloop_fns_queue(self, mainloop_name: str, function: Callable) -> None:
@@ -2506,6 +2552,8 @@ class ND_Container(ND_Elt):
 
         # List of contained elements
         self.elements: list[ND_Elt] = []
+        #
+        self.elements_by_id: dict[str, ND_Elt] = {}
 
         # Elements that represents the scrollbar if there is one
         self.h_scrollbar: Optional[ND_H_ScrollBar] = None
@@ -2526,7 +2574,11 @@ class ND_Container(ND_Elt):
     #
     def add_element(self, element: ND_Elt):
         #
+        if element.elt_id in self.elements_by_id:
+            raise IndexError(f"Error: Trying to add an element with id {element.elt_id} in container {self.elt_id}, but there was already an element with the same id in there!")
+        #
         self.elements.append(element)
+        self.elements_by_id[element.elt_id] = element
         #
         self.update_layout()
         #
