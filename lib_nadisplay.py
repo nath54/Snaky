@@ -2390,6 +2390,7 @@ class ND_LineEdit(ND_Elt):
         position: ND_Position,
         text: str = "",
         place_holder: str = "",
+        max_text_length: int = -1,
         mouse_active: bool = True,
         font_name: Optional[str] = None,
         font_size: int = 24,
@@ -2420,6 +2421,7 @@ class ND_LineEdit(ND_Elt):
         self.cursor_width: int = 2
         self.cursor_height: int = self.font_size
         self.focused: bool = False
+        self.max_text_length: int = max_text_length
 
         # Scrollbar-related
         self.scrollbar_height: int = 10
@@ -2468,6 +2470,9 @@ class ND_LineEdit(ND_Elt):
                 visible_text = visible_text[1:]
                 visible_text_width = self.window.get_text_size_with_font(visible_text, self.font_size, self.font_name).x
 
+        # TODO: correct the text that is displayed and visible
+
+
         # Render the text
         self.window.draw_text(
             txt=visible_text,
@@ -2515,6 +2520,7 @@ class ND_LineEdit(ND_Elt):
                 self.scroll_offset = int(self.scrollbar.get_scroll_ratio() * (self.full_text_width - self.w))
 
         elif isinstance(event, nd_event.ND_EventKeyDown) and self.focused:
+            # TODO: complete with all the keys, for instance the numpad keys, etc...
             if event.key == "escape":
                 self.state = "normal"
                 self.focused = False
@@ -2529,14 +2535,68 @@ class ND_LineEdit(ND_Elt):
                 if text_width - self.scroll_offset > self.w:
                     self.scroll_offset = text_width - self.w
             elif len(event.key) == 1:
+                if self.max_text_length > 0 and len(self.text) >= self.max_text_length:
+                    return
                 self.text = self.text[: self.cursor] + event.key + self.text[self.cursor :]
+                self.cursor += 1
+            elif event.key == "espace":
+                if self.max_text_length > 0 and len(self.text) >= self.max_text_length:
+                    return
+                self.text +=self.text[: self.cursor] + " " + self.text[self.cursor :]
                 self.cursor += 1
 
             # Update scrollbar position
             if self.full_text_width > self.w:
                 self.scrollbar.scroll_position = self.scroll_offset / (self.full_text_width - self.w)
 
-        self.window.update_display()
+
+# TODO: ND_Checkbox
+class ND_Checkbox(ND_Elt):
+    def __init__(
+        self,
+        window: ND_Window,
+        elt_id: str,
+        position: ND_Position,
+        checked: bool = False
+    ) -> None:
+        #
+        super().__init__(window=window, elt_id=elt_id, position=position)
+        #
+        self.checked: bool = checked
+        #
+        # TODO: ND_Checkbox
+
+    #
+    def is_checked(self) -> bool:
+        return self.checked
+
+
+# TODO: ND_NumberInput
+class ND_NumberInput(ND_Elt):
+    def __init__(
+        self,
+        window: ND_Window,
+        elt_id: str,
+        position: ND_Position,
+        value: float = 0,
+        min_value: float = 0,
+        max_value: float = 100,
+        step: float = 1,
+        digits_after_comma: int = 0
+    ) -> None:
+        #
+        super().__init__(window=window, elt_id=elt_id, position=position)
+        #
+        self.value: float = value
+        self.min_value: float = min_value
+        self.max_value: float = max_value
+        self.step: float = step
+        self.digits_ater_comma: int = digits_after_comma
+        #
+        # TODO: ND_NumberInput
+
+
+
 
 
 # ND_Container class implementation

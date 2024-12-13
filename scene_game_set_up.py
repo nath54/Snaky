@@ -409,7 +409,8 @@ def create_game_setup_scene(win: nd.ND_Window) -> None:
         position=nd.ND_Position_MultiLayer(multilayer=map_width_multilayer, w="100%", h="100%"),
         text=str(win.main_app.global_vars_get_default("terrain_h", 30)),
         place_holder="map width",
-        font_size=25
+        font_size=25,
+        max_text_length=3
     )
     map_width_line_edit.visible = False
     #
@@ -448,7 +449,8 @@ def create_game_setup_scene(win: nd.ND_Window) -> None:
         position=nd.ND_Position_MultiLayer(multilayer=map_height_multilayer, w="100%", h="100%"),
         text="30",
         place_holder="map height",
-        font_size=25
+        font_size=25,
+        max_text_length=3
     )
     map_height_line_edit.visible = False
     # #
