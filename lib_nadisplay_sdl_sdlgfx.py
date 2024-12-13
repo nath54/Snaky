@@ -601,23 +601,49 @@ class ND_Window_SDL_SDLGFX(ND_Window):
 
 
     #
-    def draw_text(self, txt: str, x: int, y: int, font_size: int, font_color: ND_Color, font: Optional[str] = None) -> None:
+    def draw_text(self, txt: str, x: int, y: int, font_size: int, font_color: ND_Color, font_name: Optional[str] = None) -> None:
         #
-        if font is None:
-            font = self.display.default_font
+        if font_name is None:
+            font_name = self.display.default_font
         #
         if not txt:
             return
+
         #
-        tid: str = f"{txt}_|||_{font}_|||_{font_size}_|||_{font_color}"
+        font: Optional[sdlttf.TTF_OpenFont] = self.display.get_font(font_name, font_size)
+
         #
-        if tid not in self.prepared_font_textures:
-            self.prepared_font_textures[tid] = self.prepare_text_to_render(text=txt, color=font_color, font_name=font, font_size=font_size)
+        if not font:
+            return
+
         #
-        tsize: ND_Point = self.get_prepared_texture_size(self.prepared_font_textures[tid])
-        self.render_prepared_texture(self.prepared_font_textures[tid], x, y, tsize.x, tsize.y)
+        # tid: str = f"{txt}_|||_{font}_|||_{font_size}_|||_{font_color}"
+        # #
+        # if tid not in self.prepared_font_textures:
+        #     self.prepared_font_textures[tid] = self.prepare_text_to_render(text=txt, color=font_color, font_name=font, font_size=font_size)
+        # #
+        # tsize: ND_Point = self.get_prepared_texture_size(self.prepared_font_textures[tid])
+        # self.render_prepared_texture(self.prepared_font_textures[tid], x, y, tsize.x, tsize.y)
 
         # TODO: render directly text instead of creating texture, and etc...
+        surface: sdl2.SDL_Surface = sdlttf.TTF_RenderUTF8_Blended(font, txt.encode("utf-8"), to_sdl_color(font_color))
+        #
+        if not surface:
+            print(f"Warning error : sdlttf.TTF_RenderUTF8_Blended couldn't not create a surface for the font : {font} and the text {text} !")
+            return
+        #
+        width: int = surface.contents.w
+        height: int = surface.contents.h
+        #
+        texture = sdl2.SDL_CreateTextureFromSurface(self.renderer, surface)
+        sdl2.SDL_FreeSurface(surface)
+        #
+        if not texture:
+            print(f"Warning error : sdl2.SDL_CreateTextureFromSurface couldn't not create a texture for the surface : {surface} that was rendered with the font {font_name} and the text {txt} !")
+            return
+        #
+        sdl2.SDL_RenderCopy(self.renderer, texture, None, sdl2.SDL_Rect(x, y, width, height))
+
 
 
     #

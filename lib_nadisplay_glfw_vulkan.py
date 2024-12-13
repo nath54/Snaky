@@ -362,10 +362,10 @@ class ND_Window_GLFW_VULKAN(ND_Window):
 
 
     #
-    def draw_text(self, txt: str, x: int, y: int, font_size: int, font_color: ND_Color, font: Optional[str] = None) -> None:
+    def draw_text(self, txt: str, x: int, y: int, font_size: int, font_color: ND_Color, font_name: Optional[str] = None) -> None:
         #
-        if font is None:
-            font = self.display.default_font
+        if font_name is None:
+            font_name = self.display.default_font
         #
         # TODO
         #

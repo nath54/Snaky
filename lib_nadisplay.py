@@ -809,7 +809,7 @@ class ND_Window:
         return
 
     #
-    def draw_text(self, txt: str, x: int, y: int, font_size: int, font_color: ND_Color, font: Optional[str] = None) -> None:
+    def draw_text(self, txt: str, x: int, y: int, font_size: int, font_color: ND_Color, font_name: Optional[str] = None) -> None:
         #
         return
 
@@ -1395,7 +1395,9 @@ class ND_Scene:
         for elt in self.elements_by_id.values():
 
             #
-            elt.handle_event(event)
+            if hasattr(elt, "handle_event"):
+                #
+                elt.handle_event(event)
 
         # #
         # layer: int
@@ -1559,7 +1561,7 @@ class ND_Text(ND_Elt):
                 txt=self.text,
                 x=x,
                 y=y,
-                font=self.font_name,
+                font_name=self.font_name,
                 font_size=self.font_size,
                 font_color=self.font_color
         )
@@ -2042,7 +2044,7 @@ class ND_Button(ND_Clickable):
                 txt=self.text,
                 x=x + (self.w - self.base_text_w) // 2,
                 y=y + (self.h - self.base_text_h) // 2,
-                font=self.font_name,
+                font_name=self.font_name,
                 font_size=self.font_size,
                 font_color=fg_color
         )
@@ -2265,7 +2267,7 @@ class ND_LineEdit(ND_Elt):
             y=self.y + (self.h - self.cursor_height) // 2,
             font_size=self.font_size,
             font_color=text_color,
-            font=self.font_name,
+            font_name=self.font_name,
         )
 
         # Render the cursor if focused
@@ -2279,6 +2281,10 @@ class ND_LineEdit(ND_Elt):
 
     #
     def handle_event(self, event: nd_event.ND_Event) -> None:
+        #
+        if not self.visible:
+            return
+        #
         if isinstance(event, nd_event.ND_EventMouse):
             if event.x >= self.x and event.x <= self.x + self.w and event.y >= self.y and event.y <= self.y + self.h:
                 if isinstance(event, nd_event.ND_EventMouseButtonDown):
@@ -2295,16 +2301,16 @@ class ND_LineEdit(ND_Elt):
                 self.scrollbar.handle_event(event)
                 self.scroll_offset = int(self.scrollbar.get_scroll_ratio() * (self.full_text_width - self.w))
 
-        elif isinstance(event, nd_event.ND_EventKeyboard) and self.focused:
-            if event.key == "Escape":
+        elif isinstance(event, nd_event.ND_EventKeyDown) and self.focused:
+            if event.key == "escape":
                 self.state = "normal"
                 self.focused = False
-            if event.key == "Backspace" and self.cursor > 0:
+            if event.key == "backspace" and self.cursor > 0:
                 self.text = self.text[: self.cursor - 1] + self.text[self.cursor :]
                 self.cursor -= 1
-            elif event.key == "Left" and self.cursor > 0:
+            elif event.key == "left" and self.cursor > 0:
                 self.cursor -= 1
-            elif event.key == "Right" and self.cursor < len(self.text):
+            elif event.key == "right" and self.cursor < len(self.text):
                 self.cursor += 1
                 text_width = len(self.text[:self.cursor]) * self.font_size
                 if text_width - self.scroll_offset > self.w:
@@ -2840,7 +2846,10 @@ class ND_MultiLayer(ND_Elt):
         for elt in self.elements_by_id.values():
 
             #
-            elt.handle_event(event)
+            if hasattr(elt, "handle_event"):
+                elt.handle_event(event)
+
+        # TODO: gérer les évenenements en fonctions de si un layer du dessus bloque les évenements en dessous
 
         # #
         # layer: int

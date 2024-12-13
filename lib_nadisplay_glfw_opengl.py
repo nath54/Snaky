@@ -595,12 +595,12 @@ class ND_Window_GLFW_OPENGL(ND_Window):
 
 
     #
-    def draw_text(self, txt: str, x: int, y: int, font_size: int, font_color: ND_Color, font: Optional[str] = None) -> None:
+    def draw_text(self, txt: str, x: int, y: int, font_size: int, font_color: ND_Color, font_name: Optional[str] = None) -> None:
         #
-        if font is None:
-            font = self.display.default_font
+        if font_name is None:
+            font_name = self.display.default_font
         #
-        font_renderer: Optional[FontRenderer] = cast(Optional[FontRenderer], self.display.get_font(font, font_size))
+        font_renderer: Optional[FontRenderer] = cast(Optional[FontRenderer], self.display.get_font(font_name, font_size))
         #
         if font_renderer is None:
             return

@@ -303,7 +303,7 @@ def create_game_setup_scene(win: nd.ND_Window) -> None:
     )
     map_width_line_edit.visible = False
     #
-    # map_width_multilayer.add_element(0, map_width_line_edit)
+    map_width_multilayer.add_element(0, map_width_line_edit)
 
     #
     map_size_cross_text: nd.ND_Text = nd.ND_Text(
@@ -330,7 +330,6 @@ def create_game_setup_scene(win: nd.ND_Window) -> None:
         onclick=None,
         text="30"
     )
-    print(f"DEBUG | {map_height_multilayer.elements_layers}")
     map_height_multilayer.add_element(1, map_height_bt)
     #
     map_height_line_edit: nd.ND_LineEdit = nd.ND_LineEdit(
@@ -343,18 +342,33 @@ def create_game_setup_scene(win: nd.ND_Window) -> None:
     )
     map_height_line_edit.visible = False
     # #
-    # map_height_multilayer.add_element(0, map_height_line_edit)
+    map_height_multilayer.add_element(0, map_height_line_edit)
 
+    #
+    map_size_utils_bt_multilayer: nd.ND_MultiLayer = nd.ND_MultiLayer(
+        window=win,
+        elt_id="map_size_utils_bt_multilayer",
+        position=nd.ND_Position_Container(100, 40, container=map_size_row, position_margins=ND_Position_Margins(margin_left="100%", margin_top="50%", margin_bottom="50%", margin_right=5)),
+        elements_layers={}
+    )
+    map_size_row.add_element(map_size_utils_bt_multilayer)
     #
     map_reset_size_bt: nd.ND_Button = nd.ND_Button(
         window=win,
         elt_id="map_reset_size_bt",
-        position=nd.ND_Position_Container(w=100, h=40, container=map_size_row, position_margins=ND_Position_Margins(margin_left="50%", margin_top="50%", margin_bottom="50%", margin_right="50%")),
+        position=nd.ND_Position_MultiLayer(multilayer=map_height_multilayer, w=100, h=40, position_margins=ND_Position_Margins(margin_left="50%", margin_top="50%", margin_bottom="50%", margin_right="50%")),
         onclick=None,
         text="reset"
     )
-    map_size_row.add_element(map_reset_size_bt)
-
+    map_size_utils_bt_multilayer.add_element(1, map_reset_size_bt)
+    #
+    map_utils_edit_size_row: nd.ND_Container = nd.ND_Container(
+        window=win,
+        elt_id="map_utils_edit_size_row",
+        position=nd.ND_Position_MultiLayer(multilayer=map_size_utils_bt_multilayer, w="100%", h="100%"),
+    )
+    map_size_utils_bt_multilayer.add_element(0, map_utils_edit_size_row)
+    #
 
 
     ### Footer ###
