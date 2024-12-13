@@ -95,6 +95,8 @@ def on_bt_map_size_change_clicked(win: nd.ND_Window) -> None:
     #
     map_reset_size_bt.visible = False
     map_utils_edit_size_row.visible = True
+    #
+    print("DEBUG | change done")
 
 def on_bt_map_size_validate_clicked(win: nd.ND_Window) -> None:
     #

@@ -1184,9 +1184,9 @@ class ND_Elt:
     def visible(self) -> bool:
         #
         if isinstance(self.position, ND_Position_Container):
-            return self.position.container.visible
+            return self._visible and self.position.container.visible
         elif isinstance(self.position, ND_Position_MultiLayer):
-            return self.position.multilayer.visible
+            return self._visible and self.position.multilayer.visible
         else:
             return self._visible
 
@@ -1763,6 +1763,7 @@ class ND_Clickable(ND_Elt):
         super().__init__(window=window, elt_id=elt_id, position=position)
         self.onclick: Optional[Callable] = onclick
         self.state: str = "normal"  # Can be "normal", "hover", or "clicked"
+        self.mouse_bt_down_on_hover: bool = False
         #
         self.active: bool = active
 
@@ -1791,16 +1792,23 @@ class ND_Clickable(ND_Elt):
         elif isinstance(event, nd_event.ND_EventMouseButtonDown):
             if event.button_id == 1:
                 if self.position.rect.contains_point(ND_Point(event.x, event.y)):
+                    #
                     self.state = "clicked"
+                    #
+                    self.mouse_bt_down_on_hover = True
+                else:
+                    self.mouse_bt_down_on_hover = False
         #
         elif isinstance(event, nd_event.ND_EventMouseButtonUp):
             if event.button_id == 1:
                 #
                 self.state = "hover" if self.position.rect.contains_point(ND_Point(event.x, event.y)) else "normal"
                 #
-                if self.state == "hover":
+                if self.state == "hover" and self.mouse_bt_down_on_hover:
                     if self.onclick:
                         self.onclick(self.window)
+            #
+            self.mouse_bt_down_on_hover = False
 
 
 # ND_Rectangle class implementation
