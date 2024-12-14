@@ -2402,6 +2402,10 @@ class ND_LineEdit(ND_Elt):
         hover_fg_color: Optional[ND_Color] = None,
         clicked_bg_color: Optional[ND_Color] = None,
         clicked_fg_color: Optional[ND_Color] = None,
+        characters_restrictions: Optional[set[str]] = None,
+        password_mode: bool = False,
+        on_line_edit_validated: Optional[Callable[["ND_LineEdit", str], None]] = None,
+        on_line_edit_escaped: Optional[Callable[["ND_LineEdit"], None]] = None
     ) -> None:
         super().__init__(window=window, elt_id=elt_id, position=position)
         self.state: str = "normal"
@@ -2422,6 +2426,10 @@ class ND_LineEdit(ND_Elt):
         self.cursor_height: int = self.font_size
         self.focused: bool = False
         self.max_text_length: int = max_text_length
+        self.characters_restrictions: Optional[set[str]] = characters_restrictions   # Do not accept others character that theses
+        self.password_mode: bool = password_mode
+        self.on_line_edit_validated: Optional[Callable[[ND_LineEdit, str], None]] = on_line_edit_validated
+        self.on_line_edit_escaped: Optional[Callable[[ND_LineEdit], None]] = on_line_edit_escaped
 
         # Scrollbar-related
         self.scrollbar_height: int = 10
@@ -2431,8 +2439,14 @@ class ND_LineEdit(ND_Elt):
             window = self.window,
             elt_id = f"scrollbar_{self.elt_id}",
             position = ND_Position(self.x, self.y + self.h - self.scrollbar_height, self.w, self.scrollbar_height),
-            content_width = len(self.text if self.text else self.place_holder) * self.font_size
+            content_width = self.window.get_text_size_with_font(self.text, self.font_size, self.font_name).x
         )
+
+    #
+    def set_text(self, txt: str) -> None:
+        #
+        self.text = txt
+        self.cursor = len(self.text)
 
     #
     def render(self) -> None:
@@ -2496,6 +2510,18 @@ class ND_LineEdit(ND_Elt):
             self.scrollbar.render()
 
     #
+    def write(self, char: str) -> None:
+        #
+        if self.max_text_length > 0 and len(self.text) + len(char) >= self.max_text_length:
+            return
+        #
+        self.text +=self.text[: self.cursor] + char + self.text[self.cursor :]
+        self.cursor += len(char)
+        #
+        self.full_text_width = self.window.get_text_size_with_font(self.text, self.font_size, self.font_name).x
+        self.scrollbar.content_width = self.full_text_width
+
+    #
     def handle_event(self, event: nd_event.ND_Event) -> None:
         #
         if not self.visible:
@@ -2504,8 +2530,12 @@ class ND_LineEdit(ND_Elt):
         if isinstance(event, nd_event.ND_EventMouse):
             if event.x >= self.x and event.x <= self.x + self.w and event.y >= self.y and event.y <= self.y + self.h:
                 if isinstance(event, nd_event.ND_EventMouseButtonDown):
-                    self.state = "clicked"
-                    self.focused = True
+                    if self.state == "clicked":
+                        # TODO: move the cursor to the closest place possible of the click
+                        pass
+                    else:
+                        self.state = "clicked"
+                        self.focused = True
                 elif isinstance(event, nd_event.ND_EventMouseMotion):
                     self.state = "hover"
             elif isinstance(event, nd_event.ND_EventMouseButtonDown):
@@ -2524,26 +2554,36 @@ class ND_LineEdit(ND_Elt):
             if event.key == "escape":
                 self.state = "normal"
                 self.focused = False
-            if event.key == "backspace" and self.cursor > 0:
+                #
+                if self.on_line_edit_escaped is not None:
+                    self.on_line_edit_escaped(self)
+            elif event.key == "enter":
+                self.state = "normal"
+                self.focused = False
+                #
+                if self.on_line_edit_validated is not None:
+                    self.on_line_edit_validated(self, self.text)
+            #
+            elif event.key == "backspace" and self.cursor > 0:
                 self.text = self.text[: self.cursor - 1] + self.text[self.cursor :]
                 self.cursor -= 1
+                self.full_text_width = self.window.get_text_size_with_font(self.text, self.font_size, self.font_name).x
+                self.scrollbar.content_width = self.full_text_width
+            #
             elif event.key == "left arrow" and self.cursor > 0:
                 self.cursor -= 1
+            #
             elif event.key == "right arrow" and self.cursor < len(self.text):
                 self.cursor += 1
-                text_width = len(self.text[:self.cursor]) * self.font_size
+                text_width = self.window.get_text_size_with_font(self.text[:self.cursor], self.font_size, self.font_name).x
                 if text_width - self.scroll_offset > self.w:
                     self.scroll_offset = text_width - self.w
+            #
             elif len(event.key) == 1:
-                if self.max_text_length > 0 and len(self.text) >= self.max_text_length:
-                    return
-                self.text = self.text[: self.cursor] + event.key + self.text[self.cursor :]
-                self.cursor += 1
+                self.write(event.key)
+            #
             elif event.key == "espace":
-                if self.max_text_length > 0 and len(self.text) >= self.max_text_length:
-                    return
-                self.text +=self.text[: self.cursor] + " " + self.text[self.cursor :]
-                self.cursor += 1
+                self.write(" ")
 
             # Update scrollbar position
             if self.full_text_width > self.w:
@@ -2564,7 +2604,46 @@ class ND_Checkbox(ND_Elt):
         #
         self.checked: bool = checked
         #
-        # TODO: ND_Checkbox
+        self.bt_checked: ND_Button = ND_Button(
+            window=self.window,
+            elt_id=f"{self.elt_id}_bt_checked",
+            position=self.position,
+            onclick=self.on_bt_checked_pressed,
+            text="v",
+            # TODO: style
+        )
+        #
+        self.bt_unchecked: ND_Button = ND_Button(
+            window=self.window,
+            elt_id=f"{self.elt_id}_bt_unchecked",
+            position=self.position,
+            onclick=self.on_bt_unchecked_pressed,
+            text="x",
+            # TODO: style
+        )
+
+    #
+    def render(self) -> None:
+        if self.checked:
+            self.bt_checked.render()
+        else:
+            self.bt_unchecked.render()
+
+    #
+    def on_bt_checked_pressed(self, _) -> None:
+        #
+        self.checked = False
+        #
+        self.bt_checked.visible = False
+        self.bt_unchecked.visible = True
+
+    #
+    def on_bt_unchecked_pressed(self, _) -> None:
+        #
+        self.checked = True
+        #
+        self.bt_checked.visible = True
+        self.bt_unchecked.visible = False
 
     #
     def is_checked(self) -> bool:
@@ -2587,16 +2666,181 @@ class ND_NumberInput(ND_Elt):
         #
         super().__init__(window=window, elt_id=elt_id, position=position)
         #
-        self.value: float = value
         self.min_value: float = min_value
         self.max_value: float = max_value
+        self.value = round(clamp(value, self.min_value, self.max_value), self.digits_after_comma)
         self.step: float = step
-        self.digits_ater_comma: int = digits_after_comma
+        self.digits_after_comma: int = digits_after_comma
         #
-        # TODO: ND_NumberInput
+        self.main_row_container: ND_Container = ND_Container(
+            window=self.window,
+            elt_id=f"{self.elt_id}_main_row_container",
+            position=self.position,
+            element_alignment="row"
+        )
+        #
+        self.line_edit: ND_LineEdit = ND_LineEdit(
+            window=self.window,
+            elt_id=f"{self.elt_id}_line_edit",
+            position=ND_Position_Container(w="80%", h="100%", container=self.main_row_container),
+            text=str(self.value),
+            place_holder="value"
+        )
+        self.main_row_container.add_element(self.line_edit)
+        #
+        self.col_bts_container: ND_Container = ND_Container(
+            window=self.window,
+            elt_id=f"{self.elt_id}_col_bts_container",
+            position=ND_Position_Container(w="20%", h="100%", container=self.main_row_container)
+        )
+        self.main_row_container.add_element(self.col_bts_container)
+        #
+        self.bt_up: ND_Button = ND_Button(
+            window=self.window,
+            elt_id=f"{self.elt_id}_main_row_container",
+            position=ND_Position_Container(w="100%", h="50%", container=self.col_bts_container),
+            onclick=None, # TODO
+            text="^"
+        )
+        #
+        self.bt_down: ND_Button = ND_Button(
+            window=self.window,
+            elt_id=f"{self.elt_id}_main_row_container",
+            position=ND_Position_Container(w="100%", h="50%", container=self.col_bts_container),
+            onclick=None, # TODO
+            text="v"
+        )
+
+    #
+    def handle_event(self, event: nd_event.ND_Event) -> None:
+        #
+        self.line_edit.handle_event(event)
+        self.bt_up.handle_event(event)
+        self.bt_down.handle_event(event)
+
+    #
+    def on_bt_up_pressed(self, _) -> None:
+        #
+        new_value: float = self.value + self.step
+        self.value = round(clamp(new_value, self.min_value, self.max_value), self.digits_after_comma)
+        #
+        self.line_edit.set_text(str(self.value))
+
+    #
+    def on_bt_down_pressed(self, _) -> None:
+        #
+        new_value: float = self.value - self.step
+        self.value = round(clamp(new_value, self.min_value, self.max_value), self.digits_after_comma)
+        #
+        self.line_edit.set_text(str(self.value))
+
+    #
+    def on_line_edit_validated(self, _, value: str) -> None:
+        #
+        try:
+            new_value: float = float(self.line_edit.text)
+            self.value = round(clamp(new_value, self.min_value, self.max_value), self.digits_after_comma)
+        except Exception as _:
+            pass
+        finally:
+            self.line_edit.set_text(str(self.value))
+
+    #
+    def on_line_edit_escaped(self, _) -> None:
+        #
+        self.line_edit.set_text(str(self.value))
 
 
 
+# TODO: ND_SelectOptions
+class ND_SelectOptions(ND_Elt):
+    def __init__(
+        self,
+        window: ND_Window,
+        elt_id: str,
+        position: ND_Position,
+        value: str,
+        options: set[str],
+        option_list_buttons_height: int = 300
+    ) -> None:
+        #
+        super().__init__(window=window, elt_id=elt_id, position=position)
+        #
+        self.value: str = value
+        self.options: set[str] = options
+        #
+        self.options_bts: dict[str, ND_Button] = {}
+        #
+        self.state: str = "base"  # "base" or "selection"
+        #
+        # 1st side: the main button to show which element is selected, and if clicked, hide itself and show the 2nd part of it
+        #
+        self.main_button: ND_Button = ND_Button(
+            window=self.window,
+            elt_id=f"{self.elt_id}_main_button",
+            position=self.position,
+            text=self.value,
+            onclick=None # TODO
+        )
+        #
+        # 2nd side: the buttons list to select a new option / see all the available options
+        #
+        self.bts_options_container: ND_Container = ND_Container(
+            window=self.window,
+            elt_id=f"{self.elt_id}_bts_options_container",
+            position=ND_Position(x=self.x, y=self.y, w=self.w, h=option_list_buttons_height)
+        )
+        self.bts_options_container.visible = False
+        #
+        option: str
+        for option in self.options:
+            self.options_bts[option] = ND_Button(
+                window=self.window,
+                elt_id=f"{self.elt_id}_bt_option_{option}",
+                position=ND_Position_Container(w=self.w, h=self.h, container=self.bts_options_container),
+                text=option,
+                onclick=lambda x, option=option: self.on_option_button_clicked(option)
+            )
+            self.bts_options_container.add_element(self.options_bts[option])
+
+    #
+    def set_state_base(self) -> None:
+        #
+        self.state = "base"
+        self.bts_options_container.visible = False
+        self.main_button.visible = True
+
+    #
+    def set_state_selection(self) -> None:
+        #
+        self.state = "selection"
+        self.bts_options_container.visible = True
+        self.main_button.visible = False
+
+    #
+    def handle_event(self, event: nd_event.ND_Event) -> None:
+        #
+        if self.state == "base":
+            self.main_button.handle_event(event)
+        else:
+            self.bts_options_container.handle_event(event)
+            #
+            if isinstance(event, nd_event.ND_EventMouseButtonDown):
+                if not self.bts_options_container.position.rect.contains_point(ND_Point(event.x, event.y)):
+                    self.set_state_base()
+
+    #
+    def on_main_button_clicked(self, _) -> None:
+        #
+        self.set_state_selection()
+
+    #
+    def on_option_button_clicked(self, new_option: str) -> None:
+        #
+        self.value = new_option
+        self.main_button.text = self.value
+        #
+        self.set_state_base()
 
 
 # ND_Container class implementation
