@@ -982,7 +982,7 @@ class ND_Window:
         return ND_Point(0, 0)
 
     #
-    def get_count_of_renderable_chars_fitting_given_width(self, txt: str, given_width: int, font_size: int, font_name: Optional[str] = None) -> Optional[tuple[int, int]]:
+    def get_count_of_renderable_chars_fitting_given_width(self, txt: str, given_width: int, font_size: int, font_name: Optional[str] = None) -> tuple[int, int]:
         #
         return 0, 0
 
@@ -2476,6 +2476,19 @@ class ND_LineEdit(ND_Elt):
         text_color = fg_color if self.text else cl("light gray")
 
         self.full_text_width = self.window.get_text_size_with_font(render_text, self.font_size, self.font_name).x
+
+        #
+        if self.scrollbar.scroll_position > 0:
+            size_hidden: int
+            count_hidden: int
+            size_hidden, count_hidden = self.window.get_count_of_renderable_chars_fitting_given_width(txt=render_text, given_width=int(self.scrollbar.scroll_position), font_name=self.font_name, font_size=self.font_size)
+            #
+            if count_hidden > 0:
+                render_text = render_text[count_hidden:]
+                self.scroll_offset = int(self.scrollbar.scroll_position) - size_hidden
+        else:
+            self.scroll_offset = 0
+
         visible_text = render_text
 
         visible_text_width: int = self.full_text_width
@@ -2512,17 +2525,25 @@ class ND_LineEdit(ND_Elt):
     #
     def write(self, char: str) -> None:
         #
-        if self.max_text_length > 0 and len(self.text) + len(char) >= self.max_text_length:
+        if self.max_text_length > 0 and len(self.text) + len(char) > self.max_text_length:
             return
         #
-        self.text +=self.text[: self.cursor] + char + self.text[self.cursor :]
+        self.text = self.text[: self.cursor] + char + self.text[self.cursor :]
         self.cursor += len(char)
         #
         self.full_text_width = self.window.get_text_size_with_font(self.text, self.font_size, self.font_name).x
         self.scrollbar.content_width = self.full_text_width
 
     #
+    def print_debug_infos(self) -> None:
+        #
+        print(f"\nDEBUG | line_edit={self.elt_id} | visible={self.visible} | focused={self.focused} | text={self.text} | cursor={self.cursor} | full_text_width={self.full_text_width} | scroll_position={self.scrollbar.scroll_position}\n")
+
+    #
     def handle_event(self, event: nd_event.ND_Event) -> None:
+        #
+        if isinstance(event, nd_event.ND_EventKeyDown) and event.key == "F3":
+            self.print_debug_infos()
         #
         if not self.visible:
             return
@@ -2557,7 +2578,7 @@ class ND_LineEdit(ND_Elt):
                 #
                 if self.on_line_edit_escaped is not None:
                     self.on_line_edit_escaped(self)
-            elif event.key == "enter":
+            elif event.key == "return":
                 self.state = "normal"
                 self.focused = False
                 #
@@ -2588,6 +2609,9 @@ class ND_LineEdit(ND_Elt):
             # Update scrollbar position
             if self.full_text_width > self.w:
                 self.scrollbar.scroll_position = self.scroll_offset / (self.full_text_width - self.w)
+            #
+            # print(f"DEBUG | event = {event}")
+            # self.print_debug_infos()
 
 
 # TODO: ND_Checkbox
@@ -2668,9 +2692,9 @@ class ND_NumberInput(ND_Elt):
         #
         self.min_value: float = min_value
         self.max_value: float = max_value
-        self.value = round(clamp(value, self.min_value, self.max_value), self.digits_after_comma)
         self.step: float = step
         self.digits_after_comma: int = digits_after_comma
+        self.value = round(clamp(value, self.min_value, self.max_value), self.digits_after_comma)
         #
         self.main_row_container: ND_Container = ND_Container(
             window=self.window,
@@ -2684,8 +2708,13 @@ class ND_NumberInput(ND_Elt):
             elt_id=f"{self.elt_id}_line_edit",
             position=ND_Position_Container(w="80%", h="100%", container=self.main_row_container),
             text=str(self.value),
-            place_holder="value"
+            place_holder="value",
+            font_name="FreeSans",
+            font_size=24,
+            on_line_edit_escaped=self.on_line_edit_escaped,
+            on_line_edit_validated=self.on_line_edit_validated
         )
+        #
         self.main_row_container.add_element(self.line_edit)
         #
         self.col_bts_container: ND_Container = ND_Container(
@@ -2697,19 +2726,38 @@ class ND_NumberInput(ND_Elt):
         #
         self.bt_up: ND_Button = ND_Button(
             window=self.window,
-            elt_id=f"{self.elt_id}_main_row_container",
+            elt_id=f"{self.elt_id}_bt_up",
             position=ND_Position_Container(w="100%", h="50%", container=self.col_bts_container),
-            onclick=None, # TODO
-            text="^"
+            onclick=self.on_bt_up_pressed, # TODO
+            text="^",
+            font_name="FreeSans",
+            font_size=12
         )
+        self.col_bts_container.add_element(self.bt_up)
         #
         self.bt_down: ND_Button = ND_Button(
             window=self.window,
-            elt_id=f"{self.elt_id}_main_row_container",
+            elt_id=f"{self.elt_id}_bt_down",
             position=ND_Position_Container(w="100%", h="50%", container=self.col_bts_container),
-            onclick=None, # TODO
-            text="v"
+            onclick=self.on_bt_down_pressed, # TODO
+            text="v",
+            font_name="FreeSans",
+            font_size=12
         )
+        self.col_bts_container.add_element(self.bt_down)
+
+    #
+    def update_layout(self) -> None:
+        self.main_row_container.update_layout()
+
+    #
+    def render(self) -> None:
+        #
+        if not self.visible:
+            return
+        #
+        self.main_row_container.render()
+        #
 
     #
     def handle_event(self, event: nd_event.ND_Event) -> None:

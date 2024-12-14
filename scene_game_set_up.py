@@ -77,13 +77,15 @@ def on_bt_map_size_change_clicked(win: nd.ND_Window) -> None:
     map_height_bt: nd.ND_Button = cast(nd.ND_Button, map_height_multilayer.elements_by_id["map_height_bt"])
     #
     map_width_line_edit: nd.ND_LineEdit = cast(nd.ND_LineEdit, map_width_multilayer.elements_by_id["map_width_line_edit"])
-    map_height_line_edit: nd.ND_LineEdit = cast(nd.ND_LineEdit, map_height_multilayer.elements_by_id["map_height_line_edit"])
+    # map_height_line_edit: nd.ND_LineEdit = cast(nd.ND_LineEdit, map_height_multilayer.elements_by_id["map_height_line_edit"])
+    map_height_line_edit: nd.ND_NumberInput = cast(nd.ND_NumberInput, map_height_multilayer.elements_by_id["map_height_line_edit"])
     #
     map_width_bt.visible = False
     map_height_bt.visible = False
     #
     map_width_line_edit.text = map_width_bt.text
-    map_height_line_edit.text = map_height_bt.text
+    # map_height_line_edit.text = map_height_bt.text
+    map_height_line_edit.value = int(map_height_bt.text)
     #
     map_width_line_edit.visible = True
     map_height_line_edit.visible = True
@@ -109,7 +111,8 @@ def on_bt_map_size_validate_clicked(win: nd.ND_Window) -> None:
     map_height_bt: nd.ND_Button = cast(nd.ND_Button, map_height_multilayer.elements_by_id["map_height_bt"])
     #
     map_width_line_edit: nd.ND_LineEdit = cast(nd.ND_LineEdit, map_width_multilayer.elements_by_id["map_width_line_edit"])
-    map_height_line_edit: nd.ND_LineEdit = cast(nd.ND_LineEdit, map_height_multilayer.elements_by_id["map_height_line_edit"])
+    # map_height_line_edit: nd.ND_LineEdit = cast(nd.ND_LineEdit, map_height_multilayer.elements_by_id["map_height_line_edit"])
+    map_height_line_edit: nd.ND_NumberInput = cast(nd.ND_NumberInput, map_height_multilayer.elements_by_id["map_height_line_edit"])
     #
     map_width_bt.visible = True
     map_height_bt.visible = True
@@ -118,12 +121,13 @@ def on_bt_map_size_validate_clicked(win: nd.ND_Window) -> None:
     if not all([c >= '0' and c <= '9' for c in new_w]):
         new_w = "30"
     #
-    new_h: str = map_height_line_edit.text
-    if not all([c >= '0' and c <= '9' for c in new_h]):
-        new_h = "30"
+    new_h: int = map_height_line_edit.value
+    # new_h: str = map_height_line_edit.text
+    # if not all([c >= '0' and c <= '9' for c in new_h]):
+    #     new_h = "30"
     #
     map_width_bt.text = new_w
-    map_height_bt.text = new_h
+    map_height_bt.text = str(new_h)
     #
     win.main_app.global_vars_set("terrain_w", int(new_w))
     win.main_app.global_vars_set("terrain_h", int(new_h))
@@ -139,7 +143,7 @@ def on_bt_map_size_validate_clicked(win: nd.ND_Window) -> None:
 
 
 
-def on_bt_map_size_cancel_clicked(win: nd.ND_Window) -> None:
+def on_bt_map_size_reset_clicked(win: nd.ND_Window) -> None:
     #
     MAIN_WINDOW_ID: int = win.main_app.global_vars_get("MAIN_WINDOW_ID")
     #
@@ -153,7 +157,8 @@ def on_bt_map_size_cancel_clicked(win: nd.ND_Window) -> None:
     map_height_bt: nd.ND_Button = cast(nd.ND_Button, map_height_multilayer.elements_by_id["map_height_bt"])
     #
     map_width_line_edit: nd.ND_LineEdit = cast(nd.ND_LineEdit, map_width_multilayer.elements_by_id["map_width_line_edit"])
-    map_height_line_edit: nd.ND_LineEdit = cast(nd.ND_LineEdit, map_height_multilayer.elements_by_id["map_height_line_edit"])
+    # map_height_line_edit: nd.ND_LineEdit = cast(nd.ND_LineEdit, map_height_multilayer.elements_by_id["map_height_line_edit"])
+    map_height_line_edit: nd.ND_NumberInput = cast(nd.ND_NumberInput, map_height_multilayer.elements_by_id["map_height_line_edit"])
     #
     map_width_bt.visible = True
     map_height_bt.visible = True
@@ -171,7 +176,7 @@ def on_bt_map_size_cancel_clicked(win: nd.ND_Window) -> None:
     map_utils_edit_size_row.visible = False
 
 
-def on_bt_map_size_reset_clicked(win: nd.ND_Window) -> None:
+def on_bt_map_size_cancel_clicked(win: nd.ND_Window) -> None:
     #
     MAIN_WINDOW_ID: int = win.main_app.global_vars_get("MAIN_WINDOW_ID")
     #
@@ -185,7 +190,8 @@ def on_bt_map_size_reset_clicked(win: nd.ND_Window) -> None:
     map_height_bt: nd.ND_Button = cast(nd.ND_Button, map_height_multilayer.elements_by_id["map_height_bt"])
     #
     map_width_line_edit: nd.ND_LineEdit = cast(nd.ND_LineEdit, map_width_multilayer.elements_by_id["map_width_line_edit"])
-    map_height_line_edit: nd.ND_LineEdit = cast(nd.ND_LineEdit, map_height_multilayer.elements_by_id["map_height_line_edit"])
+    # map_height_line_edit: nd.ND_LineEdit = cast(nd.ND_LineEdit, map_height_multilayer.elements_by_id["map_height_line_edit"])
+    map_height_line_edit: nd.ND_NumberInput = cast(nd.ND_NumberInput, map_height_multilayer.elements_by_id["map_height_line_edit"])
     #
     map_width_bt.visible = True
     map_height_bt.visible = True
@@ -410,6 +416,7 @@ def create_game_setup_scene(win: nd.ND_Window) -> None:
         text=str(win.main_app.global_vars_get_default("terrain_h", 30)),
         place_holder="map width",
         font_size=25,
+        font_name="FreeSans",
         max_text_length=3
     )
     map_width_line_edit.visible = False
@@ -443,14 +450,26 @@ def create_game_setup_scene(win: nd.ND_Window) -> None:
     )
     map_height_multilayer.add_element(1, map_height_bt)
     #
-    map_height_line_edit: nd.ND_LineEdit = nd.ND_LineEdit(
+    # map_height_line_edit: nd.ND_LineEdit = nd.ND_LineEdit(
+    #     window=win,
+    #     elt_id="map_height_line_edit",
+    #     position=nd.ND_Position_MultiLayer(multilayer=map_height_multilayer, w="100%", h="100%"),
+    #     text="30",
+    #     place_holder="map height",
+    #     font_size=25,
+    #     font_name="FreeSans",
+    #     max_text_length=3
+    # )
+    #
+    map_height_line_edit: nd.ND_NumberInput = nd.ND_NumberInput(
         window=win,
         elt_id="map_height_line_edit",
         position=nd.ND_Position_MultiLayer(multilayer=map_height_multilayer, w="100%", h="100%"),
-        text="30",
-        place_holder="map height",
-        font_size=25,
-        max_text_length=3
+        value=30,
+        min_value=5,
+        max_value=200,
+        digits_after_comma=0,
+        step=1
     )
     map_height_line_edit.visible = False
     # #

@@ -152,6 +152,9 @@ class ND_Display_SDL_SDLGFX(ND_Display):
         if font not in self.ttf_fonts:
             self.ttf_fonts[font] = {}
         #
+        if font not in self.font_names:
+            return None
+        #
         if font_size < 8:
             font_size = 8
         #
@@ -666,18 +669,23 @@ class ND_Window_SDL_SDLGFX(ND_Window):
         font: Optional[sdlttf.TTF_OpenFont] = self.display.get_font(font_name, font_size)
 
         #
-        if not font:
+        if font is None:
+            print(f"DEBUG ERROR | error : no fonts found with font_name={font_name} and font_size={font_size} ")
             return ND_Point(-1, -1)
-
+        #
+        if sdlttf.TTF_WasInit() == 0:
+            print("DEBUG ERROR | SDL_ttf is not initialized")
+            return ND_Point(-1, -1)
         #
         text_w, text_h = c_int(0), c_int(0)
-        sdlttf.TTF_SizeText(font, txt.encode("utf-8"), byref(text_w), byref(text_h))
+        sdlttf.TTF_SizeUTF8(font, txt.encode("utf-8"), byref(text_w), byref(text_h))
         text_size = [x.value for x in (text_w, text_h)]
+        #
         return ND_Point(*text_size)
 
 
     #
-    def get_count_of_renderable_chars_fitting_given_width(self, txt: str, given_width: int, font_size: int, font_name: Optional[str] = None) -> Optional[tuple[int, int]]:
+    def get_count_of_renderable_chars_fitting_given_width(self, txt: str, given_width: int, font_size: int, font_name: Optional[str] = None) -> tuple[int, int]:
         #
         if font_name is None:
             font_name = self.display.default_font
@@ -689,12 +697,17 @@ class ND_Window_SDL_SDLGFX(ND_Window):
         font: Optional[sdlttf.TTF_OpenFont] = self.display.get_font(font_name, font_size)
 
         #
-        if not font:
-            return None
+        if font is None:
+            print(f"DEBUG ERROR | error : no fonts found with font_name={font_name} and font_size={font_size} ")
+            return -1, -1
 
         #
+        if sdlttf.TTF_WasInit() == 0:
+            print("DEBUG ERROR | SDL_ttf is not initialized")
+            return (-1, -1)
+        #
         extent, count = c_int(0), c_int(0)
-        sdlttf.TTF_SizeText(font, txt.encode("utf-8"), byref(extent), byref(count))
+        sdlttf.TTF_MeasureUTF8(font, txt.encode("utf-8"), byref(extent), byref(count))
         return extent.value, count.value
 
 
