@@ -2694,7 +2694,10 @@ class ND_NumberInput(ND_Elt):
         self.max_value: float = max_value
         self.step: float = step
         self.digits_after_comma: int = digits_after_comma
-        self.value = round(clamp(value, self.min_value, self.max_value), self.digits_after_comma)
+        if self.digits_after_comma > 0:
+            self.value = round(clamp(value, self.min_value, self.max_value), self.digits_after_comma)
+        else:
+            self.value = int(clamp(value, self.min_value, self.max_value))
         #
         self.main_row_container: ND_Container = ND_Container(
             window=self.window,
@@ -2770,7 +2773,11 @@ class ND_NumberInput(ND_Elt):
     def on_bt_up_pressed(self, _) -> None:
         #
         new_value: float = self.value + self.step
-        self.value = round(clamp(new_value, self.min_value, self.max_value), self.digits_after_comma)
+        #
+        if self.digits_after_comma > 0:
+            self.value = round(clamp(new_value, self.min_value, self.max_value), self.digits_after_comma)
+        else:
+            self.value = int(clamp(new_value, self.min_value, self.max_value))
         #
         self.line_edit.set_text(str(self.value))
 
@@ -2778,7 +2785,11 @@ class ND_NumberInput(ND_Elt):
     def on_bt_down_pressed(self, _) -> None:
         #
         new_value: float = self.value - self.step
-        self.value = round(clamp(new_value, self.min_value, self.max_value), self.digits_after_comma)
+        #
+        if self.digits_after_comma > 0:
+            self.value = round(clamp(new_value, self.min_value, self.max_value), self.digits_after_comma)
+        else:
+            self.value = int(clamp(new_value, self.min_value, self.max_value))
         #
         self.line_edit.set_text(str(self.value))
 
@@ -2787,7 +2798,11 @@ class ND_NumberInput(ND_Elt):
         #
         try:
             new_value: float = float(self.line_edit.text)
-            self.value = round(clamp(new_value, self.min_value, self.max_value), self.digits_after_comma)
+            #
+            if self.digits_after_comma > 0:
+                self.value = round(clamp(new_value, self.min_value, self.max_value), self.digits_after_comma)
+            else:
+                self.value = int(clamp(new_value, self.min_value, self.max_value))
         except Exception as _:
             pass
         finally:
