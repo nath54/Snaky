@@ -2867,6 +2867,11 @@ class ND_SelectOptions(ND_Elt):
             self.bts_options_container.add_element(self.options_bts[option])
 
     #
+    def update_layout(self) -> None:
+        #
+        self.bts_options_container.update_layout()
+
+    #
     def set_state_base(self) -> None:
         #
         self.state = "base"
