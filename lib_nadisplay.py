@@ -1641,6 +1641,9 @@ class ND_Scene:
     #
     def handle_event(self, event) -> None:
         #
+        if event.blocked:
+            return
+        #
         if self.on_window_state_test is not None and self.on_window_state_test(self.window.state):
             return
 
@@ -1829,7 +1832,8 @@ class ND_Clickable(ND_Elt):
             elt_id: str,
             position: ND_Position,
             onclick: Optional[Callable] = None,
-            active: bool = True
+            active: bool = True,
+            block_events_below: bool = True
         ) -> None:
 
         #
@@ -1837,11 +1841,15 @@ class ND_Clickable(ND_Elt):
         self.onclick: Optional[Callable] = onclick
         self.state: str = "normal"  # Can be "normal", "hover", or "clicked"
         self.mouse_bt_down_on_hover: bool = False
+        self.block_events_below: bool = block_events_below
         #
         self.active: bool = active
 
     #
     def handle_event(self, event: nd_event.ND_Event) -> None:
+        #
+        if event.blocked:
+            return
         #
         if not self.visible:
             self.state = "normal"
@@ -1878,6 +1886,10 @@ class ND_Clickable(ND_Elt):
                 self.state = "hover" if self.position.rect.contains_point(ND_Point(event.x, event.y)) else "normal"
                 #
                 if self.state == "hover" and self.mouse_bt_down_on_hover:
+                    #
+                    if self.block_events_below:
+                        event.blocked = True
+                    #
                     if self.onclick:
                         self.onclick(self.window)
             #
@@ -2363,6 +2375,9 @@ class ND_H_ScrollBar(ND_Elt):
     #
     def handle_event(self, event: nd_event.ND_Event) -> None:
         #
+        if event.blocked:
+            return
+        #
         if isinstance(event, nd_event.ND_EventMouse):
             #
             if not self.position.rect.contains_point(ND_Point(event.x, event.y)):
@@ -2429,6 +2444,9 @@ class ND_V_ScrollBar(ND_Elt):
 
     #
     def handle_event(self, event: nd_event.ND_Event) -> None:
+        #
+        if event.blocked:
+            return
         #
         if isinstance(event, nd_event.ND_EventMouseButtonDown):
             if event.button_id == 1:
@@ -2606,6 +2624,9 @@ class ND_LineEdit(ND_Elt):
 
     #
     def handle_event(self, event: nd_event.ND_Event) -> None:
+        #
+        if event.blocked:
+            return
         #
         if isinstance(event, nd_event.ND_EventKeyDown) and event.key == "F3":
             self.print_debug_infos()
@@ -2830,6 +2851,9 @@ class ND_NumberInput(ND_Elt):
     #
     def handle_event(self, event: nd_event.ND_Event) -> None:
         #
+        if event.blocked:
+            return
+        #
         self.line_edit.handle_event(event)
         self.bt_up.handle_event(event)
         self.bt_down.handle_event(event)
@@ -2967,6 +2991,9 @@ class ND_SelectOptions(ND_Elt):
 
     #
     def handle_event(self, event: nd_event.ND_Event) -> None:
+        #
+        if event.blocked:
+            return
         #
         if self.state == "base":
             self.main_button.handle_event(event)
@@ -3475,13 +3502,23 @@ class ND_Container(ND_Elt):
     #
     def handle_event(self, event):
         #
+        if event.blocked:
+            return
+        #
         if self.h_scrollbar:
             self.h_scrollbar.handle_event(event)
         if self.v_scrollbar:
             self.v_scrollbar.handle_event(event)
 
         # Propagate events to child elements
-        for element in self.elements:
+        elt_order = range(len(self.elements))
+        #
+        if not self.inverse_z_order:
+            elt_order = elt_order[::-1]
+        #
+        for i in elt_order:
+            #
+            element = self.elements[i]
             if hasattr(element, 'handle_event'):
                 element.handle_event(event)
 
@@ -3525,6 +3562,9 @@ class ND_MultiLayer(ND_Elt):
 
     #
     def handle_event(self, event) -> None:
+        #
+        if event.blocked:
+            return
         #
         for elt in self.elements_by_id.values():
 

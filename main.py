@@ -59,7 +59,7 @@ if __name__ == "__main__":
 
     #
     app.global_vars_set("init_snakes",
-        [SnakePlayerSetting(name="humain1", color_idx=0, init_size=4, skin_idx=1, player_type="human", control_name="zqsd")]
+        [SnakePlayerSetting(name="player1", color_idx=0, init_size=4, skin_idx=1, player_type="human", control_name="zqsd")]
     )
 
     #
