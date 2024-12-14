@@ -191,6 +191,53 @@ class ND_MainApp:
                     self.global_vars_muts[var_name] = Lock()
 
     #
+    def global_vars_list_length(self, var_name: str) -> int:
+        #
+        if var_name in self.global_vars:
+            #
+            return len(self.global_vars[var_name])
+            #
+        else:
+            #
+            return 0
+
+    #
+    def global_vars_list_get_at_idx(self, var_name: str, idx: int) -> Optional[Any]:
+        #
+        if var_name in self.global_vars:
+            #
+            if idx < len(self.global_vars[var_name]):
+                return self.global_vars[var_name][idx]
+            #
+            else:
+                return None
+            #
+        else:
+            #
+            return None
+
+    #
+    def global_vars_list_set_at_idx(self, var_name: str, idx: int, obj_value: Any, if_not_exists: str = "error", if_idx_not_in_list_length: str = "error") -> None:
+        #
+        if var_name in self.global_vars:
+            #
+            with self.global_vars_muts[var_name]:
+                #
+                if idx < len(self.global_vars[var_name]):
+                    self.global_vars[var_name][idx] = obj_value
+                else:
+                    #
+                    if if_idx_not_in_list_length == "error":
+                        #
+                        raise UserWarning("Error, #TODO: complete error message")
+            #
+        else:
+            #
+            if if_not_exists == "error":
+                #
+                raise UserWarning("Error, #TODO: complete error message")
+
+    #
     def global_vars_dict_set(self, var_name: str, dict_key: Any, obj_value: Any, if_not_exists: str = "create") -> None:
         #
         if var_name in self.global_vars:
@@ -209,6 +256,23 @@ class ND_MainApp:
                         dict_key: obj_value
                     }
                     self.global_vars_muts[var_name] = Lock()
+
+    #
+    def global_vars_dict_get(self, var_name: str, dict_key: Any, if_not_exists: str = "none") -> None:
+        #
+        if var_name in self.global_vars:
+            #
+            return self.global_vars[var_name][dict_key]
+            #
+        else:
+            #
+            if if_not_exists == "error":
+                #
+                raise UserWarning("Error, #TODO: complete error message")
+            #
+            elif if_not_exists == "none":
+                #
+                return None
 
     #
     def global_vars_exists(self, var_name: str) -> bool:
@@ -697,7 +761,6 @@ class ND_MainApp:
             # If the frame was rendered faster than the target duration, delay
             if elapsed_time < self.frame_duration_display:
                 self.wait_time_msec(self.frame_duration_display - elapsed_time)
-
 
     #
     def run(self) -> None:
@@ -2185,7 +2248,8 @@ class ND_Button(ND_Clickable):
             hover_bg_texture: Optional[int | str] = None,
             clicked_bg_color: Optional[ND_Color] = None,
             clicked_fg_color: Optional[ND_Color] = None,
-            clicked_bg_texture: Optional[int | str] = None
+            clicked_bg_texture: Optional[int | str] = None,
+            texture_transformations: ND_Transformations = ND_Transformations()
         ) -> None:
 
         #
@@ -2211,6 +2275,7 @@ class ND_Button(ND_Clickable):
         #
         self.base_text_w, self.base_text_h = get_font_size(self.text, self.font_size, font_ratio=0.5)
         #
+        self.texture_transformations: ND_Transformations = texture_transformations
 
     #
     def render(self) -> None:
@@ -2230,13 +2295,13 @@ class ND_Button(ND_Clickable):
         if self.state == "normal":
             bg_color, fg_color, bg_texture = self.base_bg_color, self.base_fg_color, self.base_bg_texture
         elif self.state == "hover":
-            bg_color, fg_color, bg_texture = self.hover_bg_color, self.hover_fg_color, self.hover_bg_texture
+            bg_color, fg_color, bg_texture = self.hover_bg_color, self.hover_fg_color, self.hover_bg_texture if self.hover_bg_texture is not None else self.base_bg_texture
         else:  # clicked
-            bg_color, fg_color, bg_texture = self.clicked_bg_color, self.clicked_fg_color, self.clicked_bg_texture
+            bg_color, fg_color, bg_texture = self.clicked_bg_color, self.clicked_fg_color, self.clicked_bg_texture if self.clicked_bg_texture is not None else self.base_bg_texture
 
         # Drawing the background rect color or texture
         if bg_texture:
-            self.window.render_prepared_texture(bg_texture, x, y, self.w, self.h)
+            self.window.render_prepared_texture(bg_texture, x, y, self.w, self.h, transformations=self.texture_transformations)
         else:
             if not self.border and self.border_radius <= 0:
                 self.window.draw_filled_rect(x, y, self.w, self.h, bg_color)
@@ -2824,15 +2889,20 @@ class ND_SelectOptions(ND_Elt):
         position: ND_Position,
         value: str,
         options: set[str],
-        option_list_buttons_height: int = 300
+        option_list_buttons_height: int = 300,
+        on_value_selected: Optional[Callable[["ND_SelectOptions", str], None]] = None
     ) -> None:
         #
         super().__init__(window=window, elt_id=elt_id, position=position)
+        #
+        self.on_value_selected: Optional[Callable[[ND_SelectOptions, str], None]] = on_value_selected
         #
         self.value: str = value
         self.options: set[str] = options
         #
         self.options_bts: dict[str, ND_Button] = {}
+        #
+        self.option_list_buttons_height: int = option_list_buttons_height
         #
         self.state: str = "base"  # "base" or "selection"
         #
@@ -2843,7 +2913,7 @@ class ND_SelectOptions(ND_Elt):
             elt_id=f"{self.elt_id}_main_button",
             position=self.position,
             text=self.value,
-            onclick=None # TODO
+            onclick=self.on_main_button_clicked
         )
         #
         # 2nd side: the buttons list to select a new option / see all the available options
@@ -2867,7 +2937,17 @@ class ND_SelectOptions(ND_Elt):
             self.bts_options_container.add_element(self.options_bts[option])
 
     #
+    def render(self) -> None:
+        #
+        if self.state == "base":
+            self.main_button.render()
+        else:
+            self.bts_options_container.render()
+
+    #
     def update_layout(self) -> None:
+        #
+        self.bts_options_container.position = ND_Position(x=self.x, y=self.y, w=self.w, h=self.option_list_buttons_height)
         #
         self.bts_options_container.update_layout()
 
@@ -2909,6 +2989,9 @@ class ND_SelectOptions(ND_Elt):
         self.main_button.text = self.value
         #
         self.set_state_base()
+        #
+        if self.on_value_selected is not None:
+            self.on_value_selected(self, self.value)
 
 
 # ND_Container class implementation
@@ -2924,6 +3007,7 @@ class ND_Container(ND_Elt):
             scroll_h: bool = False,
             element_alignment: str = "row_wrap",
             element_alignment_kargs: dict[str, int | float | str | bool] = {},
+            inverse_z_order: bool = False,
             min_space_width_containing_elements: int = 0,
             min_space_height_containing_elements: int = 0,
             scrollbar_w_height: int = 20,
@@ -2946,6 +3030,7 @@ class ND_Container(ND_Elt):
         # If the elements are aligned in a row, a column, a row with wrap, a column with wrap or a grid
         self.element_alignment: str = element_alignment
         self.element_alignment_kargs: dict[str, int | float | str | bool] = element_alignment_kargs
+        self.inverse_z_order: bool = inverse_z_order
 
         # List of contained elements
         self.elements: list[ND_Elt] = []
@@ -3357,7 +3442,14 @@ class ND_Container(ND_Elt):
 
         # Render each element with the scrollbar offsets applied
         elt: ND_Elt
-        for elt in self.elements:
+        rendering_order = range(len(self.elements))
+        #
+        if self.inverse_z_order:
+            rendering_order = rendering_order[::-1]
+        #
+        for i in rendering_order:
+            #
+            elt = self.elements[i]
 
             # Set scroll effect
             elt.position._x -= int(scroll_x)

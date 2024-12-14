@@ -2,21 +2,147 @@
 
 from typing import Optional, cast
 
-from lib_nadisplay_colors import cl, ND_Color, ND_Transformations
-from lib_nadisplay_rects import ND_Point, ND_Position_Margins, ND_Position, ND_Position_Constraints
+from lib_nadisplay_colors import cl, ND_Transformations
+from lib_nadisplay_rects import ND_Point, ND_Position_Margins
 
 import lib_nadisplay as nd
 
-from scene_main_menu import on_bt_click_init_game
+from lib_snake import SnakePlayerSetting
 
+from scene_main_menu import on_bt_click_init_game, controls_names_to_keys, colors_idx_to_colors
 
 
 #
-def add_player_row_to_set_up_player_menu(main_app: nd.ND_MainApp, players_container: Optional[nd.ND_Container]) -> None:
+def on_player_name_escaped(line_edit: nd.ND_LineEdit, player_idx: int, main_app: nd.ND_MainApp) -> None:
+    #
+    player_setting: Optional[SnakePlayerSetting] = main_app.global_vars_list_get_at_idx("init_snakes", player_idx)
+    #
+    if player_setting is None:
+        return
+    #
+    line_edit.text = player_setting.name
 
-    # TODO
-    pass
+#
+def on_player_name_changed(_, new_name: str, player_idx: int, main_app: nd.ND_MainApp) -> None:
+    #
+    player_setting: Optional[SnakePlayerSetting] = main_app.global_vars_list_get_at_idx("init_snakes", player_idx)
+    #
+    if player_setting is None:
+        return
+    #
+    player_setting.name = new_name
+    #
 
+#
+def on_player_color_clicked(bt: nd.ND_Button, player_idx: int, main_app: nd.ND_MainApp) -> None:
+    #
+    player_setting: Optional[SnakePlayerSetting] = main_app.global_vars_list_get_at_idx("init_snakes", player_idx)
+    #
+    if player_setting is None:
+        return
+    #
+    player_setting.color_idx = (player_setting.color_idx + 1) % len(colors_idx_to_colors)
+    #
+    bt.texture_transformations.color_modulation = colors_idx_to_colors[player_setting.color_idx]
+
+#
+def on_player_type_changed(_, new_type: str, player_idx: int, main_app: nd.ND_MainApp) -> None:
+    #
+    player_setting: Optional[SnakePlayerSetting] = main_app.global_vars_list_get_at_idx("init_snakes", player_idx)
+    #
+    if player_setting is None:
+        return
+    #
+    player_setting.player_type = new_type
+
+#
+def on_player_controls_changed(_, new_controls_name: str, player_idx: int, main_app: nd.ND_MainApp) -> None:
+    #
+    player_setting: Optional[SnakePlayerSetting] = main_app.global_vars_list_get_at_idx("init_snakes", player_idx)
+    #
+    if player_setting is None:
+        return
+    #
+    player_setting.control_name = new_controls_name
+
+
+#
+def add_player_row_to_set_up_player_menu(win: nd.ND_Window, players_container: nd.ND_Container, player_lst_idx: int) -> None:
+    #
+    if players_container is None:
+        return
+
+    player_setting: Optional[SnakePlayerSetting] = win.main_app.global_vars_list_get_at_idx("init_snakes", player_lst_idx)
+    #
+    if player_setting is None:
+        return
+
+    #
+    margin_center: ND_Position_Margins = ND_Position_Margins(margin_top="50%", margin_left="50%", margin_right="50%", margin_bottom="50%")
+    #
+    row_elt_id: str = f"player_row_{player_lst_idx}"
+
+    #
+    player_row: nd.ND_Container = nd.ND_Container(
+        window=win,
+        elt_id=row_elt_id,
+        position=nd.ND_Position_Container(w="100%", h=45, container=players_container, position_margins=ND_Position_Margins(margin_top=5, margin_bottom=5))
+    )
+
+    #
+    player_name: nd.ND_LineEdit = nd.ND_LineEdit(
+        window=win,
+        elt_id=f"{row_elt_id}_player_name",
+        position=nd.ND_Position_Container(w="25%", h=40, container=player_row, position_margins=margin_center),
+        text=f"player {player_lst_idx}",
+        place_holder=player_setting.name,
+        max_text_length=20,
+        font_size=20,
+        font_name="FreeSans",
+        on_line_edit_escaped=lambda line_edit, idx=player_lst_idx, main_app=win.main_app: on_player_name_escaped(line_edit, idx, main_app),  # type: ignore
+        on_line_edit_validated=lambda line_edit, new_value, idx=player_lst_idx, main_app=win.main_app: on_player_name_changed(line_edit, new_value, idx, main_app)  # type: ignore
+    )
+    player_row.add_element(player_name)
+
+    #
+    player_type: nd.ND_SelectOptions = nd.ND_SelectOptions(
+        window=win,
+        elt_id=f"{row_elt_id}_player_type",
+        position=nd.ND_Position_Container(w="20%", h=40, container=player_row, position_margins=margin_center),
+        value=player_setting.player_type,
+        options=set(["human", "bot"]),
+        on_value_selected=lambda elt, new_value, idx=player_lst_idx, main_app=win.main_app: on_player_type_changed(elt, new_value, idx, main_app)  # type: ignore
+    )
+    player_row.add_element(player_type)
+
+    #
+    player_icon: nd.ND_Button = nd.ND_Button(
+        window=win,
+        elt_id=f"{row_elt_id}_player_icon",
+        position=nd.ND_Position_Container(w=40, h=40, container=player_row, position_margins=margin_center),
+        onclick=None,
+        text="",
+        base_bg_texture="res/sprites/snake_icon.png",
+        texture_transformations=ND_Transformations(color_modulation=colors_idx_to_colors[player_setting.color_idx])
+    )
+    #
+    player_icon.onclick = lambda win, bt=player_icon, idx=player_lst_idx, main_app=win.main_app: on_player_color_clicked(bt, idx, main_app)  # type: ignore
+    #
+    player_row.add_element(player_icon)
+
+    #
+    player_controls: nd.ND_SelectOptions = nd.ND_SelectOptions(
+        window=win,
+        elt_id=f"{row_elt_id}_player_controls",
+        position=nd.ND_Position_Container(w="10%", h=40, container=player_row, position_margins=margin_center),
+        value=player_setting.control_name,
+        options=set(controls_names_to_keys.keys()),
+        on_value_selected=lambda elt, new_value, idx=player_lst_idx, main_app=win.main_app: on_player_controls_changed(elt, new_value, idx, main_app)  # type: ignore
+    )
+    player_row.add_element(player_controls)
+
+    #
+    players_container.add_element(player_row)
 
 
 
@@ -25,13 +151,19 @@ def on_bt_add_player_button(win: nd.ND_Window) -> None:
     #
     MAIN_WINDOW_ID: int = win.main_app.global_vars_get("MAIN_WINDOW_ID")
     #
-    players_container: Optional[nd.ND_Container] = cast(Optional[nd.ND_Container], win.main_app.get_element(MAIN_WINDOW_ID, "game_setup", "players_containers") )
+    players_container: Optional[nd.ND_Container] = cast(Optional[nd.ND_Container], win.main_app.get_element(MAIN_WINDOW_ID, "game_setup", "players_container") )
     #
-    if not players_container:
+    if players_container is None:
         return
 
-    # TODO
-    pass
+    #
+    cnks: list[str] = list(controls_names_to_keys.keys())
+
+    #
+    n: int = win.main_app.global_vars_list_length("init_snakes")
+    win.main_app.global_vars_list_append("init_snakes", SnakePlayerSetting(name=f"player {n+1}", color_idx=n % len(colors_idx_to_colors), init_size=4, skin_idx=1, player_type="human", control_name=cnks[n % len(cnks)]))
+    #
+    add_player_row_to_set_up_player_menu(win, players_container, n)
 
 
 
@@ -41,7 +173,7 @@ def on_bt_remove_player_button(win: nd.ND_Window, player_idx: int) -> None:
     #
     MAIN_WINDOW_ID: int = win.main_app.global_vars_get("MAIN_WINDOW_ID")
     #
-    players_container: Optional[nd.ND_Container] = cast(Optional[nd.ND_Container], win.main_app.get_element(MAIN_WINDOW_ID, "game_setup", "players_containers") )
+    players_container: Optional[nd.ND_Container] = cast(Optional[nd.ND_Container], win.main_app.get_element(MAIN_WINDOW_ID, "game_setup", "players_container") )
     #
     if not players_container:
         return
@@ -93,6 +225,8 @@ def on_bt_map_size_change_clicked(win: nd.ND_Window) -> None:
     #
     map_reset_size_bt.visible = False
     map_utils_edit_size_row.visible = True
+    #
+
 
 
 def on_bt_map_size_validate_clicked(win: nd.ND_Window) -> None:
@@ -281,12 +415,16 @@ def create_game_setup_scene(win: nd.ND_Window) -> None:
     players_container: nd.ND_Container = nd.ND_Container(
         window=win,
         elt_id="players_container",
-        position=nd.ND_Position_Container(w="100%", h="auto", container=main_container),
-        element_alignment="col"
+        position=nd.ND_Position_Container(w="100%", h="auto", container=main_players_container),
+        element_alignment="col",
+        inverse_z_order=True
     )
     main_players_container.add_element(players_container)
 
     # TODO: add players
+    nb_players_configs: int = win.main_app.global_vars_list_length("init_snakes")
+    for payer_idx in range(nb_players_configs):
+        add_player_row_to_set_up_player_menu(win, players_container, payer_idx)
 
     #
     bt_add_player: nd.ND_Button = nd.ND_Button(
@@ -475,7 +613,8 @@ def create_game_setup_scene(win: nd.ND_Window) -> None:
         window=win,
         elt_id="map_utils_edit_size_row",
         position=nd.ND_Position_MultiLayer(multilayer=map_size_utils_bt_multilayer, w="100%", h="100%"),
-        element_alignment="row"
+        element_alignment="row",
+        overflow_hidden=False
     )
     map_utils_edit_size_row.visible = False
     map_size_utils_bt_multilayer.add_element(0, map_utils_edit_size_row)
@@ -483,7 +622,7 @@ def create_game_setup_scene(win: nd.ND_Window) -> None:
     map_size_change_validate_bt: nd.ND_Button = nd.ND_Button(
         window=win,
         elt_id="map_size_change_validate_bt",
-        position=nd.ND_Position_MultiLayer(multilayer=map_height_multilayer, w=100, h=40, position_margins=ND_Position_Margins(margin_left="50%", margin_top="50%", margin_bottom="50%", margin_right="50%")),
+        position=nd.ND_Position_Container(container=map_utils_edit_size_row, w=100, h=40, position_margins=ND_Position_Margins(margin_left="50%", margin_top="50%", margin_bottom="50%", margin_right="50%")),
         onclick=on_bt_map_size_validate_clicked,
         text="ok"
     )
@@ -492,11 +631,15 @@ def create_game_setup_scene(win: nd.ND_Window) -> None:
     map_size_change_cancel_bt: nd.ND_Button = nd.ND_Button(
         window=win,
         elt_id="map_size_change_cancel_bt",
-        position=nd.ND_Position_MultiLayer(multilayer=map_height_multilayer, w=100, h=40, position_margins=ND_Position_Margins(margin_left="50%", margin_top="50%", margin_bottom="50%", margin_right="50%")),
+        position=nd.ND_Position_Container(container=map_utils_edit_size_row, w=100, h=40, position_margins=ND_Position_Margins(margin_left="50%", margin_top="50%", margin_bottom="50%", margin_right="50%")),
         onclick=on_bt_map_size_cancel_clicked,
         text="cancel"
     )
     map_utils_edit_size_row.add_element(map_size_change_cancel_bt)
+    #
+    print(f"DEBUG1 | map_utils_edit_size_row.position = {map_utils_edit_size_row.position}")
+    print(f"DEBUG2 | map_size_change_validate_bt.position = {map_size_change_validate_bt.position}")
+    print(f"DEBUG3 | map_size_change_cancel_bt.position = {map_size_change_cancel_bt.position}")
 
 
     ### Footer ###

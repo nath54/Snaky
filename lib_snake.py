@@ -1,4 +1,5 @@
 
+from dataclasses import dataclass
 from typing import Optional
 
 import random
@@ -9,7 +10,21 @@ from lib_nadisplay_rects import ND_Point, ND_Position
 import lib_nadisplay as nd
 
 
+#
+@dataclass
+class SnakePlayerSetting:
+    #
+    name: str
+    color_idx: int
+    init_size: int
+    skin_idx: int
+    player_type: str
+    control_name: str
 
+
+
+
+#
 class Snake:
     #
     def __init__(self, pseudo: str, init_position: ND_Point, color: ND_Color, score_elt: nd.ND_Text, map_area: nd.ND_Rect, speed: float, init_direction: ND_Point = ND_Point(1, 0), init_size: int = 4) -> None:

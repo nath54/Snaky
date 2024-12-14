@@ -11,9 +11,30 @@ import math
 import random
 import time
 
-from lib_snake import Snake, create_map1, snake_skin_1, snake_skin_2
+from lib_snake import SnakePlayerSetting, Snake, create_map1, snake_skin_1, snake_skin_2
 
 
+#
+controls_names_to_keys: dict[str, tuple[str, str, str, str]] = {
+    "fleches": ("keydown_up arrow", "keydown_left arrow", "keydown_down arrow", "keydown_right arrow"),
+    "zqsd": ("keydown_z", "keydown_q", "keydown_s", "keydown_d"),
+    "tfgh": ("keydown_t", "keydown_f", "keydown_g", "keydown_h"),
+    "ijkl": ("keydown_i", "keydown_j", "keydown_k", "keydown_l")
+}
+
+
+#
+colors_idx_to_colors: dict[int, ND_Color] = {
+    0: ND_Color(255, 255, 255),
+    1: ND_Color(255, 0, 0),
+    2: ND_Color(0, 255, 0),
+    3: ND_Color(0, 0, 255),
+    4: ND_Color(255, 255, 0),
+    5: ND_Color(255, 0, 255),
+    6: ND_Color(0, 255, 255),
+    7: cl("orange"),
+    8: cl("purple")
+}
 
 
 #
@@ -145,14 +166,13 @@ def on_bt_click_init_game(win: nd.ND_Window) -> None:
     snakes_speed: float = win.main_app.global_vars_get_default("snakes_speed", 0.15) # Time between each snakes update
 
     # Getting Settings
-    # (x, y, cl, size, id, player, (key_up, key_left, key_bottom, key_right))
-    a: Optional[list[tuple[str, ND_Color, int, int, int, str, Optional[tuple[str, str, str, str]]]]] = win.main_app.global_vars_get_optional("init_snakes")
+    a: list[SnakePlayerSetting] = win.main_app.global_vars_get("init_snakes")
     #
-    init_snakes: list[tuple[str, ND_Color, int, int, int, str, Optional[tuple[str, str, str, str]]]] = \
+    init_snakes: list[SnakePlayerSetting] = \
         a if a is not None else [
-            ("humain1", ND_Color(255, 0, 0), 4, 0, 1, "human", ("keydown_z", "keydown_q", "keydown_s", "keydown_d")),
-            ("humain2", ND_Color(0, 255, 0), 4, 0, 1, "human", ("keydown_up arrow", "keydown_left arrow", "keydown_down arrow", "keydown_right arrow")),
-            # ("humain3", ND_Point(TERRAIN_X + TERRAIN_W // 3, TERRAIN_Y + TERRAIN_H //3), ND_Color(0, 0, 255), 4, 0, "human", ("keydown_u", "keydown_h", "keydown_j", "keydown_k"))
+            SnakePlayerSetting(name="humain1", color_idx=0, init_size=4, skin_idx=0, player_type="human", control_name="zqsd"),
+            SnakePlayerSetting(name="humain2", color_idx=1, init_size=4, skin_idx=0, player_type="human", control_name="fleches"),
+            SnakePlayerSetting(name="humain3", color_idx=2, init_size=4, skin_idx=0, player_type="human", control_name="ijkk")
         ]
     #
     nb_init_apples: int = 3
@@ -163,6 +183,7 @@ def on_bt_click_init_game(win: nd.ND_Window) -> None:
     # On nettoie les scorebox des anciennes parties
     trash: list[Optional[nd.ND_Container]] = cast(list[Optional[nd.ND_Container]], game_infos_container.elements)
     game_infos_container.elements = []
+    game_infos_container.elements_by_id = {}
     i: int
     sb: Optional[nd.ND_Container]
     for (i, sb) in enumerate(trash):
@@ -187,8 +208,11 @@ def on_bt_click_init_game(win: nd.ND_Window) -> None:
 
     #
     snk_idx: int
-    snk: tuple[str, ND_Color, int, int, int, str, Optional[tuple[str, str, str, str]]]
+    snk: SnakePlayerSetting
     for (snk_idx, snk) in enumerate(init_snakes):
+
+        #
+        snk_color: ND_Color = colors_idx_to_colors[snk.color_idx]
 
         # Create score box for snake
         scorebox_row: nd.ND_Container = nd.ND_Container(
@@ -205,14 +229,14 @@ def on_bt_click_init_game(win: nd.ND_Window) -> None:
                                                 position=nd.ND_Position_Container("square", "100%", container=scorebox_row),
                                                 base_texture="res/sprites/snake_icon.png")
         #
-        snake_icon.transformations = nd.ND_Transformations(color_modulation=snk[1])
+        snake_icon.transformations = nd.ND_Transformations(color_modulation=snk_color)
         #
         snake_name: nd.ND_Text = nd.ND_Text(window=win,
                                             elt_id=f"snake_{snk_idx}_scorebox_name",
                                             position=nd.ND_Position_Container("50%", "100%", container=scorebox_row, position_margins=ND_Position_Margins(margin_left=15, margin_right=15)),
-                                            text=snk[0],
+                                            text=snk.name,
                                             font_size=28,
-                                            font_color=snk[1],
+                                            font_color=snk_color,
                                             text_h_align="left")
         #
         snake_score: nd.ND_Text = nd.ND_Text(window=win,
@@ -220,7 +244,7 @@ def on_bt_click_init_game(win: nd.ND_Window) -> None:
                                             position=nd.ND_Position_Container("20%", "100%", container=scorebox_row),
                                             text="0",
                                             font_size=28,
-                                            font_color=snk[1],
+                                            font_color=snk_color,
                                             text_h_align="left")
         #
         scorebox_row.add_element(snake_icon)
@@ -232,18 +256,18 @@ def on_bt_click_init_game(win: nd.ND_Window) -> None:
         # Create Snake
         init_pos: ND_Point = init_snake_positions[snk_idx]
         map_area: nd.ND_Rect = maps_areas[0] if map_mode == "together" else maps_areas[snk_idx]
-        snake: Snake = Snake( pseudo=snk[0], init_position=init_pos, color=snk[1], init_size=snk[2], score_elt=snake_score, map_area=map_area, speed=snakes_speed )
+        snake: Snake = Snake( pseudo=snk.name, init_position=init_pos, color=snk_color, init_size=snk.init_size, score_elt=snake_score, map_area=map_area, speed=snakes_speed )
         snake.last_update = time.time()
 
         #
         win.main_app.global_vars_dict_set("snakes", snk_idx, snake)
 
         #
-        if snk[4] == 1:
+        if snk.skin_idx == 1:
             #
             snake_skin_1(win, snake, snk_idx, grid)
         #
-        elif snk[4] == 2:
+        elif snk.skin_idx == 2:
             #
             snake_skin_2(win, snake, snk_idx, grid)
 
@@ -264,18 +288,20 @@ def on_bt_click_init_game(win: nd.ND_Window) -> None:
         grid.set_transformations_to_position(pos_tail, nd.ND_Transformations(rotation=dir_angle))
 
         #
-        if snk[5] == "human" and snk[6] is not None:
+        if snk.player_type == "human" and snk.control_name in controls_names_to_keys:
             #
-            win.main_app.add_function_to_event_fns_queue(snk[6][0],
+            control_keys: tuple[str, str, str, str] = controls_names_to_keys[snk.control_name]
+            #
+            win.main_app.add_function_to_event_fns_queue(control_keys[0],
                 lambda main_app, snk_idx=snk_idx: event_set_snake_direction(main_app, ND_Point(0, -1), snk_idx))
             #
-            win.main_app.add_function_to_event_fns_queue(snk[6][1],
+            win.main_app.add_function_to_event_fns_queue(control_keys[1],
                 lambda main_app, snk_idx=snk_idx: event_set_snake_direction(main_app, ND_Point(-1, 0), snk_idx))
             #
-            win.main_app.add_function_to_event_fns_queue(snk[6][2],
+            win.main_app.add_function_to_event_fns_queue(control_keys[2],
                 lambda main_app, snk_idx=snk_idx: event_set_snake_direction(main_app, ND_Point(0, 1), snk_idx))
             #
-            win.main_app.add_function_to_event_fns_queue(snk[6][3],
+            win.main_app.add_function_to_event_fns_queue(control_keys[3],
                 lambda main_app, snk_idx=snk_idx: event_set_snake_direction(main_app, ND_Point(1, 0), snk_idx))
 
         # TODO: bots

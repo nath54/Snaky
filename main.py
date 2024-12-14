@@ -11,12 +11,12 @@ from lib_nadisplay_sdl import ND_EventsManager_SDL as EventsManagerClass
 # from lib_nadisplay_glfw import ND_EventsManager_GLFW as EventsManagerClass  # Not working at all
 # from lib_nadisplay_pygame import ND_Display_Pygame as DisplayClass, ND_Window_Pygame as WindowClass, ND_EventsManager_Pygame as EventsManagerClass  # Working a little
 
+from lib_snake import SnakePlayerSetting
 
 from scene_main_menu import create_main_menu_scene
 from scene_game import create_game_scene
 from scene_game_end import create_end_menu
 from scene_game_set_up import create_game_setup_scene
-
 
 
 #
@@ -56,6 +56,11 @@ if __name__ == "__main__":
 
     #
     app.global_vars_set("MAIN_WINDOW_ID", 0)
+
+    #
+    app.global_vars_set("init_snakes",
+        [SnakePlayerSetting(name="humain1", color_idx=0, init_size=4, skin_idx=1, player_type="human", control_name="zqsd")]
+    )
 
     #
     create_main_menu_scene(win)
