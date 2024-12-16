@@ -5,6 +5,8 @@ from typing import Optional
 import random
 import math
 
+import numpy as np
+
 from lib_nadisplay_colors import ND_Color, cl
 from lib_nadisplay_rects import ND_Point, ND_Position
 import lib_nadisplay as nd
@@ -44,10 +46,10 @@ class SnakeBot:  # Default base class is full random bot
         #
         possible_directions: list[int] = list(range(len(self.all_directions)))
         # On enlève l'inverse de la dernière direction utilisée
-        idx: int = self.all_directions.index(snake.last_applied_direction)
-        possible_directions.remove(idx)
+        # idx: int = self.all_directions.index(snake.last_applied_direction)
+        # possible_directions.remove(idx)
         #
-        if self.security:
+        if self.security and snake.cases:
             #
             to_remove: list[int] = []
             #
@@ -60,9 +62,6 @@ class SnakeBot:  # Default base class is full random bot
                 #
                 elif grid_elt_id in self.food_ids:  # Nourriture, donc c'est bon
                     continue
-
-                #
-                # print(f"DEBUG | elt_mur méchant = {grid_elt_id}")
 
                 # Sinon, c'est un truc mortel
                 to_remove.append(idx)
@@ -82,9 +81,111 @@ class SnakeBot:  # Default base class is full random bot
             return None
         #
         chosen_direction: int = random.choice(possible_directions)
+        # chosen_direction: int = possible_directions[0]
         #
         return self.all_directions[chosen_direction]
 
+
+#
+class SnakeBot_PerfectButSlowAndBoring(SnakeBot):  # Default base class is full random bot
+    #
+    def __init__(self, main_app: nd.ND_MainApp, security: bool = True) -> None:
+        #
+        super().__init__(main_app=main_app, security=security)
+        #
+        self.state = 0  # 0 : Global direction = droite / 1 = Global direction = gauche
+
+    #
+    def predict_next_direction(self, snake: "Snake", grid: nd.ND_RectGrid, main_app: nd.ND_MainApp) -> Optional[ND_Point]:
+        # Default bot is random
+        possible_directions: list[int] = self.possible_direction(snake, grid, main_app)
+        if not possible_directions:
+            return None
+        #
+        chosen_direction: int = random.choice(possible_directions)
+        #
+        # Idxs:
+        #  0 : ND_Point(1, 0) - droite
+        #  1 : ND_Point(0, 1) - bas
+        #  2 : ND_Point(-1, 0) - gauche
+        #  3 : ND_Point(0, -1) - haut
+        #
+        if snake.last_applied_direction.x != 0:  # Si il allait à droite ou à gauche
+            #
+            if 1 in possible_directions and ( (self.state == 1 and snake.cases[0].y + 3 < main_app.global_vars_get_default("terrain_h", 30)) or (self.state == 0)):
+                chosen_direction = 1
+            elif 3 in possible_directions and ( (self.state == 0 and snake.cases[0].y > 1) or (self.state == 1)):
+                chosen_direction = 3
+        #
+        elif snake.last_applied_direction.y == 1:  # Si il allait en bas
+            #
+            if 1 in possible_directions and ( (self.state == 1 and snake.cases[0].y + 3 < main_app.global_vars_get_default("terrain_h", 30)) or (self.state == 0)):
+                chosen_direction = 1
+            else:
+                #
+                if self.state == 0:
+                    #
+                    if 0 in possible_directions:
+                        chosen_direction = 0
+                    elif 2 in possible_directions:
+                        self.state = 1
+                        chosen_direction = 2
+                #
+                else:
+                    #
+                    if 2 in possible_directions:
+                        chosen_direction = 2
+                    elif 0 in possible_directions:
+                        self.state = 0
+                        chosen_direction = 0
+        #
+        elif snake.last_applied_direction.y == -1:  # Si il allait en haut
+            if 3 in possible_directions and ( (self.state == 0 and snake.cases[0].y > 1) or (self.state == 1)):
+                chosen_direction = 3
+            else:
+                #
+                if self.state == 0:
+                    #
+                    if 0 in possible_directions:
+                        chosen_direction = 0
+                    elif 2 in possible_directions:
+                        self.state = 1
+                        chosen_direction = 2
+                #
+                else:
+                    #
+                    if 2 in possible_directions:
+                        chosen_direction = 2
+                    elif 0 in possible_directions:
+                        self.state = 0
+                        chosen_direction = 0
+        #
+        # print(f"DEBUG | snak_last_dir={snake.last_applied_direction} | dir_poss={possible_directions} | chosen_dir={chosen_direction}")
+        #
+        return self.all_directions[chosen_direction]
+
+
+#
+class SnakeBot_Version1(SnakeBot):
+    #
+    def __init__(self, main_app: nd.ND_MainApp, security: bool = True) -> None:
+        #
+        super().__init__(main_app=main_app, security=security)
+        #
+
+    #
+    def predict_next_direction(self, snake: "Snake", grid: nd.ND_RectGrid, main_app: nd.ND_MainApp) -> Optional[ND_Point]:
+        # Default bot is random
+        possible_directions: list[int] = self.possible_direction(snake, grid, main_app)
+        if not possible_directions:
+            return None
+        #
+
+        # TODO
+        chosen_direction: int = possible_directions[0]
+
+        #
+        return self.all_directions[chosen_direction]
 
 
 
@@ -92,6 +193,8 @@ class SnakeBot:  # Default base class is full random bot
 class Snake:
     #
     def __init__(self, pseudo: str, init_position: ND_Point, color: ND_Color, score_elt: nd.ND_Text, map_area: nd.ND_Rect, speed: float, init_direction: ND_Point = ND_Point(1, 0), init_size: int = 4) -> None:
+        #
+        self.dead: bool = False
         #
         self.color: ND_Color = color
         self.hidding_size: int = init_size  # Taille cachée qu'il faut ajouter au snake quand il avance
@@ -152,7 +255,6 @@ def distribute_points(X: int, Y: int, W: int, H: int, N: int) -> list[ND_Point]:
                 points.append(ND_Point(x + X, y + Y))
 
     return points
-
 
 
 #
@@ -435,6 +537,7 @@ def snake_skin_1(win: nd.ND_Window, snake: Snake, snk_idx: int, grid: nd.ND_Rect
     )
     sprite_body_corner.transformations.color_modulation = snake.color
     snake.sprites["body_corner"] = (sprite_body_corner, grid.add_element_to_grid(sprite_body_corner, []))
+
 
 
 def snake_skin_2(win: nd.ND_Window, snake: Snake, snk_idx: int, grid: nd.ND_RectGrid) -> None:

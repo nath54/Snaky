@@ -92,6 +92,7 @@ def update_physic(main_app: nd.ND_MainApp, delta_time: float) -> None:
     game_pause: float = cast(float, win.main_app.global_vars_get("game_pause"))
     win.main_app.global_vars_set("game_pause", 0)
 
+
     #
     snaks_to_die: list[int] = []
 
@@ -103,144 +104,163 @@ def update_physic(main_app: nd.ND_MainApp, delta_time: float) -> None:
         #
         updates=False
         #
-        for snak_idx, snak in snakes.items():
+        snak_items = list(snakes.items())
+        #
+        for snak_idx, snak in snak_items:
+            #
+            if snak.dead:
+                continue
             #
             snak.last_update += game_pause
             #
-            if now - snak.last_update >= snak.speed:
+            if now - snak.last_update < snak.speed:
+                continue
+
+            #
+            updates = True
+            #
+            snak.last_update += snak.speed
+            #
+            nhp: ND_Point = snak.cases[0] + snak.direction
+            snak.last_applied_direction = snak.direction
+
+            # Test de collision
+            elt_id_col: Optional[int] = grid.get_element_id_at_grid_case(nhp)
+
+            #
+            if elt_id_col is not None:
                 #
-                updates = True
+                foods: list[int] = [food_1_grid_id, food_2_grid_id, food_3_grid_id]
                 #
-                snak.last_update += snak.speed
-                #
-                nhp: ND_Point = snak.cases[0] + snak.direction
-                snak.last_applied_direction = snak.direction
+                fi: int = foods.index(elt_id_col) if elt_id_col in foods else -1
+                if fi != -1:
 
+                    snak.score += fi + 1
+                    snak.score_elt.text = str(snak.score)
+                    snak.hidding_size += 1
 
-                # Test de collision
-                elt_id_col: Optional[int] = grid.get_element_id_at_grid_case(nhp)
+                    # On rajoute une nouvelle pomme
+                    put_new_apple_on_grid(win.main_app, grid, food_1_grid_id, food_2_grid_id, food_3_grid_id, snak.map_area)
 
-                #
-                if elt_id_col is not None:
-                    #
-                    foods: list[int] = [food_1_grid_id, food_2_grid_id, food_3_grid_id]
-                    #
-                    fi: int = foods.index(elt_id_col) if elt_id_col in foods else -1
-                    if fi != -1:
-
-                        snak.score += fi + 1
-                        snak.score_elt.text = str(snak.score)
-                        snak.hidding_size += 1
-
-                        # On rajoute une nouvelle pomme
-                        put_new_apple_on_grid(win.main_app, grid, food_1_grid_id, food_2_grid_id, food_3_grid_id, snak.map_area)
-
-                    else:
-
-                        # COLLISION : Le serpent meurt, on remplace son corps par des murs
-                        pos: nd.ND_Point
-                        for pos in snak.cases:
-                            grid.remove_at_position(pos)
-                            grid.add_element_position(wall_grid_id, pos)
-
-                        #
-                        snaks_to_die.append(snak_idx)
-                        break
-                #
-                dir_angle: int = min(0, snak.direction.x) * 180 + 90 * snak.direction.y
-
-                #
-                snak.cases.insert(0, nhp)
-                snak.cases_angles.insert(0, dir_angle)
-                grid.add_element_position(snak.sprites["head"][1], nhp)
-                grid.set_transformations_to_position(nhp, nd.ND_Transformations(rotation=dir_angle))
-                #
-                if len(snak.cases) > 2:
-                    #
-                    c0: ND_Point = snak.cases[0] - snak.cases[1]
-                    c2: ND_Point = snak.cases[2] - snak.cases[1]
-                    #
-                    grid.remove_at_position(snak.cases[1])
-                    #
-                    if c0.x == c2.x or c0.y == c2.y:
-                        grid.add_element_position(snak.sprites["body"][1], snak.cases[1])
-                    else:
-                        angle: int = 0
-                        #
-                        if c0 == ND_Point(0, -1):
-                            #
-                            if c2 == ND_Point(-1, 0):
-                                angle = 90
-                            #
-                            elif c2 == ND_Point(1, 0):
-                                angle = 180
-                        #
-                        elif c0 == ND_Point(1, 0):
-                            #
-                            if c2 == ND_Point(0, 1):
-                                angle = 270
-                            #
-                            elif c2 == ND_Point(0, -1):
-                                angle = 180
-                        #
-                        elif c0 == ND_Point(0, 1):
-                            #
-                            if c2 == ND_Point(1, 0):
-                                angle = 270
-                        #
-                        elif c0 == ND_Point(-1, 0):
-                            #
-                            if c2 == ND_Point(0, -1):
-                                angle = 90
-                        #
-                        grid.add_element_position(snak.sprites["body_corner"][1], snak.cases[1])
-                        grid.set_transformations_to_position(snak.cases[1], nd.ND_Transformations(rotation=angle))
-
-                #
-                if snak.hidding_size > 0:  # En avancant, le serpent augmente sa taille
-                    #
-                    snak.hidding_size -= 1
-                #
                 else:
-                    #
-                    grid.remove_at_position(snak.cases[-2])
-                    grid.add_element_position(snak.sprites["tail"][1], snak.cases[-2])
-                    #
-                    c0 = snak.cases[-3] - snak.cases[-2]
-                    #
-                    if c0 == ND_Point(1, 0):
-                        grid.set_transformations_to_position(snak.cases[-2], nd.ND_Transformations(rotation=0))
-                    elif c0 == ND_Point(0, 1):
-                        grid.set_transformations_to_position(snak.cases[-2], nd.ND_Transformations(rotation=90))
-                    elif c0 == ND_Point(-1, 0):
-                        grid.set_transformations_to_position(snak.cases[-2], nd.ND_Transformations(rotation=180))
-                    elif c0 == ND_Point(0, -1):
-                        grid.set_transformations_to_position(snak.cases[-2], nd.ND_Transformations(rotation=270))
-                    #
-                    grid.remove_at_position(snak.cases[-1])
-                    grid.set_transformations_to_position(snak.cases[-1], None)
-                    #
-                    snak.cases.pop(-1)
 
+                    # COLLISION : Le serpent meurt, on remplace son corps par des murs
+                    pos: nd.ND_Point
+                    for pos in snak.cases:
+                        grid.remove_at_position(pos)
+                        grid.add_element_position(wall_grid_id, pos)
+
+                    snak.dead = True
+
+                    #
+                    snaks_to_die.append(snak_idx)
+
+                    #
+                    continue
+
+            #
+            dir_angle: int = min(0, snak.direction.x) * 180 + 90 * snak.direction.y
+
+            #
+            snak.cases.insert(0, nhp)
+            snak.cases_angles.insert(0, dir_angle)
+            grid.add_element_position(snak.sprites["head"][1], nhp)
+            grid.set_transformations_to_position(nhp, nd.ND_Transformations(rotation=dir_angle))
+            #
+            if len(snak.cases) > 2:
                 #
-                if snak.bot is not None:
+                c0: ND_Point = snak.cases[0] - snak.cases[1]
+                c2: ND_Point = snak.cases[2] - snak.cases[1]
+                #
+                grid.remove_at_position(snak.cases[1])
+                #
+                if c0.x == c2.x or c0.y == c2.y:
+                    grid.add_element_position(snak.sprites["body"][1], snak.cases[1])
+                else:
+                    angle: int = 0
                     #
-                    new_dir: Optional[ND_Point] = snak.bot.predict_next_direction(snake=snak, grid=grid, main_app=main_app)
+                    if c0 == ND_Point(0, -1):
+                        #
+                        if c2 == ND_Point(-1, 0):
+                            angle = 90
+                        #
+                        elif c2 == ND_Point(1, 0):
+                            angle = 180
                     #
-                    if new_dir is not None:
-                        snak.direction = new_dir
+                    elif c0 == ND_Point(1, 0):
+                        #
+                        if c2 == ND_Point(0, 1):
+                            angle = 270
+                        #
+                        elif c2 == ND_Point(0, -1):
+                            angle = 180
+                    #
+                    elif c0 == ND_Point(0, 1):
+                        #
+                        if c2 == ND_Point(1, 0):
+                            angle = 270
+                    #
+                    elif c0 == ND_Point(-1, 0):
+                        #
+                        if c2 == ND_Point(0, -1):
+                            angle = 90
+                    #
+                    grid.add_element_position(snak.sprites["body_corner"][1], snak.cases[1])
+                    grid.set_transformations_to_position(snak.cases[1], nd.ND_Transformations(rotation=angle))
 
+            #
+            if snak.hidding_size > 0:  # En avancant, le serpent augmente sa taille
+                #
+                snak.hidding_size -= 1
+            #
+            else:
+                #
+                grid.remove_at_position(snak.cases[-2])
+                grid.add_element_position(snak.sprites["tail"][1], snak.cases[-2])
+                #
+                c0 = snak.cases[-3] - snak.cases[-2]
+                #
+                if c0 == ND_Point(1, 0):
+                    grid.set_transformations_to_position(snak.cases[-2], nd.ND_Transformations(rotation=0))
+                elif c0 == ND_Point(0, 1):
+                    grid.set_transformations_to_position(snak.cases[-2], nd.ND_Transformations(rotation=90))
+                elif c0 == ND_Point(-1, 0):
+                    grid.set_transformations_to_position(snak.cases[-2], nd.ND_Transformations(rotation=180))
+                elif c0 == ND_Point(0, -1):
+                    grid.set_transformations_to_position(snak.cases[-2], nd.ND_Transformations(rotation=270))
+                #
+                grid.remove_at_position(snak.cases[-1])
+                grid.set_transformations_to_position(snak.cases[-1], None)
+                #
+                snak.cases.pop(-1)
 
-    #
-    for snak_idx in snaks_to_die:
-        dead_snakes[snak_idx] = snakes[snak_idx]
-        del snakes[snak_idx]
+            #
+            if snak.bot is not None:
+                #
+                new_dir: Optional[ND_Point] = snak.bot.predict_next_direction(snake=snak, grid=grid, main_app=main_app)
+                #
+                if new_dir is not None:
+                    snak.direction = new_dir
 
-    #
-    if len(snakes) == 0:  # Plus de serpents en vie => Partie finie
         #
-        win.state = "end_menu"
+        if snaks_to_die:
+            #
+            for snak_idx in snaks_to_die:
+                if snak_idx <= len(snakes):
+                    dead_snakes[snak_idx] = snakes[snak_idx]
+                    del snakes[snak_idx]
 
+            #
+            snaks_to_die = []
+
+            #
+            if not snakes:  # Plus de serpents en vie => Partie finie
+                #
+                win.state = "end_menu"
+                #
+                updates = False
+                #
+                break
 
 #
 def create_game_scene(win: nd.ND_Window) -> None:

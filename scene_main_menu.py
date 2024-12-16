@@ -11,7 +11,7 @@ import math
 import random
 import time
 
-from lib_snake import SnakePlayerSetting, Snake, SnakeBot, create_map1, snake_skin_1, snake_skin_2
+from lib_snake import SnakePlayerSetting, Snake, SnakeBot, SnakeBot_PerfectButSlowAndBoring, create_map1, snake_skin_1, snake_skin_2
 
 
 #
@@ -163,7 +163,7 @@ def on_bt_click_init_game(win: nd.ND_Window) -> None:
     map_mode: str = win.main_app.global_vars_get_default("map_mode", "together")
     terrain_w: int = win.main_app.global_vars_get_default("terrain_w", 30)
     terrain_h: int = win.main_app.global_vars_get_default("terrain_h", 30)
-    snakes_speed: float = win.main_app.global_vars_get_default("snakes_speed", 0.15) # Time between each snakes update
+    snakes_speed: float = win.main_app.global_vars_get_default("snakes_speed", 0.005) # Time between each snakes update
 
     # Getting Settings
     a: list[SnakePlayerSetting] = win.main_app.global_vars_get("init_snakes")
@@ -327,7 +327,7 @@ def on_bt_click_init_game(win: nd.ND_Window) -> None:
 
         # TODO: bots
         elif snk.player_type == "bot":
-            snake.bot = SnakeBot(main_app=win.main_app)
+            snake.bot = SnakeBot_PerfectButSlowAndBoring(main_app=win.main_app)
 
 
 
