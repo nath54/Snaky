@@ -93,13 +93,13 @@ class SnakeBot_PerfectButSlowAndBoring(SnakeBot):  # Default base class is full 
         #
         super().__init__(main_app=main_app, security=security)
         #
-        self.state = 0  # 0 : Global direction = droite / 1 = Global direction = gauche
+        self.state = 0  # 0 : Global direction = droite, 1 = retour vers la gauche
 
     #
     def predict_next_direction(self, snake: "Snake", grid: nd.ND_RectGrid, main_app: nd.ND_MainApp) -> Optional[ND_Point]:
         # Default bot is random
         possible_directions: list[int] = self.possible_direction(snake, grid, main_app)
-        if not possible_directions:
+        if not possible_directions or not snake.cases:
             return None
         #
         chosen_direction: int = random.choice(possible_directions)
@@ -110,57 +110,31 @@ class SnakeBot_PerfectButSlowAndBoring(SnakeBot):  # Default base class is full 
         #  2 : ND_Point(-1, 0) - gauche
         #  3 : ND_Point(0, -1) - haut
         #
-        if snake.last_applied_direction.x != 0:  # Si il allait à droite ou à gauche
-            #
-            if 1 in possible_directions and ( (self.state == 1 and snake.cases[0].y + 3 < main_app.global_vars_get_default("terrain_h", 30)) or (self.state == 0)):
+
+        if snake.cases[0].y <= snake.map_area.y:
+            if 2 in possible_directions:
+                chosen_direction = 2
+        #
+        elif snake.cases[0].x % 2 == 0:  # Case paire, on descend
+            if 1 in possible_directions:
                 chosen_direction = 1
-            elif 3 in possible_directions and ( (self.state == 0 and snake.cases[0].y > 1) or (self.state == 1)):
-                chosen_direction = 3
+            elif 0 in possible_directions:
+                chosen_direction = 0
         #
-        elif snake.last_applied_direction.y == 1:  # Si il allait en bas
+        elif snake.cases[0].x % 2 == 1:  # Case paire, on remonte
             #
-            if 1 in possible_directions and ( (self.state == 1 and snake.cases[0].y + 3 < main_app.global_vars_get_default("terrain_h", 30)) or (self.state == 0)):
-                chosen_direction = 1
+            if snake.cases[0].y - 1 > snake.map_area.y or snake.cases[0].x >= snake.map_area.x + snake.map_area.w - 1:
+                if 3 in possible_directions:
+                    chosen_direction = 3
+                elif 0 in possible_directions:
+                    chosen_direction = 0
+            #
             else:
-                #
-                if self.state == 0:
-                    #
-                    if 0 in possible_directions:
-                        chosen_direction = 0
-                    elif 2 in possible_directions:
-                        self.state = 1
-                        chosen_direction = 2
-                #
-                else:
-                    #
-                    if 2 in possible_directions:
-                        chosen_direction = 2
-                    elif 0 in possible_directions:
-                        self.state = 0
-                        chosen_direction = 0
+                if 0 in possible_directions:
+                    chosen_direction = 0
         #
-        elif snake.last_applied_direction.y == -1:  # Si il allait en haut
-            if 3 in possible_directions and ( (self.state == 0 and snake.cases[0].y > 1) or (self.state == 1)):
-                chosen_direction = 3
-            else:
-                #
-                if self.state == 0:
-                    #
-                    if 0 in possible_directions:
-                        chosen_direction = 0
-                    elif 2 in possible_directions:
-                        self.state = 1
-                        chosen_direction = 2
-                #
-                else:
-                    #
-                    if 2 in possible_directions:
-                        chosen_direction = 2
-                    elif 0 in possible_directions:
-                        self.state = 0
-                        chosen_direction = 0
-        #
-        # print(f"DEBUG | snak_last_dir={snake.last_applied_direction} | dir_poss={possible_directions} | chosen_dir={chosen_direction}")
+
+
         #
         return self.all_directions[chosen_direction]
 

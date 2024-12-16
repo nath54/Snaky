@@ -532,7 +532,7 @@ def create_game_setup_scene(win: nd.ND_Window) -> None:
         elt_id="map_width_bt",
         position=nd.ND_Position_MultiLayer(multilayer=map_width_multilayer, w="100%", h="100%"),
         onclick=on_bt_map_size_change_clicked,
-        text=str(win.main_app.global_vars_get_default("terrain_w", 30))
+        text=str(win.main_app.global_vars_get_default("terrain_w", 29))
     )
     map_width_multilayer.add_element(1, map_width_bt)
     #
@@ -573,7 +573,7 @@ def create_game_setup_scene(win: nd.ND_Window) -> None:
         elt_id="map_height_bt",
         position=nd.ND_Position_MultiLayer(multilayer=map_height_multilayer, w="100%", h="100%"),
         onclick=on_bt_map_size_change_clicked,
-        text="30"
+        text=str(win.main_app.global_vars_get_default("terrain_h", 29))
     )
     map_height_multilayer.add_element(1, map_height_bt)
     #
