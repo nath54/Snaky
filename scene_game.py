@@ -222,6 +222,14 @@ def update_physic(main_app: nd.ND_MainApp, delta_time: float) -> None:
                     #
                     snak.cases.pop(-1)
 
+                #
+                if snak.bot is not None:
+                    #
+                    new_dir: Optional[ND_Point] = snak.bot.predict_next_direction(snake=snak, grid=grid, main_app=main_app)
+                    #
+                    if new_dir is not None:
+                        snak.direction = new_dir
+
 
     #
     for snak_idx in snaks_to_die:

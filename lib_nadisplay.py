@@ -10,6 +10,8 @@ import atexit
 import math
 import random
 
+import numpy as np
+
 import lib_nadisplay_events as nd_event
 from lib_nadisplay_colors import ND_Color, cl, ND_Transformations
 from lib_nadisplay_rects import ND_Rect, ND_Point, ND_Position, ND_Position_Constraints, ND_Position_Margins
@@ -3995,6 +3997,26 @@ class ND_RectGrid(ND_Elt):
     def render(self) -> None:
         # Do nothing here, because it is a camera that have to render
         return
+
+    #
+    def export_chunk_of_grid_to_numpy(self, x_0: int, y_0: int, x_1: int, y_1: int, fn_elt_to_value: Callable[[Optional[ND_Elt], Optional[int]], int | float], np_type: np.dtype = np.float32) -> np.ndarray:
+        #
+        dtx: int = x_1 - x_0
+        dty: int = y_1 - y_0
+        #
+        grid: np.ndarray = np.zeros((dtx, dty), dtype=np_type)
+        #
+        for dx in range(dtx):
+            for dy in range(dty):
+                #
+                case_point: ND_Point = ND_Point(x_0 + dx, y_0 + dy)
+                #
+                elt: Optional[ND_Elt] = self.get_element_at_grid_case(case_point)
+                elt_id: Optional[int] = self.get_element_id_at_grid_case(case_point)
+                #
+                grid[dx, dy] = fn_elt_to_value(elt, elt_id)
+        #
+        return grid
 
 
 #

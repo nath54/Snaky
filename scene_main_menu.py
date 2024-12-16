@@ -11,7 +11,7 @@ import math
 import random
 import time
 
-from lib_snake import SnakePlayerSetting, Snake, create_map1, snake_skin_1, snake_skin_2
+from lib_snake import SnakePlayerSetting, Snake, SnakeBot, create_map1, snake_skin_1, snake_skin_2
 
 
 #
@@ -206,6 +206,27 @@ def on_bt_click_init_game(win: nd.ND_Window) -> None:
 
     win.main_app.global_vars_set("maps_areas", maps_areas)
 
+
+    # Food
+    food_1_elt_name: str = win.main_app.global_vars_get("food_1_elt_name")
+    food_2_elt_name: str = win.main_app.global_vars_get("food_2_elt_name")
+    food_3_elt_name: str = win.main_app.global_vars_get("food_3_elt_name")
+    #
+    food_1_elt: nd.ND_Elt = win.main_app.global_vars_get(food_1_elt_name)
+    food_2_elt: nd.ND_Elt = win.main_app.global_vars_get(food_2_elt_name)
+    food_3_elt: nd.ND_Elt = win.main_app.global_vars_get(food_3_elt_name)
+
+    #
+    food_1_grid_id: int = grid.add_element_to_grid(food_1_elt, [])
+    food_2_grid_id: int = grid.add_element_to_grid(food_2_elt, [])
+    food_3_grid_id: int = grid.add_element_to_grid(food_3_elt, [])
+
+    #
+    win.main_app.global_vars_set("food_1_grid_id", food_1_grid_id)
+    win.main_app.global_vars_set("food_2_grid_id", food_2_grid_id)
+    win.main_app.global_vars_set("food_3_grid_id", food_3_grid_id)
+
+
     #
     snk_idx: int
     snk: SnakePlayerSetting
@@ -305,26 +326,9 @@ def on_bt_click_init_game(win: nd.ND_Window) -> None:
                 lambda main_app, snk_idx=snk_idx: event_set_snake_direction(main_app, ND_Point(1, 0), snk_idx))
 
         # TODO: bots
+        elif snk.player_type == "bot":
+            snake.bot = SnakeBot(main_app=win.main_app)
 
-
-    # Food
-    food_1_elt_name: str = win.main_app.global_vars_get("food_1_elt_name")
-    food_2_elt_name: str = win.main_app.global_vars_get("food_2_elt_name")
-    food_3_elt_name: str = win.main_app.global_vars_get("food_3_elt_name")
-    #
-    food_1_elt: nd.ND_Elt = win.main_app.global_vars_get(food_1_elt_name)
-    food_2_elt: nd.ND_Elt = win.main_app.global_vars_get(food_2_elt_name)
-    food_3_elt: nd.ND_Elt = win.main_app.global_vars_get(food_3_elt_name)
-
-    #
-    food_1_grid_id: int = grid.add_element_to_grid(food_1_elt, [])
-    food_2_grid_id: int = grid.add_element_to_grid(food_2_elt, [])
-    food_3_grid_id: int = grid.add_element_to_grid(food_3_elt, [])
-
-    #
-    win.main_app.global_vars_set("food_1_grid_id", food_1_grid_id)
-    win.main_app.global_vars_set("food_2_grid_id", food_2_grid_id)
-    win.main_app.global_vars_set("food_3_grid_id", food_3_grid_id)
 
 
     # Init Food

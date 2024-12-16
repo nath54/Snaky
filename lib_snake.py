@@ -22,6 +22,70 @@ class SnakePlayerSetting:
     control_name: str
 
 
+#
+class SnakeBot:  # Default base class is full random bot
+    #
+    def __init__(self, main_app: nd.ND_MainApp, security: bool = True) -> None:
+        #
+        self.security: bool = security
+        #
+        self.all_directions: tuple[ND_Point, ND_Point, ND_Point, ND_Point] = (ND_Point(1, 0), ND_Point(0, 1), ND_Point(-1, 0), ND_Point(0, -1))
+        #
+        self.food_ids: set[int] = set()
+
+        # Au moment où des instances de cette classe sont créées, les variables globales sont normalement déjà déterminées
+        self.food_ids.add( main_app.global_vars_get("food_1_grid_id") )
+        self.food_ids.add( main_app.global_vars_get("food_2_grid_id") )
+        self.food_ids.add( main_app.global_vars_get("food_3_grid_id") )
+
+
+    #
+    def possible_direction(self, snake: "Snake", grid: nd.ND_RectGrid, main_app: nd.ND_MainApp) -> list[int]:
+        #
+        possible_directions: list[int] = list(range(len(self.all_directions)))
+        # On enlève l'inverse de la dernière direction utilisée
+        idx: int = self.all_directions.index(snake.last_applied_direction)
+        possible_directions.remove(idx)
+        #
+        if self.security:
+            #
+            to_remove: list[int] = []
+            #
+            for idx in possible_directions:
+                #
+                grid_elt_id: Optional[int] = grid.get_element_id_at_grid_case(snake.cases[0] + self.all_directions[idx])
+                #
+                if grid_elt_id is None or grid_elt_id < 0:  # Case vide
+                    continue
+                #
+                elif grid_elt_id in self.food_ids:  # Nourriture, donc c'est bon
+                    continue
+
+                #
+                # print(f"DEBUG | elt_mur méchant = {grid_elt_id}")
+
+                # Sinon, c'est un truc mortel
+                to_remove.append(idx)
+
+            #
+            for idx in to_remove:
+                #
+                possible_directions.remove(idx)
+        #
+        return possible_directions
+
+    #
+    def predict_next_direction(self, snake: "Snake", grid: nd.ND_RectGrid, main_app: nd.ND_MainApp) -> Optional[ND_Point]:
+        # Default bot is random
+        possible_directions: list[int] = self.possible_direction(snake, grid, main_app)
+        if not possible_directions:
+            return None
+        #
+        chosen_direction: int = random.choice(possible_directions)
+        #
+        return self.all_directions[chosen_direction]
+
+
 
 
 #
@@ -48,6 +112,8 @@ class Snake:
         self.score_elt: nd.ND_Text = score_elt
         #
         self.sprites: dict[str, tuple[nd.ND_AnimatedSprite | nd.ND_Sprite_of_AtlasTexture, int]] = {}
+        #
+        self.bot: Optional[SnakeBot] = None
 
 
 #
