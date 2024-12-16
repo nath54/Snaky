@@ -93,6 +93,12 @@ def update_physic(main_app: nd.ND_MainApp, delta_time: float) -> None:
     win.main_app.global_vars_set("game_pause", 0)
 
 
+    for snak in snakes.values():
+        #
+        snak.last_update += game_pause
+
+
+
     #
     snaks_to_die: list[int] = []
 
@@ -110,8 +116,6 @@ def update_physic(main_app: nd.ND_MainApp, delta_time: float) -> None:
             #
             if snak.dead:
                 continue
-            #
-            snak.last_update += game_pause
             #
             if now - snak.last_update < snak.speed:
                 continue

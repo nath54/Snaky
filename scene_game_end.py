@@ -10,6 +10,7 @@ import lib_nadisplay as nd
 
 from scene_main_menu import on_bt_click_init_game, on_bt_click_quit
 
+from scene_pause_screen import on_bt_go_to_menu
 
 
 #
@@ -50,6 +51,16 @@ def create_end_menu(win: nd.ND_Window) -> None:
     )
 
     #
+    bt_go_to_menu: nd.ND_Button = nd.ND_Button(
+        window=win,
+        elt_id="bt_go_to_menu",
+        position=nd.ND_Position_Container(w=150, h=75, container=bts_container, position_margins=ND_Position_Margins(margin_left="50%", margin_top=25, margin_bottom=25)),
+        onclick=on_bt_go_to_menu,
+        text="Go to menu !",
+        font_size=20
+    )
+
+    #
     bt_replay: nd.ND_Button = nd.ND_Button(
         window=win,
         elt_id="bt_replay",
@@ -70,6 +81,7 @@ def create_end_menu(win: nd.ND_Window) -> None:
     )
 
     #
+    bts_container.add_element(bt_go_to_menu)
     bts_container.add_element(bt_replay)
     bts_container.add_element(bt_quit)
 

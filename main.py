@@ -17,6 +17,7 @@ from scene_main_menu import create_main_menu_scene
 from scene_game import create_game_scene
 from scene_game_end import create_end_menu
 from scene_game_set_up import create_game_setup_scene
+from scene_pause_screen import create_pause_menu
 
 
 #
@@ -67,6 +68,7 @@ if __name__ == "__main__":
     create_game_scene(win)
     create_end_menu(win)
     create_game_setup_scene(win)
+    create_pause_menu(win)
 
     #
     # win.set_fullscreen(2)
