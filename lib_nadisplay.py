@@ -2951,7 +2951,9 @@ class ND_SelectOptions(ND_Elt):
         value: str,
         options: set[str],
         option_list_buttons_height: int = 300,
-        on_value_selected: Optional[Callable[["ND_SelectOptions", str], None]] = None
+        on_value_selected: Optional[Callable[["ND_SelectOptions", str], None]] = None,
+        font_size: int = 24,
+        font_name: Optional[str] = None
     ) -> None:
         #
         super().__init__(window=window, elt_id=elt_id, position=position)
@@ -2974,7 +2976,9 @@ class ND_SelectOptions(ND_Elt):
             elt_id=f"{self.elt_id}_main_button",
             position=self.position,
             text=self.value,
-            onclick=self.on_main_button_clicked
+            onclick=self.on_main_button_clicked,
+            font_name=font_name,
+            font_size=font_size
         )
         #
         # 2nd side: the buttons list to select a new option / see all the available options
@@ -2993,7 +2997,9 @@ class ND_SelectOptions(ND_Elt):
                 elt_id=f"{self.elt_id}_bt_option_{option}",
                 position=ND_Position_Container(w=self.w, h=self.h, container=self.bts_options_container),
                 text=option,
-                onclick=lambda x, option=option: self.on_option_button_clicked(option)
+                onclick=lambda x, option=option: self.on_option_button_clicked(option),
+                font_name=font_name,
+                font_size=font_size
             )
             self.bts_options_container.add_element(self.options_bts[option])
 

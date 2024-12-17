@@ -121,7 +121,8 @@ def create_training_menu_scene(win: nd.ND_Window) -> None:
         window=win,
         elt_id="right_col",
         position=nd.ND_Position_Container(w="50%", h="auto", container=body_row, position_margins=nd.ND_Position_Margins(margin_top=50)),
-        element_alignment="col"
+        element_alignment="col",
+        inverse_z_order=True
     )
     body_row.add_element(right_col)
 
@@ -150,7 +151,8 @@ def create_training_menu_scene(win: nd.ND_Window) -> None:
         position=nd.ND_Position_Container(w=400, h=40, container=row_map_mode),
         value=win.main_app.global_vars_get_default("training_bots_map_mode", "separate_close"),
         options=set(["together", "separate_close", "separate_far"]),
-        option_list_buttons_height=40
+        option_list_buttons_height=40,
+        font_name="FreeSans"
     )
     row_map_mode.add_element(input_map_mode)
 
