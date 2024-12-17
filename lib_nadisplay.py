@@ -677,7 +677,8 @@ class ND_MainApp:
         # While not all threads are done
         while self.threads_ids_not_joined:
             #
-            print(f"Threads to wait :\n  - {'\n  - '.join([str(self.threads_names[t]) for t in list(self.threads_ids_not_joined)])}")
+            spc: str = "\n - "
+            print(f"Threads to wait :\n  - {spc.join([str(self.threads_names[t]) for t in list(self.threads_ids_not_joined)])}")
             #
             with self.threads_condition:
                 #
