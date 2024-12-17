@@ -92,19 +92,17 @@ def update_physic(main_app: nd.ND_MainApp, delta_time: float) -> None:
     game_pause: float = cast(float, win.main_app.global_vars_get("game_pause"))
     win.main_app.global_vars_set("game_pause", 0)
 
-
+    #
+    snak: Snake
     for snak in snakes.values():
         #
         snak.last_update += game_pause
-
-
 
     #
     snaks_to_die: list[int] = []
 
     #
     updates: bool = True
-    snak: Snake
     #
     while updates:
         #

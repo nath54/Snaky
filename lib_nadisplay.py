@@ -2650,6 +2650,9 @@ class ND_LineEdit(ND_Elt):
             elif isinstance(event, nd_event.ND_EventMouseButtonDown):
                 self.state = "normal"
                 self.focused = False
+                #
+                if self.on_line_edit_escaped is not None:
+                    self.on_line_edit_escaped(self)
             else:
                 self.state = "normal"
 
@@ -2902,7 +2905,11 @@ class ND_NumberInput(ND_Elt):
     #
     def on_line_edit_escaped(self, _) -> None:
         #
-        self.line_edit.set_text(str(self.value))
+        value: str = self.line_edit.text
+        #
+        self.on_line_edit_validated(_, value)
+        #
+        # self.line_edit.set_text(str(self.value))
 
 
 

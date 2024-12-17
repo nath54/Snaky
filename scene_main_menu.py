@@ -163,7 +163,7 @@ def on_bt_click_init_game(win: nd.ND_Window) -> None:
     map_mode: str = win.main_app.global_vars_get_default("map_mode", "together")
     terrain_w: int = win.main_app.global_vars_get_default("terrain_w", 29)
     terrain_h: int = win.main_app.global_vars_get_default("terrain_h", 29)
-    snakes_speed: float = win.main_app.global_vars_get_default("snakes_speed", 0.005) # Time between each snakes update
+    snakes_speed: float = win.main_app.global_vars_get_default("snakes_speed", 0.1) # Time between each snakes update
 
     # Getting Settings
     a: list[SnakePlayerSetting] = win.main_app.global_vars_get("init_snakes")
