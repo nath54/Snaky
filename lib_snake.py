@@ -1,6 +1,6 @@
 
 from dataclasses import dataclass
-from typing import Optional
+from typing import Optional, Callable
 
 import random
 import math
@@ -175,7 +175,7 @@ class SnakeBot_Version1(SnakeBot):
 
         context: np.ndarray = np.zeros((self.dim_in, 1), dtype=self.dtype)
 
-        
+
 
         # TODO: fill context
 
@@ -261,6 +261,85 @@ def distribute_points(X: int, Y: int, W: int, H: int, N: int) -> list[ND_Point]:
                 points.append(ND_Point(x + X, y + Y))
 
     return points
+
+
+
+#
+def finish_map_creation(map_mode: str, create_map_square: Callable[[int, int, int, int], None], tx: int, ty: int, nb_snakes: int) -> tuple[list[nd.ND_Rect], list[ND_Point]]:
+    #
+
+    #
+    snak_init_positions: list[ND_Point] = []
+    maps_areas: list[nd.ND_Rect] = []
+
+    #
+    if map_mode == "together":
+        #
+        maps_areas.append( nd.ND_Rect(0, 0, tx, ty) )
+        create_map_square(0, 0, tx, ty)
+        #
+        snak_init_positions = distribute_points(0, 0, tx, ty, nb_snakes)
+
+    #
+    elif map_mode == "separete_far":
+        #
+        maps_row_size: int = math.floor(math.sqrt(nb_snakes))
+        #
+        maps_origin: ND_Point = ND_Point(0, 0)
+        #
+        nb_in_current_row: int = 0
+        #
+        for i in range(nb_snakes):
+            #
+            maps_areas.append( nd.ND_Rect(maps_origin.x, maps_origin.y, tx, ty) )
+            create_map_square(maps_origin.x, maps_origin.y, maps_origin.x+tx, maps_origin.y+ty)
+            snak_init_positions.append(maps_origin + ND_Point(tx//2, ty//2))
+            #
+            nb_in_current_row += 1
+            #
+            if nb_in_current_row >= maps_row_size:
+                #
+                maps_origin.x = 0
+                maps_origin.y += ty*2 + 2
+                nb_in_current_row = 0
+            #
+            else:
+                #
+                maps_origin.x += tx*2 + 2
+
+    #
+    elif map_mode == "separate_close":
+        #
+        maps_row_size = math.floor(math.sqrt(nb_snakes))
+        #
+        maps_origin = ND_Point(0, 0)
+        #
+        nb_in_current_row = 0
+        #
+        for i in range(nb_snakes):
+            #
+            maps_areas.append( nd.ND_Rect(maps_origin.x, maps_origin.y, tx, ty) )
+            create_map_square(maps_origin.x, maps_origin.y, maps_origin.x+tx, maps_origin.y+ty)
+            snak_init_positions.append(maps_origin + ND_Point(tx//2, ty//2))
+            #
+            nb_in_current_row += 1
+            #
+            if nb_in_current_row >= maps_row_size:
+                #
+                maps_origin.x = 0
+                maps_origin.y += ty + 3
+                nb_in_current_row = 0
+            #
+            else:
+                #
+                maps_origin.x += tx + 3
+
+    #
+    print(f"DEBUG || maps_areas = {maps_areas} | snak_init_positions = {snak_init_positions} | nb_snakes = {nb_snakes} | tx = {tx} , ty = {ty}")
+
+    #
+    return maps_areas, snak_init_positions
+
 
 
 #
@@ -361,7 +440,7 @@ def create_map1(win: nd.ND_Window, tx: int, ty: int, map_mode: str, nb_snakes: i
         if sprite_pos_id not in bg_garden_sprites_dict:
             bg_garden_sprites_dict[sprite_pos_id] = create_sprite_of_bg_garden(sprite_pos_id, *SPRITE_POSITIONS[sprite_pos_id])
 
-
+    #
     def create_map_square(map_start_x: int, map_start_y: int, map_end_x: int, map_end_y: int) -> None:
         #
         x: int
@@ -421,34 +500,8 @@ def create_map1(win: nd.ND_Window, tx: int, ty: int, map_mode: str, nb_snakes: i
             grid.add_element_position(wall_grid_id, ND_Point(x, map_start_y-1))
             grid.add_element_position(wall_grid_id, ND_Point(x, map_end_y+1))
 
-
     #
-    snak_init_positions: list[ND_Point] = []
-    maps_areas: list[nd.ND_Rect] = []
-
-    #
-    if map_mode == "together":
-
-        maps_areas.append( nd.ND_Rect(0, 0, tx, ty) )
-
-        create_map_square(0, 0, tx, ty)
-
-        return maps_areas, distribute_points(0, 0, tx, ty, nb_snakes)
-
-
-    #
-    elif map_mode == "separete_far":
-
-        # TODO
-        pass
-
-    elif map_mode == "separate_close":
-
-        # TODO
-        pass
-
-
-    return maps_areas, snak_init_positions
+    return finish_map_creation(map_mode, create_map_square, tx, ty, nb_snakes)
 
 
 #

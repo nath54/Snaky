@@ -51,6 +51,7 @@ def put_new_apple_on_grid(main_app: nd.ND_MainApp, grid: nd.ND_RectGrid, food_1_
         #
         food_grid_id: int = random.choice([food_1_grid_id, food_2_grid_id, food_3_grid_id])
         #
+        grid.set_transformations_to_position(p, ND_Transformations())
         grid.add_element_position(food_grid_id, p)
         #
         main_app.global_vars_list_append("apples_positions", p)

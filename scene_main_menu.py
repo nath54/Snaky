@@ -162,7 +162,7 @@ def on_bt_click_init_game(win: nd.ND_Window) -> None:
         - separate close: All the snakes have their own map, but they can see each others maps
     """
 
-    map_mode: str = win.main_app.global_vars_get_default("map_mode", "together")  # "together", "separate far", "separate close"
+    map_mode: str = win.main_app.global_vars_get_default("map_mode", "together")  # "together", "separate_far", "separate_close"
     terrain_w: int = win.main_app.global_vars_get_default("terrain_w", 29)
     terrain_h: int = win.main_app.global_vars_get_default("terrain_h", 29)
     snakes_speed: float = win.main_app.global_vars_get_default("snakes_speed", 0.1) # Time between each snakes update

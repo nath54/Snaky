@@ -60,7 +60,7 @@ if __name__ == "__main__":
 
     # On peut facilement remplacer quelques paramètres par défaut ici:
     app.global_vars_set("nb_init_apples", 3)
-    app.global_vars_set("map_mode", "together")  # "together", "separate far", "separate close"
+    app.global_vars_set("map_mode", "separate_close")  # "together", "separate_far", "separate_close"
     app.global_vars_set("terrain_w", 25)
     app.global_vars_set("terrain_h", 25)
     app.global_vars_set("snakes_speed", 0.1)
