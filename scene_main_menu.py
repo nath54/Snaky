@@ -3,7 +3,7 @@
 from typing import Optional, cast
 
 from lib_nadisplay_colors import cl, ND_Color
-from lib_nadisplay_rects import ND_Point, ND_Position_Margins, ND_Position_Constraints
+from lib_nadisplay_rects import ND_Point, ND_Rect, ND_Position_Margins, ND_Position_Constraints
 
 import lib_nadisplay as nd
 
@@ -118,8 +118,28 @@ def center_game_camera(main_app: nd.ND_MainApp) -> None:
         #
         else:
 
-            # TODO
-            pass
+            min_x: int = maps_areas[0].x
+            min_y: int = maps_areas[0].y
+            max_x: int = maps_areas[0].x + maps_areas[0].w
+            max_y: int = maps_areas[0].y + maps_areas[0].h
+
+            #
+            marea: ND_Rect
+            for marea in maps_areas:
+                if marea.x < min_x:
+                    min_x = marea.x
+                if marea.y < min_y:
+                    min_y = marea.y
+                if marea.x + marea.w > max_x:
+                    max_x = marea.x + marea.w
+                if marea.y + marea.h > max_y:
+                    max_y = marea.y + marea.h
+
+            #
+            to_rect: ND_Rect = ND_Rect(min_x + 1, min_y + 1, (max_x - min_x) - 1, (max_y - min_y) - 1)
+
+            #
+            cam_grid.move_camera_to_grid_area(to_rect)
 
     #
     elif cam_mode == "follow_player":
@@ -365,6 +385,10 @@ def on_bt_click_quit(win: nd.ND_Window) -> None:
     #
     win.main_app.quit()
 
+#
+def on_bt_click_training_bots(win: nd.ND_Window) -> None:
+    #
+    win.set_state("training_menu")
 
 
 
@@ -431,7 +455,7 @@ def create_main_menu_scene(win: nd.ND_Window) -> None:
         window=win,
         elt_id="bt_train",
         position=nd.ND_Position_Container(w=250, h=100, container=bts_container, position_margins=ND_Position_Margins(margin_left="50%", margin_top=25, margin_bottom=25)),
-        onclick=None,
+        onclick=on_bt_click_training_bots,
         text="Train Bots",
         font_size=35
     )

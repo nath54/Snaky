@@ -207,6 +207,20 @@ class ND_MainApp:
                 raise UserWarning("#TODO: complete error message")
 
     #
+    def global_vars_list_del_at_idx(self, var_name: str, idx: int, if_not_exists: str = "ignore") -> None:
+        #
+        if var_name in self.global_vars:
+            #
+            with self.global_vars_muts[var_name]:
+                #
+                del self.global_vars[var_name][idx]
+            #
+        else:
+            #
+            if not if_not_exists == "error":
+                raise UserWarning("#TODO: complete error message")
+
+    #
     def global_vars_list_length(self, var_name: str) -> int:
         #
         if var_name in self.global_vars:
@@ -2837,7 +2851,7 @@ class ND_NumberInput(ND_Elt):
             window=self.window,
             elt_id=f"{self.elt_id}_bt_up",
             position=ND_Position_Container(w="100%", h="50%", container=self.col_bts_container),
-            onclick=self.on_bt_up_pressed, # TODO
+            onclick=self.on_bt_up_pressed,
             text="^",
             font_name="FreeSans",
             font_size=12
@@ -2848,7 +2862,7 @@ class ND_NumberInput(ND_Elt):
             window=self.window,
             elt_id=f"{self.elt_id}_bt_down",
             position=ND_Position_Container(w="100%", h="50%", container=self.col_bts_container),
-            onclick=self.on_bt_down_pressed, # TODO
+            onclick=self.on_bt_down_pressed,
             text="v",
             font_name="FreeSans",
             font_size=12
@@ -2925,7 +2939,6 @@ class ND_NumberInput(ND_Elt):
         self.on_line_edit_validated(_, value)
         #
         # self.line_edit.set_text(str(self.value))
-
 
 
 # TODO: ND_SelectOptions
@@ -3105,7 +3118,7 @@ class ND_Container(ND_Elt):
         self.min_space_height_containing_elements: int = min_space_height_containing_elements
 
     #
-    def add_element(self, element: ND_Elt):
+    def add_element(self, element: ND_Elt) -> None:
         #
         if element.elt_id in self.elements_by_id:
             raise IndexError(f"Error: Trying to add an element with id {element.elt_id} in container {self.elt_id}, but there was already an element with the same id in there!")
@@ -3119,7 +3132,31 @@ class ND_Container(ND_Elt):
             element.update_layout()
 
     #
-    def update_layout(self):
+    def remove_element(self, element: ND_Elt) -> None:
+        #
+        if element.elt_id not in self.elements_by_id:
+            raise IndexError(f"Error: Trying to remove an element with id {element.elt_id} in container {self.elt_id}, but there aren't such elements in there !")
+        #
+        self.elements.remove(element)
+        del self.elements_by_id[element.elt_id]
+        #
+        self.update_layout()
+
+    #
+    def remove_element_from_elt_id(self, elt_id: str) -> None:
+        #
+        if elt_id not in self.elements_by_id:
+            raise IndexError(f"Error: Trying to remove an element with id {elt_id} in container {self.elt_id}, but there aren't such elements in there !")
+        #
+        element: ND_Elt = self.elements_by_id[elt_id]
+        #
+        self.elements.remove(element)
+        del self.elements_by_id[element.elt_id]
+        #
+        self.update_layout()
+
+    #
+    def update_layout(self) -> None:
         #
         if self.element_alignment == "row_wrap":
             self._layout_row_wrap()
@@ -3142,8 +3179,8 @@ class ND_Container(ND_Elt):
             if self.content_width > self.w:
                 if not self.h_scrollbar:
                     self.h_scrollbar = ND_H_ScrollBar(self.window, f"{self.elt_id}_hscroll",
-                                                    ND_Position(self.x, self.y + self.h - self.scrollbar_w_height, self.w, self.scrollbar_w_height),
-                                                    self.content_width)
+                                                      ND_Position(self.x, self.y + self.h - self.scrollbar_w_height, self.w, self.scrollbar_w_height),
+                                                      self.content_width)
                 else:
                     self.h_scrollbar.content_width = self.content_width
                     self.h_scrollbar.position.set_w(self.w)

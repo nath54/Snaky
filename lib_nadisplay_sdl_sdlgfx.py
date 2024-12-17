@@ -257,6 +257,9 @@ class ND_Window_SDL_SDLGFX(ND_Window):
         super().__init__(display=display, window_id=window_id, init_state=init_state)
 
         #
+        self.clip_rect_stack: list[sdl2.SDL_Rect] = []
+
+        #
         if isinstance(size, str):
             #
             infos: Optional[sdl2.SDL_DisplayMode] = get_display_info()
@@ -892,14 +895,29 @@ class ND_Window_SDL_SDLGFX(ND_Window):
         # Define a clipping area
         clip_rect: sdl2.SDL_Rect = sdl2.SDL_Rect(x, y, width, height)
 
+        #
+        self.clip_rect_stack.append(clip_rect)
+
         # Enable clipping area
         sdl2.SDL_RenderSetClipRect(self.renderer, clip_rect)
 
 
     #
     def disable_area_drawing_constraints(self) -> None:
-        # Reset clipping (disable clipping by passing None)
-        sdl2.SDL_RenderSetClipRect(self.renderer, None)
+
+        #
+        self.clip_rect_stack.pop(-1)
+
+        #
+        if not self.clip_rect_stack:
+
+            # Reset clipping (disable clipping by passing None)
+            sdl2.SDL_RenderSetClipRect(self.renderer, None)
+
+        else:
+
+            # If there was another clip rect
+            sdl2.SDL_RenderSetClipRect(self.renderer, self.clip_rect_stack[-1])
 
 
     #

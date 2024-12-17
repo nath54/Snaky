@@ -170,17 +170,39 @@ def on_bt_add_player_button(win: nd.ND_Window) -> None:
 
 
 #
-def on_bt_remove_player_button(win: nd.ND_Window, player_idx: int) -> None:
+def on_bt_remove_player_button(win: nd.ND_Window) -> None:
     #
     MAIN_WINDOW_ID: int = win.main_app.global_vars_get("MAIN_WINDOW_ID")
     #
     players_container: Optional[nd.ND_Container] = cast(Optional[nd.ND_Container], win.main_app.get_element(MAIN_WINDOW_ID, "game_setup", "players_container") )
     #
-    if not players_container:
+    if players_container is None:
+        return
+    #
+    n: int = win.main_app.global_vars_list_length("init_snakes")
+
+    #
+    if n <= 1:
         return
 
-    # TODO
-    pass
+    #
+    win.main_app.global_vars_list_del_at_idx("init_snakes", n-1)
+
+    #
+    row_elt_id: str = f"player_row_{n-1}"
+
+    #
+    row_elt: Optional[nd.ND_Container] = cast(Optional[nd.ND_Container], win.main_app.get_element(MAIN_WINDOW_ID, "game_setup", row_elt_id) )
+
+    #
+    if not row_elt:
+        return
+
+    #
+    players_container.remove_element(row_elt)
+
+    # TODO: assure that row_elt is well destroyed properly
+
 
 
 #
@@ -398,7 +420,7 @@ def create_game_setup_scene(win: nd.ND_Window) -> None:
     main_players_container: nd.ND_Container = nd.ND_Container(
         window=win,
         elt_id="main_players_container",
-        position=nd.ND_Position_Container(w="45%", h="95%", container=main_container, position_margins=ND_Position_Margins(margin_left="50%", margin_top="50%", margin_bottom="50%", margin_right="50%")),
+        position=nd.ND_Position_Container(w="45%", h="75%", container=main_container, position_margins=ND_Position_Margins(margin_left="50%", margin_top="50%", margin_bottom="50%", margin_right="50%")),
         element_alignment="col"
     )
     mid_container.add_element(main_players_container)
@@ -416,26 +438,48 @@ def create_game_setup_scene(win: nd.ND_Window) -> None:
     players_container: nd.ND_Container = nd.ND_Container(
         window=win,
         elt_id="players_container",
-        position=nd.ND_Position_Container(w="100%", h="auto", container=main_players_container),
+        position=nd.ND_Position_Container(w="100%", h="65%", container=main_players_container),
         element_alignment="col",
-        inverse_z_order=True
+        inverse_z_order=True,
+        overflow_hidden=True,
+        scroll_h=True
     )
     main_players_container.add_element(players_container)
 
-    # TODO: add players
+    #
     nb_players_configs: int = win.main_app.global_vars_list_length("init_snakes")
     for payer_idx in range(nb_players_configs):
         add_player_row_to_set_up_player_menu(win, players_container, payer_idx)
 
     #
+    row_bts_manage_players: nd.ND_Container = nd.ND_Container(
+        window=win,
+        elt_id="row_bts_manage_players",
+        position=nd.ND_Position_Container(w="100%", h="10%", container=main_players_container),
+        overflow_hidden=False,
+        element_alignment="row_wrap"
+    )
+    main_players_container.add_element(row_bts_manage_players)
+
+    #
     bt_add_player: nd.ND_Button = nd.ND_Button(
         window=win,
         elt_id="bt_add_player",
-        position=nd.ND_Position_Container(w="60%", h=30, container=main_players_container, position_margins=ND_Position_Margins(margin_left="50%", margin_top="50%", margin_bottom="50%", margin_right="50%")),
+        position=nd.ND_Position_Container(w="40%", h=30, container=row_bts_manage_players, position_margins=ND_Position_Margins(margin_left="50%", margin_top="50%", margin_bottom="50%", margin_right="50%")),
         onclick=on_bt_add_player_button,
         text="add"
     )
-    main_players_container.add_element(bt_add_player)
+    row_bts_manage_players.add_element(bt_add_player)
+
+    #
+    bt_del_player: nd.ND_Button = nd.ND_Button(
+        window=win,
+        elt_id="bt_del_player",
+        position=nd.ND_Position_Container(w="40%", h=30, container=row_bts_manage_players, position_margins=ND_Position_Margins(margin_left="50%", margin_top="50%", margin_bottom="50%", margin_right="50%")),
+        onclick=on_bt_remove_player_button,
+        text="del"
+    )
+    row_bts_manage_players.add_element(bt_del_player)
 
 
 
@@ -638,10 +682,6 @@ def create_game_setup_scene(win: nd.ND_Window) -> None:
     )
     map_utils_edit_size_row.add_element(map_size_change_cancel_bt)
     #
-    print(f"DEBUG1 | map_utils_edit_size_row.position = {map_utils_edit_size_row.position}")
-    print(f"DEBUG2 | map_size_change_validate_bt.position = {map_size_change_validate_bt.position}")
-    print(f"DEBUG3 | map_size_change_cancel_bt.position = {map_size_change_cancel_bt.position}")
-
 
     ### Footer ###
 

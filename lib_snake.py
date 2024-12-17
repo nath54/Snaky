@@ -299,7 +299,7 @@ class SnakeBot_Version1(SnakeBot):
 #
 class SnakeBot_Version2(SnakeBot):
     #
-    def __init__(self, main_app: nd.ND_MainApp, security: bool = True, radius: int = 3, include_direction_of_apples_to_context: bool = True, random_weights: int = 2) -> None:
+    def __init__(self, main_app: nd.ND_MainApp, security: bool = True, radius: int = 4, include_direction_of_apples_to_context: bool = True, random_weights: int = 2) -> None:
         #
         super().__init__(main_app=main_app, security=security)
         #
@@ -464,7 +464,9 @@ class SnakeBot_Version2(SnakeBot):
         context[a:a+self.random_weights] = np.random.normal(loc=0.0, scale=1.0, size=(self.random_weights,)).astype(self.dtype)
 
         # PREDICTING OUTPUT
-        output: np.ndarray = (context @ self.weigths_1) @ self.weigths_2
+        output: np.ndarray = context @ self.weigths_1  # First Weight matrix multiplication
+        output = output * (output > 0)  # ReLU Gate
+        output = output @ self.weigths_2  # Second Weight matrix multiplication
 
         # CHOOSING BEST DIRECTION FROM OUTPUT PREDICTIONS
         max_chosen_direction: int = possible_directions[0]
@@ -569,7 +571,7 @@ def finish_map_creation(map_mode: str, create_map_square: Callable[[int, int, in
     #
     elif map_mode == "separete_far":
         #
-        maps_row_size: int = math.floor(math.sqrt(nb_snakes))
+        maps_row_size: int = round(math.sqrt(nb_snakes))
         #
         maps_origin: ND_Point = ND_Point(0, 0)
         #
@@ -596,7 +598,7 @@ def finish_map_creation(map_mode: str, create_map_square: Callable[[int, int, in
     #
     elif map_mode == "separate_close":
         #
-        maps_row_size = math.floor(math.sqrt(nb_snakes))
+        maps_row_size = round(math.sqrt(nb_snakes))
         #
         maps_origin = ND_Point(0, 0)
         #
