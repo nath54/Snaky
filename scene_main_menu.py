@@ -11,7 +11,7 @@ import math
 import random
 import time
 
-from lib_snake import SnakePlayerSetting, Snake, SnakeBot, SnakeBot_PerfectButSlowAndBoring, create_map1, snake_skin_1, snake_skin_2
+from lib_snake import SnakePlayerSetting, Snake, SnakeBot, SnakeBot_Version1, SnakeBot_Version2, SnakeBot_PerfectButSlowAndBoring, create_map1, snake_skin_1, snake_skin_2
 
 
 #
@@ -166,15 +166,16 @@ def on_bt_click_init_game(win: nd.ND_Window) -> None:
     terrain_w: int = win.main_app.global_vars_get_default("terrain_w", 29)
     terrain_h: int = win.main_app.global_vars_get_default("terrain_h", 29)
     snakes_speed: float = win.main_app.global_vars_get_default("snakes_speed", 0.1) # Time between each snakes update
+    init_snake_size: int = win.main_app.global_vars_get_default("init_snake_size", 0)  #
 
     # Getting Settings
     a: list[SnakePlayerSetting] = win.main_app.global_vars_get("init_snakes")
     #
     init_snakes: list[SnakePlayerSetting] = \
         a if a is not None else [
-            SnakePlayerSetting(name="humain1", color_idx=0, init_size=4, skin_idx=0, player_type="human", control_name="zqsd"),
-            SnakePlayerSetting(name="humain2", color_idx=1, init_size=4, skin_idx=0, player_type="human", control_name="fleches"),
-            SnakePlayerSetting(name="humain3", color_idx=2, init_size=4, skin_idx=0, player_type="human", control_name="ijkk")
+            SnakePlayerSetting(name="humain1", color_idx=0, init_size=init_snake_size, skin_idx=0, player_type="human", control_name="zqsd"),
+            SnakePlayerSetting(name="humain2", color_idx=1, init_size=init_snake_size, skin_idx=0, player_type="human", control_name="fleches"),
+            SnakePlayerSetting(name="humain3", color_idx=2, init_size=init_snake_size, skin_idx=0, player_type="human", control_name="ijkk")
         ]
     #
     nb_init_apples: int = win.main_app.global_vars_get_default("nb_init_apples", 3)
@@ -329,7 +330,10 @@ def on_bt_click_init_game(win: nd.ND_Window) -> None:
 
         # TODO: bots
         elif snk.player_type == "bot":
-            snake.bot = SnakeBot_PerfectButSlowAndBoring(main_app=win.main_app)
+            # snake.bot = SnakeBot_PerfectButSlowAndBoring(main_app=win.main_app)
+            snake.bot = SnakeBot_Version2(main_app=win.main_app)
+            #
+            # print(f"DEBUG  | Bot name : {snake.bot.name}")
 
 
     # Init Food

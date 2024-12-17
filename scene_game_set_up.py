@@ -161,7 +161,8 @@ def on_bt_add_player_button(win: nd.ND_Window) -> None:
 
     #
     n: int = win.main_app.global_vars_list_length("init_snakes")
-    win.main_app.global_vars_list_append("init_snakes", SnakePlayerSetting(name=f"player {n+1}", color_idx=n % len(colors_idx_to_colors), init_size=4, skin_idx=1, player_type="human", control_name=cnks[n % len(cnks)]))
+    init_snake_size: int = win.main_app.global_vars_get_default("init_snake_size", 0)
+    win.main_app.global_vars_list_append("init_snakes", SnakePlayerSetting(name=f"player {n+1}", color_idx=n % len(colors_idx_to_colors), init_size=init_snake_size, skin_idx=1, player_type="human", control_name=cnks[n % len(cnks)]))
     #
     add_player_row_to_set_up_player_menu(win, players_container, n)
 

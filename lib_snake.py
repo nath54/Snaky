@@ -1,6 +1,6 @@
 
 from dataclasses import dataclass
-from typing import Optional, Callable
+from typing import Optional, Callable, cast
 
 import random
 import math
@@ -141,16 +141,31 @@ class SnakeBot_PerfectButSlowAndBoring(SnakeBot):  # Default base class is full 
 #
 class SnakeBot_Version1(SnakeBot):
     #
-    def __init__(self, main_app: nd.ND_MainApp, security: bool = True, radius: int = 5, direction_of_apples: bool = False) -> None:
+    def __init__(self, main_app: nd.ND_MainApp, security: bool = True, radius: int = 5, include_direction_of_apples_to_context: bool = False, random_weights: int = 3) -> None:
         #
         super().__init__(main_app=main_app, security=security)
         #
-        self.dim_in: int = radius * radius + direction_of_apples * main_app.global_vars_get_default("nb_init_apples", 3)
+        self.grid_tot_size: int = (2*radius ) ** 2
+        #
+        self.random_weights: int = 3
+        #
+        self.dim_in: int = self.grid_tot_size + self.random_weights
+        #
+        self.nb_apples_to_include: int = 0
+        self.include_direction_of_apples_to_context: int = include_direction_of_apples_to_context
+        if include_direction_of_apples_to_context:
+            self.nb_apples_to_include = main_app.global_vars_get_default("nb_init_apples", 3)
+            self.dim_in += 2 * self.nb_apples_to_include
+        #
         self.dim_out: int = 4
         #
         self.dtype: type = np.float32
         #
-        self.weigths: np.ndarray = np.random.normal(loc=0.0, scale=2.0, size=(self.dim_in, self.dim_out)).astype(self.dtype)
+        self.weigths: np.ndarray = np.random.normal(loc=0.0, scale=0.5, size=(self.dim_in, self.dim_out)).astype(self.dtype)
+        #
+        self.radius: int = radius
+        #
+        self.name: str = self.create_name()
 
     #
     def save_weights_to_path(self, path: str) -> None:
@@ -164,34 +179,306 @@ class SnakeBot_Version1(SnakeBot):
         #
         if arr.shape != self.weigths.shape:
             raise UserWarning(f"Error: the matrix from file \"{path}\" has shape {arr.shape} while expected shape was {self.weigths.shape} !")
+        #
+        self.weigths = arr
+        #
+        self.name = self.create_name()
+
+    #
+    def create_name(self) -> str:
+        #
+        name: str = ""
+        #
+        chars: str = "0123456789abcdefgijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ_"
+        one_char_for_nb_params: int = 10
+        #
+        min_vals: float = -3
+        max_vals: float = 3
+        #
+        # points_per_params: int = len(chars) // one_char_for_nb_params
+        #
+        currents_params_batch: list[float] = []
+        #
+        def study_batch() -> None:
+            nonlocal name
+            if not currents_params_batch:
+                return
+
+            # Normalize the batch average to a range [0, len(chars)-1]
+            avg_value: float = sum(currents_params_batch) / len(currents_params_batch)
+            normalized_value: float = max(min(avg_value, max_vals), min_vals)  # Clamp within min_vals and max_vals
+            normalized_index: int = int(((normalized_value - min_vals) / (max_vals - min_vals)) * (len(chars) - 1))
+            #
+            char_for_batch: str = chars[normalized_index]  # Map to a character
+            name += char_for_batch  # Append to the name
+        #
+        i: int = 0
+        for x in range(self.weigths.shape[0]):
+            for y in range(self.weigths.shape[1]):
+                #
+                currents_params_batch.append(self.weigths[x, y])
+                i += 1
+                #
+                if i >= one_char_for_nb_params:
+                    #
+                    study_batch()
+                    i = 0
+                    currents_params_batch = []
+        #
+        if len(currents_params_batch) > 0:
+            study_batch()
+            i = 0
+            currents_params_batch = []
+        #
+        return name
+
+    #
+    def fn_grid_elt_to_matrix_vision_value(self, elt: Optional[nd.ND_Elt], elt_id: Optional[int]) -> float:
+        #
+        # vide = 0, apple = valeur de la pomme (valeur positive), obstacle (mur ou snake) = -2
+        #
+        if elt is None or elt_id is None or elt_id < 0:
+            return 0.0
+        #
+        elif elt_id in self.food_ids:  # TODO: food value?
+            return 1.0
+        #
+        return -1.0
 
     #
     def predict_next_direction(self, snake: "Snake", grid: nd.ND_RectGrid, main_app: nd.ND_MainApp) -> Optional[ND_Point]:
         #
         possible_directions: list[int] = self.possible_direction(snake, grid, main_app)
-        if not possible_directions:
+        if not possible_directions or not snake.cases:
             return None
         #
 
-        context: np.ndarray = np.zeros((self.dim_in, 1), dtype=self.dtype)
+        # CONTEXT INITIALIZATION
+        context: np.ndarray = np.zeros((self.dim_in), dtype=self.dtype)
 
+        # FILLING CONTEXT WITH GRID
+        grid_center: ND_Point = snake.cases[0]
+        grid_x0: int = grid_center.x - self.radius
+        grid_x1: int = grid_center.x + self.radius
+        grid_y0: int = grid_center.y - self.radius
+        grid_y1: int = grid_center.y + self.radius
+        #
+        grid_vision: np.ndarray = grid.export_chunk_of_grid_to_numpy(x_0=grid_x0, y_0=grid_y0, x_1=grid_x1, y_1=grid_y1, fn_elt_to_value=self.fn_grid_elt_to_matrix_vision_value)
+        context[0: self.grid_tot_size] = grid_vision.flatten()
 
+        # FILLING CONTEXT WITH APPLE POSITIONS
+        i_apple: int = 0
+        i_tot_apples: int = 0
+        length_tot_apples: int = main_app.global_vars_list_length("apples_position")
+        #
+        while i_apple < self.nb_apples_to_include and i_tot_apples < length_tot_apples:
+            #
+            current_tot_apples_point: ND_Point = cast(ND_Point, main_app.global_vars_list_get_at_idx("apples_position", i_tot_apples))
+            while i_tot_apples < length_tot_apples and not snake.map_area.contains_point(current_tot_apples_point):
+                i_tot_apples += 1
+            #
+            context[self.grid_tot_size+2*i_apple: self.grid_tot_size+2*(i_apple+1)] = (current_tot_apples_point-grid_center).np_normalize()
 
-        # TODO: fill context
-
+        # PREDICTING OUTPUT
         output: np.ndarray = context @ self.weigths
 
-        #
+        # CHOOSING BEST DIRECTION FROM OUTPUT PREDICTIONS
         max_chosen_direction: int = possible_directions[0]
         max_chosen_direction_value: float = output[possible_directions[0]]
-
+        #
         for i in range(1, len(possible_directions)):
             if output[possible_directions[i]] > max_chosen_direction_value:
                 max_chosen_direction_value = output[possible_directions[i]]
                 max_chosen_direction = possible_directions[i]
 
-        #
+        # RETURNING THE BEST CHOSEN DIRECTION
         return self.all_directions[max_chosen_direction]
+
+
+
+#
+class SnakeBot_Version2(SnakeBot):
+    #
+    def __init__(self, main_app: nd.ND_MainApp, security: bool = True, radius: int = 3, include_direction_of_apples_to_context: bool = True, random_weights: int = 2) -> None:
+        #
+        super().__init__(main_app=main_app, security=security)
+        #
+        self.grid_tot_size: int = (2*radius ) ** 2
+        #
+        self.random_weights: int = random_weights
+        #
+        self.dim_in: int = self.grid_tot_size + self.random_weights
+        #
+        self.nb_apples_to_include: int = 0
+        self.include_direction_of_apples_to_context: int = include_direction_of_apples_to_context
+        if include_direction_of_apples_to_context:
+            self.nb_apples_to_include = main_app.global_vars_get_default("nb_init_apples", 5)
+            self.dim_in += 2 * self.nb_apples_to_include
+        #
+        self.dim_out: int = 4
+        #
+        self.dim_intermediaire: int = 16
+        #
+        self.dtype: type = np.float32
+        #
+        self.weigths_1: np.ndarray = np.random.normal(loc=0.0, scale=3.0, size=(self.dim_in, self.dim_intermediaire)).astype(self.dtype)
+        self.weigths_2: np.ndarray = np.random.normal(loc=0.0, scale=3.0, size=(self.dim_intermediaire, self.dim_out)).astype(self.dtype)
+        #
+        self.radius: int = radius
+        #
+        self.name: str = self.create_name()
+
+    #
+    def save_weights_to_path(self, path: str) -> None:
+        #
+        self.weigths_1.tofile(path+"_1.dat")
+        self.weigths_2.tofile(path+"_2.dat")
+
+    #
+    def load_weights_from_path(self, path: str) -> None:
+        #
+        arr_1: np.ndarray = np.fromfile(path+"_1.dat", dtype=self.dtype)
+        arr_2: np.ndarray = np.fromfile(path+"_2.dat", dtype=self.dtype)
+        #
+        if arr_1.shape != self.weigths_1.shape:
+            raise UserWarning(f"Error: the matrix from file \"{path}_1.dat\" has shape {arr_1.shape} while expected shape was {self.weigths_1.shape} !")
+        #
+        self.weigths_1 = arr_1
+        #
+        if arr_2.shape != self.weigths_2.shape:
+            raise UserWarning(f"Error: the matrix from file \"{path}_2.dat\" has shape {arr_2.shape} while expected shape was {self.weigths_2.shape} !")
+        #
+        self.weigths_2 = arr_2
+        #
+        self.name = self.create_name()
+
+    #
+    def create_name(self) -> str:
+        #
+        name: str = ""
+        #
+        chars: str = "0123456789abcdefgijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ_"
+        one_char_for_nb_params: int = 10
+        #
+        min_vals: float = -3
+        max_vals: float = 3
+        #
+        # points_per_params: int = len(chars) // one_char_for_nb_params
+        #
+        currents_params_batch: list[float] = []
+        #
+        def study_batch() -> None:
+            nonlocal name
+            if not currents_params_batch:
+                return
+
+            # Normalize the batch average to a range [0, len(chars)-1]
+            avg_value: float = sum(currents_params_batch) / len(currents_params_batch)
+            normalized_value: float = max(min(avg_value, max_vals), min_vals)  # Clamp within min_vals and max_vals
+            normalized_index: int = int(((normalized_value - min_vals) / (max_vals - min_vals)) * (len(chars) - 1))
+            #
+            char_for_batch: str = chars[normalized_index]  # Map to a character
+            name += char_for_batch  # Append to the name
+        #
+        i: int = 0
+        for x in range(self.weigths_1.shape[0]):
+            for y in range(self.weigths_1.shape[1]):
+                #
+                currents_params_batch.append(self.weigths_1[x, y])
+                i += 1
+                #
+                if i >= one_char_for_nb_params:
+                    #
+                    study_batch()
+                    i = 0
+                    currents_params_batch = []
+        #
+        for x in range(self.weigths_2.shape[0]):
+            for y in range(self.weigths_2.shape[1]):
+                #
+                currents_params_batch.append(self.weigths_2[x, y])
+                i += 1
+                #
+                if i >= one_char_for_nb_params:
+                    #
+                    study_batch()
+                    i = 0
+                    currents_params_batch = []
+        #
+        if len(currents_params_batch) > 0:
+            study_batch()
+            i = 0
+            currents_params_batch = []
+        #
+        return name
+
+    #
+    def fn_grid_elt_to_matrix_vision_value(self, elt: Optional[nd.ND_Elt], elt_id: Optional[int]) -> float:
+        #
+        # vide = 0, apple = valeur de la pomme (valeur positive), obstacle (mur ou snake) = -2
+        #
+        if elt is None or elt_id is None or elt_id < 0:
+            return 0.0
+        #
+        elif elt_id in self.food_ids:  # TODO: food value?
+            return 1.0
+        #
+        return -1.0
+
+    #
+    def predict_next_direction(self, snake: "Snake", grid: nd.ND_RectGrid, main_app: nd.ND_MainApp) -> Optional[ND_Point]:
+        #
+        possible_directions: list[int] = self.possible_direction(snake, grid, main_app)
+        if not possible_directions or not snake.cases:
+            return None
+        #
+
+        # CONTEXT INITIALIZATION
+        context: np.ndarray = np.zeros((self.dim_in,), dtype=self.dtype)
+
+        # FILLING CONTEXT WITH GRID
+        grid_center: ND_Point = snake.cases[0]
+        grid_x0: int = grid_center.x - self.radius
+        grid_x1: int = grid_center.x + self.radius
+        grid_y0: int = grid_center.y - self.radius
+        grid_y1: int = grid_center.y + self.radius
+        #
+        grid_vision: np.ndarray = grid.export_chunk_of_grid_to_numpy(x_0=grid_x0, y_0=grid_y0, x_1=grid_x1, y_1=grid_y1, fn_elt_to_value=self.fn_grid_elt_to_matrix_vision_value)
+        context[0: self.grid_tot_size] = grid_vision.flatten()
+
+        # FILLING CONTEXT WITH APPLE POSITIONS
+        i_apple: int = 0
+        i_tot_apples: int = 0
+        length_tot_apples: int = main_app.global_vars_list_length("apples_position")
+        #
+        while i_apple < self.nb_apples_to_include and i_tot_apples < length_tot_apples:
+            #
+            current_tot_apples_point: ND_Point = cast(ND_Point, main_app.global_vars_list_get_at_idx("apples_position", i_tot_apples))
+            while i_tot_apples < length_tot_apples and not snake.map_area.contains_point(current_tot_apples_point):
+                i_tot_apples += 1
+            #
+            context[self.grid_tot_size+2*i_apple: self.grid_tot_size+2*(i_apple+1)] = (current_tot_apples_point-grid_center).np_normalize()
+
+        # FILLING RANDOM CONTEXT
+        a: int = self.grid_tot_size+2*(i_apple+1)
+        context[a:a+self.random_weights] = np.random.normal(loc=0.0, scale=1.0, size=(self.random_weights,)).astype(self.dtype)
+
+        # PREDICTING OUTPUT
+        output: np.ndarray = (context @ self.weigths_1) @ self.weigths_2
+
+        # CHOOSING BEST DIRECTION FROM OUTPUT PREDICTIONS
+        max_chosen_direction: int = possible_directions[0]
+        max_chosen_direction_value: float = output[possible_directions[0]]
+        #
+        for i in range(1, len(possible_directions)):
+            if output[possible_directions[i]] > max_chosen_direction_value:
+                max_chosen_direction_value = output[possible_directions[i]]
+                max_chosen_direction = possible_directions[i]
+
+        # RETURNING THE BEST CHOSEN DIRECTION
+        return self.all_directions[max_chosen_direction]
+
+
 
 
 
@@ -261,7 +548,6 @@ def distribute_points(X: int, Y: int, W: int, H: int, N: int) -> list[ND_Point]:
                 points.append(ND_Point(x + X, y + Y))
 
     return points
-
 
 
 #
@@ -335,11 +621,7 @@ def finish_map_creation(map_mode: str, create_map_square: Callable[[int, int, in
                 maps_origin.x += tx + 3
 
     #
-    print(f"DEBUG || maps_areas = {maps_areas} | snak_init_positions = {snak_init_positions} | nb_snakes = {nb_snakes} | tx = {tx} , ty = {ty}")
-
-    #
     return maps_areas, snak_init_positions
-
 
 
 #

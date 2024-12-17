@@ -2,6 +2,8 @@
 from typing import Optional
 from math import sqrt
 
+import numpy as np
+
 from dataclasses import dataclass
 
 
@@ -17,6 +19,7 @@ class ND_Point:
     #
     def __hash__(self) -> int:
         return hash(f"{self.x}_{self.y}")
+
 
     #
     def __repr__(self) -> str:
@@ -61,6 +64,13 @@ class ND_Point:
         #
         return (rect.left <= self.x < rect.right and
                 rect.top <= self.y < rect.bottom)
+
+
+    #
+    def np_normalize(self) -> np.ndarray:
+        #
+        norm: float = self.x + self.y
+        return np.array([self.x / norm, self.y / norm])
 
 
     #
