@@ -40,7 +40,6 @@ class SnakeBot:  # Default base class is full random bot
         self.food_ids.add( main_app.global_vars_get("food_2_grid_id") )
         self.food_ids.add( main_app.global_vars_get("food_3_grid_id") )
 
-
     #
     def possible_direction(self, snake: "Snake", grid: nd.ND_RectGrid, main_app: nd.ND_MainApp) -> list[int]:
         #
@@ -142,24 +141,57 @@ class SnakeBot_PerfectButSlowAndBoring(SnakeBot):  # Default base class is full 
 #
 class SnakeBot_Version1(SnakeBot):
     #
-    def __init__(self, main_app: nd.ND_MainApp, security: bool = True) -> None:
+    def __init__(self, main_app: nd.ND_MainApp, security: bool = True, radius: int = 5, direction_of_apples: bool = False) -> None:
         #
         super().__init__(main_app=main_app, security=security)
         #
+        self.dim_in: int = radius * radius + direction_of_apples * main_app.global_vars_get_default("nb_init_apples", 3)
+        self.dim_out: int = 4
+        #
+        self.dtype: type = np.float32
+        #
+        self.weigths: np.ndarray = np.random.normal(loc=0.0, scale=2.0, size=(self.dim_in, self.dim_out)).astype(self.dtype)
+
+    #
+    def save_weights_to_path(self, path: str) -> None:
+        #
+        self.weigths.tofile(path)
+
+    #
+    def load_weights_from_path(self, path: str) -> None:
+        #
+        arr: np.ndarray = np.fromfile(path, dtype=self.dtype)
+        #
+        if arr.shape != self.weigths.shape:
+            raise UserWarning(f"Error: the matrix from file \"{path}\" has shape {arr.shape} while expected shape was {self.weigths.shape} !")
 
     #
     def predict_next_direction(self, snake: "Snake", grid: nd.ND_RectGrid, main_app: nd.ND_MainApp) -> Optional[ND_Point]:
-        # Default bot is random
+        #
         possible_directions: list[int] = self.possible_direction(snake, grid, main_app)
         if not possible_directions:
             return None
         #
 
-        # TODO
-        chosen_direction: int = possible_directions[0]
+        context: np.ndarray = np.zeros((self.dim_in, 1), dtype=self.dtype)
+
+        
+
+        # TODO: fill context
+
+        output: np.ndarray = context @ self.weigths
 
         #
-        return self.all_directions[chosen_direction]
+        max_chosen_direction: int = possible_directions[0]
+        max_chosen_direction_value: float = output[possible_directions[0]]
+
+        for i in range(1, len(possible_directions)):
+            if output[possible_directions[i]] > max_chosen_direction_value:
+                max_chosen_direction_value = output[possible_directions[i]]
+                max_chosen_direction = possible_directions[i]
+
+        #
+        return self.all_directions[max_chosen_direction]
 
 
 

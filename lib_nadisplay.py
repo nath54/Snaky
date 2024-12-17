@@ -193,6 +193,20 @@ class ND_MainApp:
                     self.global_vars_muts[var_name] = Lock()
 
     #
+    def global_vars_list_remove(self, var_name: str, obj_value: Any, if_not_exists: str = "ignore") -> None:
+        #
+        if var_name in self.global_vars:
+            #
+            with self.global_vars_muts[var_name]:
+                #
+                self.global_vars[var_name].remove(obj_value)
+            #
+        else:
+            #
+            if not if_not_exists == "error":
+                raise UserWarning("#TODO: complete error message")
+
+    #
     def global_vars_list_length(self, var_name: str) -> int:
         #
         if var_name in self.global_vars:
@@ -4006,7 +4020,7 @@ class ND_RectGrid(ND_Elt):
         return
 
     #
-    def export_chunk_of_grid_to_numpy(self, x_0: int, y_0: int, x_1: int, y_1: int, fn_elt_to_value: Callable[[Optional[ND_Elt], Optional[int]], int | float], np_type: np.dtype = np.float32) -> np.ndarray:
+    def export_chunk_of_grid_to_numpy(self, x_0: int, y_0: int, x_1: int, y_1: int, fn_elt_to_value: Callable[[Optional[ND_Elt], Optional[int]], int | float], np_type: type = np.float32) -> np.ndarray:
         #
         dtx: int = x_1 - x_0
         dty: int = y_1 - y_0

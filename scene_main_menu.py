@@ -151,6 +151,8 @@ def on_bt_click_init_game(win: nd.ND_Window) -> None:
     win.main_app.global_vars_set("dead_snakes", {})
     win.main_app.global_vars_set("game_pause", 0.0)
     win.main_app.global_vars_set("game_debut_pause", 0.0)
+    win.main_app.global_vars_set("apples_positions", [])
+
 
     """
     List of game modes:
@@ -160,7 +162,7 @@ def on_bt_click_init_game(win: nd.ND_Window) -> None:
         - separate close: All the snakes have their own map, but they can see each others maps
     """
 
-    map_mode: str = win.main_app.global_vars_get_default("map_mode", "together")
+    map_mode: str = win.main_app.global_vars_get_default("map_mode", "together")  # "together", "separate far", "separate close"
     terrain_w: int = win.main_app.global_vars_get_default("terrain_w", 29)
     terrain_h: int = win.main_app.global_vars_get_default("terrain_h", 29)
     snakes_speed: float = win.main_app.global_vars_get_default("snakes_speed", 0.1) # Time between each snakes update
@@ -175,7 +177,7 @@ def on_bt_click_init_game(win: nd.ND_Window) -> None:
             SnakePlayerSetting(name="humain3", color_idx=2, init_size=4, skin_idx=0, player_type="human", control_name="ijkk")
         ]
     #
-    nb_init_apples: int = 3
+    nb_init_apples: int = win.main_app.global_vars_get_default("nb_init_apples", 3)
     #
     grid: nd.ND_RectGrid = win.main_app.global_vars_get("grid")
     game_infos_container: nd.ND_Container = win.main_app.global_vars_get("game_infos_container")
@@ -330,7 +332,6 @@ def on_bt_click_init_game(win: nd.ND_Window) -> None:
             snake.bot = SnakeBot_PerfectButSlowAndBoring(main_app=win.main_app)
 
 
-
     # Init Food
     rect_area: nd.ND_Rect
     for rect_area in maps_areas:
@@ -344,11 +345,11 @@ def on_bt_click_init_game(win: nd.ND_Window) -> None:
                 food_grid_id: int = random.choice([food_1_grid_id, food_2_grid_id, food_3_grid_id])
                 #
                 grid.add_element_position(food_grid_id, p)
-
+                #
+                win.main_app.global_vars_list_append("apples_positions", p)
 
     #
     center_game_camera(win.main_app)
-
 
     # Setting New State
     win.set_state("game")

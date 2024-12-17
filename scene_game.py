@@ -52,6 +52,8 @@ def put_new_apple_on_grid(main_app: nd.ND_MainApp, grid: nd.ND_RectGrid, food_1_
         food_grid_id: int = random.choice([food_1_grid_id, food_2_grid_id, food_3_grid_id])
         #
         grid.add_element_position(food_grid_id, p)
+        #
+        main_app.global_vars_list_append("apples_positions", p)
 
     # TODO
     pass
@@ -140,6 +142,9 @@ def update_physic(main_app: nd.ND_MainApp, delta_time: float) -> None:
                     snak.score += fi + 1
                     snak.score_elt.text = str(snak.score)
                     snak.hidding_size += 1
+
+                    #
+                    win.main_app.global_vars_list_remove("apples_positions", nhp)
 
                     # On rajoute une nouvelle pomme
                     put_new_apple_on_grid(win.main_app, grid, food_1_grid_id, food_2_grid_id, food_3_grid_id, snak.map_area)
@@ -459,6 +464,7 @@ def create_game_scene(win: nd.ND_Window) -> None:
 
     #
     win.main_app.add_function_to_event_fns_queue("keydown_p", on_pause_pressed)
+    win.main_app.add_function_to_event_fns_queue("keydown_escape", on_pause_pressed)
 
     #
     win.main_app.add_function_to_mainloop_fns_queue("physics", update_physic)

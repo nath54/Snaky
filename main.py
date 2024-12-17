@@ -58,6 +58,14 @@ if __name__ == "__main__":
     #
     app.global_vars_set("MAIN_WINDOW_ID", 0)
 
+    # On peut facilement remplacer quelques paramètres par défaut ici:
+    app.global_vars_set("nb_init_apples", 3)
+    app.global_vars_set("map_mode", "together")  # "together", "separate far", "separate close"
+    app.global_vars_set("terrain_w", 25)
+    app.global_vars_set("terrain_h", 25)
+    app.global_vars_set("snakes_speed", 0.1)
+
+
     #
     app.global_vars_set("init_snakes",
         [SnakePlayerSetting(name="player1", color_idx=0, init_size=4, skin_idx=1, player_type="human", control_name="zqsd")]
