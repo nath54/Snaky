@@ -201,6 +201,7 @@ def on_bt_click_init_game(win: nd.ND_Window) -> None:
     nb_init_apples: int = win.main_app.global_vars_get_default("nb_init_apples", 3)
     #
     grid: nd.ND_RectGrid = win.main_app.global_vars_get("grid")
+    bg_grid: nd.ND_RectGrid = win.main_app.global_vars_get("bg_grid")
     game_infos_container: nd.ND_Container = win.main_app.global_vars_get("game_infos_container")
 
     # On nettoie les scorebox des anciennes parties
@@ -216,7 +217,7 @@ def on_bt_click_init_game(win: nd.ND_Window) -> None:
 
     # On nettoie la grille
     grid.clean()
-
+    bg_grid.clean()
 
     # New Game
 

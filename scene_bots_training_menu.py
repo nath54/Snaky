@@ -11,6 +11,16 @@ import lib_nadisplay as nd
 from scene_game_set_up import on_bt_back_clicked
 
 
+
+#
+def on_bt_training_click(win: nd.ND_Window) -> None:
+    #
+    pass
+
+
+
+
+
 #
 def create_training_menu_scene(win: nd.ND_Window) -> None:
 
@@ -110,7 +120,7 @@ def create_training_menu_scene(win: nd.ND_Window) -> None:
         window=win,
         elt_id="bt_start_training",
         position=nd.ND_Position_Container(w=350, h=40, container=left_col, position_margins=margin_center),
-        onclick=None, # TODO
+        onclick=on_bt_training_click,
         text="Start Training"
     )
     left_col.add_element(bt_start_training)
@@ -151,7 +161,7 @@ def create_training_menu_scene(win: nd.ND_Window) -> None:
         position=nd.ND_Position_Container(w=400, h=40, container=row_map_mode),
         value=win.main_app.global_vars_get_default("training_bots_map_mode", "separate_close"),
         options=set(["together", "separate_close", "separate_far"]),
-        option_list_buttons_height=40,
+        option_list_buttons_height=300,
         font_name="FreeSans"
     )
     row_map_mode.add_element(input_map_mode)

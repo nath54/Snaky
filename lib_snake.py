@@ -721,8 +721,8 @@ def create_map1(win: nd.ND_Window, tx: int, ty: int, map_mode: str, nb_snakes: i
     #
     sprite_pos_id: str
     for sprite_pos_id in SPRITE_POSITIONS:
-        if sprite_pos_id not in bg_garden_sprites_dict:
-            bg_garden_sprites_dict[sprite_pos_id] = create_sprite_of_bg_garden(sprite_pos_id, *SPRITE_POSITIONS[sprite_pos_id])
+        # if sprite_pos_id not in bg_garden_sprites_dict:
+        bg_garden_sprites_dict[sprite_pos_id] = create_sprite_of_bg_garden(sprite_pos_id, *SPRITE_POSITIONS[sprite_pos_id])
 
     #
     def create_map_square(map_start_x: int, map_start_y: int, map_end_x: int, map_end_y: int) -> None:
