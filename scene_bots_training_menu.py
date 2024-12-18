@@ -35,7 +35,7 @@ def on_bt_black_to_menu_clicked(win: nd.ND_Window) -> None:
     win.set_state("main_menu")
 
 #
-def reproduce_bots_v2() -> str:
+def reproduce_bots_v2(bots: dict[str, dict], bots_to_reproduce: list[str]) -> str:
     #
     # TODO
     pass
@@ -61,16 +61,26 @@ def on_bt_training_click(win: nd.ND_Window) -> None:
     nb_epochs: int = cast(int, win.main_app.get_element_value(MAIN_WINDOW_ID, "training_menu", "input_nb_bots"))
     min_random_bots_per_epoch: int = cast(int, win.main_app.get_element_value(MAIN_WINDOW_ID, "training_menu", "input_min_random_bots_per_epoch"))
 
-    # TODO: fusion and reproduction between the best snakes that can reproduce
+    #
     init_snakes: list[SnakePlayerSetting] = [
-        SnakePlayerSetting(name=f"bot {i}", color_idx=i%len(colors_idx_to_colors), init_size=win.main_app.global_vars_get("init_snake_size"), skin_idx=1, player_type="bot", control_name="fleches")
+        SnakePlayerSetting(name=f"bot {i}", color_idx=i%len(colors_idx_to_colors), init_size=win.main_app.global_vars_get("init_snake_size"), skin_idx=1, player_type="new_bot_v2", control_name="fleches")
         for i in range(min(nb_bots, min_random_bots_per_epoch))
     ]
 
     #
+    bots: dict[str, dict] = win.main_app.global_vars_get("bots")
+    #
+    bots_to_reproduce: list[str] = []
+    #
+    for bot_name in bots:
+        #
+        if bots[bot_name]["max_score"] >= min_score_to_reproduce:  # C'est ici qu'on fait de l'eugénisme !
+            bots_to_reproduce.append(bot_name)
+
+    #
     for i in range(len(init_snakes), nb_bots):
         #
-        init_snakes.append( SnakePlayerSetting(name=f"bot {i}", color_idx=i%len(colors_idx_to_colors), init_size=win.main_app.global_vars_get("init_snake_size"), skin_idx=1, player_type=reproduce_bots_v2(), control_name="fleches") )
+        init_snakes.append( SnakePlayerSetting(name=f"bot {i}", color_idx=i%len(colors_idx_to_colors), init_size=win.main_app.global_vars_get("init_snake_size"), skin_idx=1, player_type=reproduce_bots_v2(bots=bots, bots_to_reproduce=bots_to_reproduce), control_name="fleches") )
 
     #
     win.main_app.global_vars_set("map_mode", map_mode)

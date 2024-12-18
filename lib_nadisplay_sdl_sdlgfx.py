@@ -673,7 +673,7 @@ class ND_Window_SDL_SDLGFX(ND_Window):
 
         #
         if font is None:
-            print(f"DEBUG ERROR | error : no fonts found with font_name={font_name} and font_size={font_size} ")
+            # print(f"DEBUG ERROR | error : no fonts found with font_name={font_name} and font_size={font_size} ")
             return ND_Point(-1, -1)
         #
         if sdlttf.TTF_WasInit() == 0:
@@ -701,12 +701,12 @@ class ND_Window_SDL_SDLGFX(ND_Window):
 
         #
         if font is None:
-            print(f"DEBUG ERROR | error : no fonts found with font_name={font_name} and font_size={font_size} ")
+            # print(f"DEBUG ERROR | error : no fonts found with font_name={font_name} and font_size={font_size} ")
             return -1, -1
 
         #
         if sdlttf.TTF_WasInit() == 0:
-            print("DEBUG ERROR | SDL_ttf is not initialized")
+            # print("DEBUG ERROR | SDL_ttf is not initialized")
             return (-1, -1)
         #
         extent, count = c_int(0), c_int(0)

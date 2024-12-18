@@ -388,7 +388,7 @@ def create_game_scene(win: nd.ND_Window) -> None:
     )
     coin_3: nd.ND_AnimatedSprite = nd.ND_AnimatedSprite(
         window=win,
-        elt_id="spinning coin",
+        elt_id="spinning coin 3",
         position=nd.ND_Position_RectGrid(rect_grid=grid),
         animations={
             "spinning": [
@@ -409,7 +409,7 @@ def create_game_scene(win: nd.ND_Window) -> None:
     )
     coin_2: nd.ND_AnimatedSprite = nd.ND_AnimatedSprite(
         window=win,
-        elt_id="spinning coin",
+        elt_id="spinning coin 2",
         position=nd.ND_Position_RectGrid(rect_grid=grid),
         animations={
             "spinning": [
@@ -430,7 +430,7 @@ def create_game_scene(win: nd.ND_Window) -> None:
     )
     coin_1: nd.ND_AnimatedSprite = nd.ND_AnimatedSprite(
         window=win,
-        elt_id="spinning coin",
+        elt_id="spinning coin 1",
         position=nd.ND_Position_RectGrid(rect_grid=grid),
         animations={
             "spinning": [
@@ -458,10 +458,90 @@ def create_game_scene(win: nd.ND_Window) -> None:
     win.main_app.global_vars_set("coin_3_elt", coin_3)
     win.main_app.global_vars_set("coin_2_elt", coin_2)
     win.main_app.global_vars_set("coin_1_elt", coin_1)
+
+
+    apples_atlas: nd.ND_AtlasTexture = nd.ND_AtlasTexture(
+        window=win,
+        texture_atlas_path="res/sprites/apples_silver.png",
+        tiles_size=ND_Point(32, 32)
+    )
+    apple_3: nd.ND_AnimatedSprite = nd.ND_AnimatedSprite(
+        window=win,
+        elt_id="floating apple 3",
+        position=nd.ND_Position_RectGrid(rect_grid=grid),
+        animations={
+            "floating": [
+                nd.ND_Sprite_of_AtlasTexture(
+                    window=win,
+                    elt_id=f"floating_appele_anim_{i}",
+                    position=ND_Position(),
+                    atlas_texture=apples_atlas,
+                    tile_x=i, tile_y=0
+                )
+
+                for i in range(6)
+            ]
+        },
+        animations_speed={},
+        default_animation_speed=0.1,
+        default_animation="floating"
+    )
+    apple_2: nd.ND_AnimatedSprite = nd.ND_AnimatedSprite(
+        window=win,
+        elt_id="floating apple 2",
+        position=nd.ND_Position_RectGrid(rect_grid=grid),
+        animations={
+            "floating": [
+                nd.ND_Sprite_of_AtlasTexture(
+                    window=win,
+                    elt_id=f"floating_appele_anim_{i}",
+                    position=ND_Position(),
+                    atlas_texture=apples_atlas,
+                    tile_x=i, tile_y=0
+                )
+
+                for i in range(6)
+            ]
+        },
+        animations_speed={},
+        default_animation_speed=0.1,
+        default_animation="floating"
+    )
+    apple_1: nd.ND_AnimatedSprite = nd.ND_AnimatedSprite(
+        window=win,
+        elt_id="floating apple 1",
+        position=nd.ND_Position_RectGrid(rect_grid=grid),
+        animations={
+            "floating": [
+                nd.ND_Sprite_of_AtlasTexture(
+                    window=win,
+                    elt_id=f"floating_appele_anim_{i}",
+                    position=ND_Position(),
+                    atlas_texture=apples_atlas,
+                    tile_x=i, tile_y=0
+                )
+
+                for i in range(6)
+            ]
+        },
+        animations_speed={},
+        default_animation_speed=0.1,
+        default_animation="floating"
+    )
     #
-    win.main_app.global_vars_set("food_3_elt_name", "coin_3_elt")
-    win.main_app.global_vars_set("food_2_elt_name", "coin_2_elt")
-    win.main_app.global_vars_set("food_1_elt_name", "coin_1_elt")
+    apple_1.transformations = ND_Transformations(color_modulation=cl("red"))
+    apple_2.transformations = ND_Transformations(color_modulation=cl("silver"))
+    apple_3.transformations = ND_Transformations(color_modulation=cl("gold web golden"))
+
+    #
+    win.main_app.global_vars_set("apple_3_elt", apple_3)
+    win.main_app.global_vars_set("apple_2_elt", apple_2)
+    win.main_app.global_vars_set("apple_1_elt", apple_1)
+
+    #
+    win.main_app.global_vars_set("food_3_elt_name", "apple_3_elt")
+    win.main_app.global_vars_set("food_2_elt_name", "apple_2_elt")
+    win.main_app.global_vars_set("food_1_elt_name", "apple_1_elt")
 
     #
     win.main_app.add_function_to_event_fns_queue("keydown_p", on_pause_pressed)
