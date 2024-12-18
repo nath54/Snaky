@@ -212,7 +212,7 @@ class ND_EventsManager_SDL(ND_EventsManager):
             #
             if sdl_event.window.event == sdl2.SDL_WINDOWEVENT_CLOSE:
                 #
-                return nd_event.ND_EventWindowClose(nd_window_id)
+                return nd_event.ND_EventWindowClose(window_id=nd_window_id)
             #
             # elif sdl_event.window.event == sdl2.SDL_WINDOWEVENT_SHOWN:
             #     #
@@ -224,17 +224,17 @@ class ND_EventsManager_SDL(ND_EventsManager):
 
             elif sdl_event.window.event == sdl2.SDL_WINDOWEVENT_RESIZED:
                 #
-                new_window_width: int = sdl_event.window.npya1  # width
-                new_window_height: int = sdl_event.window.npya2  # height
+                new_window_width: int = sdl_event.window.data1  # width
+                new_window_height: int = sdl_event.window.data2  # height
                 #
-                return nd_event.ND_EventWindowResized(nd_window_id, new_window_width, new_window_height)
+                return nd_event.ND_EventWindowResized(window_id=nd_window_id, w=new_window_width, h=new_window_height)
             #
             elif sdl_event.window.event == sdl2.SDL_WINDOWEVENT_MOVED:
                 #
-                new_window_x: int = sdl_event.window.npya1
-                new_window_y: int = sdl_event.window.npya2
+                new_window_x: int = sdl_event.window.data1
+                new_window_y: int = sdl_event.window.data2
                 #
-                return nd_event.ND_EventWindowMoved(nd_window_id, new_window_x, new_window_y)
+                return nd_event.ND_EventWindowMoved(window_id=nd_window_id, x=new_window_x, y=new_window_y)
             #
             # elif sdl_event.window.event == sdl2.SDL_WINDOWEVENT_ENTER:
             #     #

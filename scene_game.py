@@ -279,7 +279,7 @@ def update_physic(main_app: nd.ND_MainApp, delta_time: float) -> None:
     # Game end
     if not snakes:
         #
-        gtype: str = win.main_app.global_vars_get("game_type")
+        gtype: str = win.main_app.global_vars_get("game_mode")
         #
         if gtype == "standard_game":
             win.state = "end_menu"

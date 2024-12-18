@@ -228,9 +228,6 @@ def init_really_game(win: nd.ND_Window) -> None:
     maps_areas, init_snake_positions = create_map1(win, terrain_w, terrain_h, map_mode, len(init_snakes))
 
     #
-    print(f"DEBUG | MAP_MODE = {map_mode} | len(init_snakes) = {len(init_snakes)} | len(init_snake_positions) = {len(init_snake_positions)}")
-
-    #
     win.main_app.global_vars_set("maps_areas", maps_areas)
 
     # Food

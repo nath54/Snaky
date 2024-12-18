@@ -38,7 +38,6 @@ def on_bt_black_to_menu_clicked(win: nd.ND_Window) -> None:
     #
     win.set_state("main_menu")
 
-
 #
 def new_genes_from_bot_dict(bots: dict[str, dict], bot_dict: dict, main_app: nd.ND_MainApp) -> str:
     #
@@ -135,7 +134,6 @@ def new_genes_from_fusion_of_two_bot_dict(bots: dict[str, dict], bot1_dict: dict
     #
     return "new_bot_v2"
 
-
 #
 def are_two_bots_dict_compatible(bot1_dict: dict, bot2_dict: dict) -> bool:
     #
@@ -154,7 +152,6 @@ def are_two_bots_dict_compatible(bot1_dict: dict, bot2_dict: dict) -> bool:
             return False
     #
     return True
-
 
 #
 def reproduce_bots_v2(bots: dict[str, dict], bots_to_reproduce: list[str], main_app: nd.ND_MainApp) -> str:
@@ -191,23 +188,15 @@ def reproduce_bots_v2(bots: dict[str, dict], bots_to_reproduce: list[str], main_
     return "new_bot_v2"
 
 #
-def on_bt_training_click(win: nd.ND_Window) -> None:
+def really_init_training_mode(win: nd.ND_Window) -> None:
     #
     MAIN_WINDOW_ID: int = win.main_app.global_vars_get("MAIN_WINDOW_ID")
-    #
-    win.main_app.global_vars_set("snakes_speed", 0.001)
-    win.main_app.global_vars_set("game_mode", "training_bots")
-    win.main_app.global_vars_set("apples_multiple_values", False)
-    win.main_app.global_vars_set("init_snake_size", 0)
 
     #
-    map_mode: str = cast(str, win.main_app.get_element_value(MAIN_WINDOW_ID, "training_menu", "input_map_mode"))
-    min_score_to_reproduce: int = cast(int, win.main_app.get_element_value(MAIN_WINDOW_ID, "training_menu", "input_min_score_to_reproduce"))
-    max_nb_steps: int = cast(int, win.main_app.get_element_value(MAIN_WINDOW_ID, "training_menu", "input_max_nb_steps"))
-    grid_size: int = cast(int, win.main_app.get_element_value(MAIN_WINDOW_ID, "training_menu", "input_grid_size"))
     nb_bots: int = cast(int, win.main_app.get_element_value(MAIN_WINDOW_ID, "training_menu", "input_nb_bots"))
-    nb_epochs: int = cast(int, win.main_app.get_element_value(MAIN_WINDOW_ID, "training_menu", "input_nb_bots"))
     min_random_bots_per_epoch: int = cast(int, win.main_app.get_element_value(MAIN_WINDOW_ID, "training_menu", "input_min_random_bots_per_epoch"))
+    min_score_to_reproduce: int = cast(int, win.main_app.get_element_value(MAIN_WINDOW_ID, "training_menu", "input_min_score_to_reproduce"))
+
 
     #
     init_snakes: list[SnakePlayerSetting] = [
@@ -235,20 +224,49 @@ def on_bt_training_click(win: nd.ND_Window) -> None:
             init_snakes.append( SnakePlayerSetting(name=f"bot {i}", color_idx=i%len(colors_idx_to_colors), init_size=win.main_app.global_vars_get("init_snake_size"), skin_idx=1, player_type="new_bot_v2", control_name="fleches") )
 
     #
-    win.main_app.global_vars_set("map_mode", map_mode)
-    win.main_app.global_vars_set("min_score_to_reproduce", min_score_to_reproduce)
-    win.main_app.global_vars_set("max_nb_steps", max_nb_steps)
-    win.main_app.global_vars_set("terrain_w", grid_size)
-    win.main_app.global_vars_set("terrain_h", grid_size)
     win.main_app.global_vars_set("init_snakes", init_snakes)
-    win.main_app.global_vars_set("nb_epochs_tot", nb_epochs)
-    win.main_app.global_vars_set("nb_epochs_cur", 1)
 
     #
     init_really_game(win)
 
 #
+def on_bt_training_click(win: nd.ND_Window) -> None:
+    #
+    MAIN_WINDOW_ID: int = win.main_app.global_vars_get("MAIN_WINDOW_ID")
+    #
+    win.main_app.global_vars_set("snakes_speed", 0.001)
+    win.main_app.global_vars_set("game_mode", "training_bots")
+    win.main_app.global_vars_set("apples_multiple_values", False)
+    win.main_app.global_vars_set("init_snake_size", 0)
+
+    #
+    map_mode: str = cast(str, win.main_app.get_element_value(MAIN_WINDOW_ID, "training_menu", "input_map_mode"))
+    max_nb_steps: int = cast(int, win.main_app.get_element_value(MAIN_WINDOW_ID, "training_menu", "input_max_nb_steps"))
+    grid_size: int = cast(int, win.main_app.get_element_value(MAIN_WINDOW_ID, "training_menu", "input_grid_size"))
+    nb_epochs: int = cast(int, win.main_app.get_element_value(MAIN_WINDOW_ID, "training_menu", "input_nb_bots"))
+    min_score_to_reproduce: int = cast(int, win.main_app.get_element_value(MAIN_WINDOW_ID, "training_menu", "input_min_score_to_reproduce"))
+
+    #
+    win.main_app.global_vars_set("map_mode", map_mode)
+    win.main_app.global_vars_set("min_score_to_reproduce", min_score_to_reproduce)
+    win.main_app.global_vars_set("max_nb_steps", max_nb_steps)
+    win.main_app.global_vars_set("terrain_w", grid_size)
+    win.main_app.global_vars_set("terrain_h", grid_size)
+    win.main_app.global_vars_set("nb_epoch_tot", nb_epochs)
+    win.main_app.global_vars_set("nb_epoch_cur", 1)
+
+    #
+    really_init_training_mode(win)
+
+#
+def continue_training_botss(win: nd.ND_Window) -> None:
+    #
+    really_init_training_mode(win)
+
+#
 def at_traning_epoch_end(win: nd.ND_Window) -> None:
+    #
+    print(f"DEBUG | epoch {win.main_app.global_vars_get("nb_epoch_cur")} / {win.main_app.global_vars_get("nb_epoch_tot")}")
     #
     if win.main_app.global_vars_get("nb_epoch_cur") >= win.main_app.global_vars_get("nb_epoch_tot"):
         #
@@ -260,8 +278,7 @@ def at_traning_epoch_end(win: nd.ND_Window) -> None:
     #
     win.main_app.global_vars_set("nb_epoch_cur", win.main_app.global_vars_get("nb_epoch_cur")+1)
     #
-    on_bt_training_click(win)
-
+    continue_training_botss(win)
 
 #
 def create_training_menu_scene(win: nd.ND_Window) -> None:
