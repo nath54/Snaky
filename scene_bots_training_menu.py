@@ -7,11 +7,19 @@ from lib_nadisplay_rects import ND_Point, ND_Position_Margins, ND_Position, ND_P
 
 import lib_nadisplay as nd
 
-from lib_snake import SnakePlayerSetting
+from lib_snake import SnakePlayerSetting, SnakeBot_Version2
 
 from scene_game_set_up import on_bt_back_clicked
 from scene_main_menu import init_really_game, colors_idx_to_colors
 
+
+#
+def reproduce_bots_v2() -> str:
+    #
+    # TODO
+    pass
+    #
+    return ""
 
 #
 def on_bt_training_click(win: nd.ND_Window) -> None:
@@ -35,8 +43,13 @@ def on_bt_training_click(win: nd.ND_Window) -> None:
     # TODO: fusion and reproduction between the best snakes that can reproduce
     init_snakes: list[SnakePlayerSetting] = [
         SnakePlayerSetting(name=f"bot {i}", color_idx=i%len(colors_idx_to_colors), init_size=win.main_app.global_vars_get("init_snake_size"), skin_idx=1, player_type="bot", control_name="fleches")
-        for i in range(nb_bots)
+        for i in range(min(nb_bots, min_random_bots_per_epoch))
     ]
+
+    #
+    for i in range(len(init_snakes), nb_bots):
+        #
+        init_snakes.append( SnakePlayerSetting(name=f"bot {i}", color_idx=i%len(colors_idx_to_colors), init_size=win.main_app.global_vars_get("init_snake_size"), skin_idx=1, player_type=reproduce_bots_v2(), control_name="fleches") )
 
     #
     win.main_app.global_vars_set("map_mode", map_mode)

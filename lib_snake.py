@@ -185,15 +185,11 @@ class SnakeBot_Version1(SnakeBot):
         self.name = self.create_name()
 
     #
-    def create_name(self) -> str:
+    def create_name(self, nb_random_chars: int = 5, min_vals: float = -1, max_vals: float = 1, one_char_for_nb_params: int = 10) -> str:
         #
         name: str = ""
         #
         chars: str = "0123456789abcdefgijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ_"
-        one_char_for_nb_params: int = 10
-        #
-        min_vals: float = -3
-        max_vals: float = 3
         #
         # points_per_params: int = len(chars) // one_char_for_nb_params
         #
@@ -229,6 +225,17 @@ class SnakeBot_Version1(SnakeBot):
             study_batch()
             i = 0
             currents_params_batch = []
+
+        # Add some random characters after to avoid collision
+        if nb_random_chars <= 0:
+            return name
+
+        #
+        name += "_"
+        #
+        for i in range(nb_random_chars):
+            name += random.choice(chars)
+
         #
         return name
 
@@ -295,7 +302,6 @@ class SnakeBot_Version1(SnakeBot):
         return self.all_directions[max_chosen_direction]
 
 
-
 #
 class SnakeBot_Version2(SnakeBot):
     #
@@ -353,15 +359,11 @@ class SnakeBot_Version2(SnakeBot):
         self.name = self.create_name()
 
     #
-    def create_name(self) -> str:
+    def create_name(self, nb_random_chars: int = 5, min_vals: float = -1, max_vals: float = 1, one_char_for_nb_params: int = 10) -> str:
         #
         name: str = ""
         #
         chars: str = "0123456789abcdefgijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ_"
-        one_char_for_nb_params: int = 10
-        #
-        min_vals: float = -3
-        max_vals: float = 3
         #
         # points_per_params: int = len(chars) // one_char_for_nb_params
         #
@@ -409,6 +411,17 @@ class SnakeBot_Version2(SnakeBot):
             study_batch()
             i = 0
             currents_params_batch = []
+
+        # Add some random characters after to avoid collision
+        if nb_random_chars <= 0:
+            return name
+
+        #
+        name += "_"
+        #
+        for i in range(nb_random_chars):
+            name += random.choice(chars)
+
         #
         return name
 
@@ -479,9 +492,6 @@ class SnakeBot_Version2(SnakeBot):
 
         # RETURNING THE BEST CHOSEN DIRECTION
         return self.all_directions[max_chosen_direction]
-
-
-
 
 
 #

@@ -2,6 +2,7 @@
 from typing import Optional
 
 import os
+import json
 
 import lib_nadisplay as nd
 
@@ -25,6 +26,40 @@ from scene_bots_training_menu import create_training_menu_scene
 
 #
 MAIN_WINDOW_ID: int = 0
+
+
+#
+bots_types_keys: dict[str, list[str]] = {
+    "bot_v1": ["path_weights", "radius", "nb_apples", "random_weights"],
+    "bot_v2": ["path_weights_1", "path_weights_2", "radius", "nb_apples", "random_weights"]
+}
+
+
+#
+def verify_json_dict_is_bot(bot_dict: dict) -> bool:
+    #
+    if "name" not in bot_dict:
+        return False
+    #
+    if "type" not in bot_dict:
+        return False
+    #
+    if "max_score" not in bot_dict:
+        return False
+    #
+    if "scores" not in bot_dict:
+        return False
+    #
+    if bot_dict["type"] not in bots_types_keys:
+        return False
+    #
+    key: str
+    for key in bots_types_keys:
+        if key not in bot_dict:
+            return False
+    #
+    return True
+
 
 
 #
@@ -67,6 +102,28 @@ if __name__ == "__main__":
 
     #
     app.global_vars_set("MAIN_WINDOW_ID", 0)
+
+    # Chargement des bots qui ont déjà été sauvegardés
+    app.global_vars_set("bots", {})
+
+    #
+    bot_dict: dict
+    for filepath in os.listdir(snakes_bot_paths):
+        #
+        if not filepath.endswith(".json"):
+            continue
+
+        # Les bots seront enregistrés dans un fichier json
+
+        #
+        with open(f"{snakes_bot_paths}{filepath}", "r", encoding="utf-8") as f:
+            bot_dict = json.load(f)
+        #
+        if not verify_json_dict_is_bot(bot_dict):
+            #
+            continue
+        #
+        app.global_vars_dict_set("bots", bot_dict["name"], bot_dict)
 
     # On peut facilement remplacer quelques paramètres par défaut ici:
     app.global_vars_set("game_nb_init_apples", 1)
