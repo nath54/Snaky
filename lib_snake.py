@@ -5,6 +5,7 @@ from typing import Optional, Callable, cast
 import random
 import math
 import json
+import os
 
 import numpy as np
 
@@ -187,8 +188,6 @@ class SnakeBot_Version1(SnakeBot):
         self.scores.append(score)
         if score > self.max_score:
             self.max_score = score
-            #
-            self.main_app.global_vars_dict_set("bots", self.name, self.export_bot_dict())
         #
         self.save_bot_dict()
 
@@ -213,6 +212,30 @@ class SnakeBot_Version1(SnakeBot):
         #
         self.save_weights_to_path(self.weights_path)
         self.save_bot_dict()
+
+    #
+    def set_name(self, new_name: str) -> None:
+        #
+        self.delete_all_data()
+        #
+        self.name = new_name
+        #
+        self.weights_path: str = f"{self.snakes_bot_paths}{self.name}_weight_"
+        self.save_bot_dict_path: str = f"{self.snakes_bot_paths}{self.name}.json"
+
+    #
+    def delete_all_data(self) -> None:
+        #
+        bots: dict[str, dict] = self.main_app.global_vars_get("bots")
+        #
+        if self.name in bots:
+            del bots[self.name]
+        #
+        if os.path.exists(self.weights_path+".npy"):
+            os.remove(self.weights_path+".npy")
+        #
+        if os.path.exists(self.save_bot_dict_path):
+            os.remove(self.save_bot_dict_path)
 
     #
     def save_bot_dict(self) -> None:
@@ -240,7 +263,7 @@ class SnakeBot_Version1(SnakeBot):
         #
         self.weigths = arr
         #
-        self.name = self.create_name()
+        self.set_name( self.create_name() )
 
     #
     def create_name(self, nb_random_chars: int = 10, min_vals: float = -1, max_vals: float = 1, one_char_for_nb_params: int = 10) -> str:
@@ -398,6 +421,33 @@ class SnakeBot_Version2(SnakeBot):
         self.save_bot_dict_path: str = f"{self.snakes_bot_paths}{self.name}.json"
 
     #
+    def set_name(self, new_name: str) -> None:
+        #
+        self.delete_all_data()
+        #
+        self.name = new_name
+        #
+        self.weights_path: str = f"{self.snakes_bot_paths}{self.name}_weight_"
+        self.save_bot_dict_path: str = f"{self.snakes_bot_paths}{self.name}.json"
+
+    #
+    def delete_all_data(self) -> None:
+        #
+        bots: dict[str, dict] = self.main_app.global_vars_get("bots")
+        #
+        if self.name in bots:
+            del bots[self.name]
+        #
+        if os.path.exists(self.weights_path+"_1.npy"):
+            os.remove(self.weights_path+"_1.npy")
+        #
+        if os.path.exists(self.weights_path+"_2.npy"):
+            os.remove(self.weights_path+"_2.npy")
+        #
+        if os.path.exists(self.save_bot_dict_path):
+            os.remove(self.save_bot_dict_path)
+
+    #
     def add_to_score(self, score: int) -> None:
         #
         self.scores.append(score)
@@ -464,7 +514,7 @@ class SnakeBot_Version2(SnakeBot):
         #
         self.weigths_2 = arr_2
         #
-        self.name = self.create_name()
+        self.set_name( self.create_name() )
 
     #
     def create_name(self, nb_random_chars: int = 10, min_vals: float = -1, max_vals: float = 1, one_char_for_nb_params: int = 10) -> str:
@@ -641,7 +691,9 @@ def create_bot_from_bot_dict(main_app: nd.ND_MainApp, bot_dict: dict, ignore_foo
         #
         bot1: SnakeBot_Version1 = SnakeBot_Version1(main_app=main_app, radius=bot_dict["radius"], random_weights=bot_dict["random_weights"], nb_apples_to_context=bot_dict["nb_apples"], ignore_food_grid_id=ignore_food_grid_id)
         bot1.load_weights_from_path(bot_dict["weights_path"])
-        bot1.name = bot_dict["name"]
+        bot1.set_name( bot_dict["name"] )
+        bot1.scores = bot_dict["scores"]
+        bot1.max_score = bot_dict["max_score"]
         #
         return bot1
     #
@@ -649,7 +701,9 @@ def create_bot_from_bot_dict(main_app: nd.ND_MainApp, bot_dict: dict, ignore_foo
         #
         bot2: SnakeBot_Version2 = SnakeBot_Version2(main_app=main_app, radius=bot_dict["radius"], random_weights=bot_dict["random_weights"], nb_apples_to_context=bot_dict["nb_apples"], ignore_food_grid_id=ignore_food_grid_id)
         bot2.load_weights_from_path(bot_dict["weights_path"])
-        bot2.name = bot_dict["name"]
+        bot2.set_name( bot_dict["name"] )
+        bot2.scores = bot_dict["scores"]
+        bot2.max_score = bot_dict["max_score"]
         #
         return bot2
     #
@@ -664,10 +718,10 @@ def create_new_bot(main_app: nd.ND_MainApp, bot_type: str) -> SnakeBot:
     if bot_type == "bot_v1" or bot_type == "new_bot_v1":
         #
         bot1: SnakeBot_Version1 = SnakeBot_Version1(main_app=main_app)
-        bot1.name = bot1.create_name()
+        bot1.set_name( bot1.create_name() )
         #
         while bot1.name in bots:
-            bot1.name = bot1.create_name()
+            bot1.set_name( bot1.create_name() )
         #
         bot1.save_bot()
         #
@@ -676,10 +730,10 @@ def create_new_bot(main_app: nd.ND_MainApp, bot_type: str) -> SnakeBot:
     elif bot_type == "bot_v2" or bot_type == "new_bot_v2":
         #
         bot2: SnakeBot_Version2 = SnakeBot_Version2(main_app=main_app)
-        bot2.name = bot2.create_name()
+        bot2.set_name( bot2.create_name() )
         #
         while bot2.name in bots:
-            bot2.name = bot1.create_name()
+            bot2.set_name( bot1.create_name() )
         #
         bot2.save_bot()
         #

@@ -57,7 +57,14 @@ def verify_json_dict_is_bot(bot_dict: dict) -> bool:
     for key in bots_types_keys[bot_dict["type"]]:
         if key not in bot_dict:
             return False
-        if "path" in key and not os.path.exists(bot_dict[key]):
+    #
+    if bot_dict["type"] == "bot_v1":
+        if not os.path.exists(bot_dict["weights_path"]+".npy"):
+            return False
+    elif bot_dict["type"] == "bot_v2":
+        if not os.path.exists(bot_dict["weights_path"]+"_1.npy"):
+            return False
+        if not os.path.exists(bot_dict["weights_path"]+"_2.npy"):
             return False
     #
     return True

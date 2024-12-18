@@ -53,10 +53,10 @@ def new_genes_from_bot_dict(bots: dict[str, dict], bot_dict: dict, main_app: nd.
         #
         new_bot1.weigths = bot1.weigths + delta
         #
-        new_bot1.name = new_bot1.create_name()
+        new_bot1.set_name( new_bot1.create_name() )
         #
         while new_bot1.name in bots:
-            new_bot1.name = new_bot1.create_name()
+            new_bot1.set_name( new_bot1.create_name() )
         #
         new_bot1.save_bot()
         #
@@ -78,10 +78,10 @@ def new_genes_from_bot_dict(bots: dict[str, dict], bot_dict: dict, main_app: nd.
         new_bot2.weigths_1 = bot2.weigths_1 + delta1
         new_bot2.weigths_2 = bot2.weigths_2 + delta2
         #
-        new_bot2.name = new_bot2.create_name()
+        new_bot2.set_name( new_bot2.create_name() )
         #
         while new_bot2.name in bots:
-            new_bot2.name = new_bot2.create_name()
+            new_bot2.set_name( new_bot2.create_name() )
         #
         new_bot2.save_bot()
         #
@@ -103,10 +103,10 @@ def new_genes_from_fusion_of_two_bot_dict(bots: dict[str, dict], bot1_dict: dict
         #
         new_bot1.weigths = bot1_a.weigths * fusion_factor + bot1_b.weigths * (1.0 - fusion_factor)
         #
-        new_bot1.name = new_bot1.create_name()
+        new_bot1.set_name( new_bot1.create_name() )
         #
         while new_bot1.name in bots:
-            new_bot1.name = new_bot1.create_name()
+            new_bot1.set_name( new_bot1.create_name() )
         #
         new_bot1.save_bot()
         #
@@ -123,10 +123,10 @@ def new_genes_from_fusion_of_two_bot_dict(bots: dict[str, dict], bot1_dict: dict
         new_bot2.weigths_1 = bot2_a.weigths_1 * fusion_factor + bot2_b.weigths_1 * (1.0 - fusion_factor)
         new_bot2.weigths_2 = bot2_a.weigths_2 * fusion_factor + bot2_b.weigths_2 * (1.0 - fusion_factor)
         #
-        new_bot2.name = new_bot2.create_name()
+        new_bot2.set_name( new_bot2.create_name() )
         #
         while new_bot2.name in bots:
-            new_bot2.name = new_bot2.create_name()
+            new_bot2.set_name( new_bot2.create_name() )
         #
         new_bot2.save_bot()
         #
@@ -289,10 +289,20 @@ def at_traning_epoch_end(win: nd.ND_Window) -> None:
     #
     print(f"Training epoch {win.main_app.global_vars_get("nb_epoch_cur")} / {win.main_app.global_vars_get("nb_epoch_tot")}.  (Current max bot score:  {get_best_bots_score(main_app=win.main_app)}, nb_bots = {len(win.main_app.global_vars_get("bots"))})")
     #
+    min_score_to_reproduce: int = cast(int, win.main_app.get_element_value(win.window_id, "training_menu", "input_min_score_to_reproduce"))
+    #
     # Saving bots
-    for snakes in win.main_app.global_vars_get("dead_snakes").values():
-        snakes.bot.save_bot_dict()
-        win.main_app.global_vars_dict_set("bots", snakes.bot.name, snakes.bot.export_bot_dict())
+    for snakes in list(win.main_app.global_vars_get("dead_snakes").values()) + list(win.main_app.global_vars_get("snakes").values()):
+        #
+        if snakes.score >= min_score_to_reproduce:
+            #
+            print(f"Saving bot : {snakes.bot.name} of score : {snakes.score} > {min_score_to_reproduce}")
+            snakes.bot.add_to_score(snakes.score)
+            snakes.bot.save_bot()
+            #
+        elif snakes.bot.max_score < min_score_to_reproduce:
+            #
+            snakes.bot.delete_all_data()
 
     #
     if win.main_app.global_vars_get("nb_epoch_cur") >= win.main_app.global_vars_get("nb_epoch_tot"):
@@ -343,7 +353,6 @@ def on_bt_del_bad_bots_clicked(win: nd.ND_Window) -> None:
             if os.path.exists(bot_dict["weights_path"]+"_2.npy"):
                 os.remove(bot_dict["weights_path"]+"_2.npy")
         #
-        print(f"DEBUG | {snakes_bot_paths+bot_name+".json"}")
         if os.path.exists(snakes_bot_paths+bot_name+".json"):
             os.remove(snakes_bot_paths+bot_name+".json")
         #

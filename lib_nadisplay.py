@@ -268,7 +268,7 @@ class ND_MainApp:
                 raise UserWarning("Error, #TODO: complete error message")
 
     #
-    def global_vars_dict_set(self, var_name: str, dict_key: Any, obj_value: Any, if_not_exists: str = "create") -> None:
+    def global_vars_dict_set(self, var_name: str, dict_key: Any, obj_value: Any, if_not_exists: str = "ignore") -> None:
         #
         if var_name in self.global_vars:
             #
@@ -303,6 +303,20 @@ class ND_MainApp:
             elif if_not_exists == "none":
                 #
                 return None
+
+    #
+    def global_vars_dict_del(self, var_name: str, dict_key: Any, if_not_exists: str = "ignore") -> None:
+        #
+        if var_name in self.global_vars:
+            #
+            with self.global_vars_muts[var_name]:
+                #
+                del self.global_vars[var_name][dict_key]
+            #
+        else:
+            #
+            if not if_not_exists == "error":
+                raise UserWarning("#TODO: complete error message")
 
     #
     def global_vars_exists(self, var_name: str) -> bool:
