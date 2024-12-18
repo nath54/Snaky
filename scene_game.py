@@ -462,9 +462,15 @@ def create_game_scene(win: nd.ND_Window) -> None:
 
     apples_atlas: nd.ND_AtlasTexture = nd.ND_AtlasTexture(
         window=win,
+        texture_atlas_path="res/sprites/apples.png",
+        tiles_size=ND_Point(32, 32)
+    )
+    apples_silver_atlas: nd.ND_AtlasTexture = nd.ND_AtlasTexture(
+        window=win,
         texture_atlas_path="res/sprites/apples_silver.png",
         tiles_size=ND_Point(32, 32)
     )
+    #
     apple_3: nd.ND_AnimatedSprite = nd.ND_AnimatedSprite(
         window=win,
         elt_id="floating apple 3",
@@ -475,7 +481,7 @@ def create_game_scene(win: nd.ND_Window) -> None:
                     window=win,
                     elt_id=f"floating_appele_anim_{i}",
                     position=ND_Position(),
-                    atlas_texture=apples_atlas,
+                    atlas_texture=apples_silver_atlas,
                     tile_x=i, tile_y=0
                 )
 
@@ -483,7 +489,7 @@ def create_game_scene(win: nd.ND_Window) -> None:
             ]
         },
         animations_speed={},
-        default_animation_speed=0.1,
+        default_animation_speed=0.15,
         default_animation="floating"
     )
     apple_2: nd.ND_AnimatedSprite = nd.ND_AnimatedSprite(
@@ -496,7 +502,7 @@ def create_game_scene(win: nd.ND_Window) -> None:
                     window=win,
                     elt_id=f"floating_appele_anim_{i}",
                     position=ND_Position(),
-                    atlas_texture=apples_atlas,
+                    atlas_texture=apples_silver_atlas,
                     tile_x=i, tile_y=0
                 )
 
@@ -504,10 +510,31 @@ def create_game_scene(win: nd.ND_Window) -> None:
             ]
         },
         animations_speed={},
-        default_animation_speed=0.1,
+        default_animation_speed=0.15,
         default_animation="floating"
     )
     apple_1: nd.ND_AnimatedSprite = nd.ND_AnimatedSprite(
+        window=win,
+        elt_id="floating apple 1",
+        position=nd.ND_Position_RectGrid(rect_grid=grid),
+        animations={
+            "floating": [
+                nd.ND_Sprite_of_AtlasTexture(
+                    window=win,
+                    elt_id=f"floating_appele_anim_{i}",
+                    position=ND_Position(),
+                    atlas_texture=apples_silver_atlas,
+                    tile_x=i, tile_y=0
+                )
+
+                for i in range(6)
+            ]
+        },
+        animations_speed={},
+        default_animation_speed=0.15,
+        default_animation="floating"
+    )
+    apple_base: nd.ND_AnimatedSprite = nd.ND_AnimatedSprite(
         window=win,
         elt_id="floating apple 1",
         position=nd.ND_Position_RectGrid(rect_grid=grid),
@@ -525,7 +552,7 @@ def create_game_scene(win: nd.ND_Window) -> None:
             ]
         },
         animations_speed={},
-        default_animation_speed=0.1,
+        default_animation_speed=0.15,
         default_animation="floating"
     )
     #
@@ -536,7 +563,7 @@ def create_game_scene(win: nd.ND_Window) -> None:
     #
     win.main_app.global_vars_set("apple_3_elt", apple_3)
     win.main_app.global_vars_set("apple_2_elt", apple_2)
-    win.main_app.global_vars_set("apple_1_elt", apple_1)
+    win.main_app.global_vars_set("apple_1_elt", apple_base)
 
     #
     win.main_app.global_vars_set("food_3_elt_name", "apple_3_elt")
