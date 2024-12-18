@@ -41,24 +41,24 @@ def on_pause_pressed(main_app: nd.ND_MainApp) -> None:
         #
         win.set_state("game")
 
-
 #
 def put_new_apple_on_grid(main_app: nd.ND_MainApp, grid: nd.ND_RectGrid, food_1_grid_id: int, food_2_grid_id: int, food_3_grid_id: int, rect_area: nd.ND_Rect) -> None:
-
+    #
+    apples_multiple_values: bool = main_app.global_vars_get_default("apples_multiple_values", True)
+    #
     p: Optional[ND_Point] = grid.get_empty_case_in_range(rect_area.x, rect_area.x + rect_area.w, rect_area.y, rect_area.y + rect_area.h)
     #
     if p is not None:
         #
-        food_grid_id: int = random.choice([food_1_grid_id, food_2_grid_id, food_3_grid_id])
+        food_grid_id: int = food_1_grid_id
+        #
+        if apples_multiple_values:
+            food_grid_id = random.choice([food_1_grid_id, food_2_grid_id, food_3_grid_id])
         #
         grid.set_transformations_to_position(p, ND_Transformations())
         grid.add_element_position(food_grid_id, p)
         #
         main_app.global_vars_list_append("apples_positions", p)
-
-    # TODO
-    pass
-
 
 #
 def update_physic(main_app: nd.ND_MainApp, delta_time: float) -> None:

@@ -22,7 +22,6 @@ controls_names_to_keys: dict[str, tuple[str, str, str, str]] = {
     "ijkl": ("keydown_i", "keydown_j", "keydown_k", "keydown_l")
 }
 
-
 #
 colors_idx_to_colors: dict[int, ND_Color] = {
     0: ND_Color(255, 255, 255),
@@ -35,7 +34,6 @@ colors_idx_to_colors: dict[int, ND_Color] = {
     7: cl("orange"),
     8: cl("purple")
 }
-
 
 #
 def event_set_snake_direction(main_app: nd.ND_MainApp, direction: ND_Point, snake_idx: int) -> None:
@@ -53,9 +51,6 @@ def event_set_snake_direction(main_app: nd.ND_MainApp, direction: ND_Point, snak
     #
     if snakes[snake_idx].last_applied_direction != -direction:
         snakes[snake_idx].direction = direction
-
-
-
 
 #
 def animate_main_menu(main_app: nd.ND_MainApp, delta_time: float) -> None:
@@ -85,8 +80,6 @@ def animate_main_menu(main_app: nd.ND_MainApp, delta_time: float) -> None:
             m: int = round(((math.sin(0.001 * t ) + 1) / 2 ) * 300)
             #
             game_window.set_size(400 + m, 300 + m)
-
-
 
 #
 def center_game_camera(main_app: nd.ND_MainApp) -> None:
@@ -156,24 +149,22 @@ def center_game_camera(main_app: nd.ND_MainApp) -> None:
     # TODO
     pass
 
-
 #
 def on_bt_play_clicked(win: nd.ND_Window) -> None:
     #
     win.set_state("game_setup")
 
-
 #
-def on_bt_click_init_game(win: nd.ND_Window) -> None:
+def init_really_game(win: nd.ND_Window) -> None:
 
-    # Cleaning
+    # Cleaning and initialisation
     win.main_app.global_vars_set("snakes", {})
     win.main_app.global_vars_set("dead_snakes", {})
     win.main_app.global_vars_set("game_pause", 0.0)
     win.main_app.global_vars_set("game_debut_pause", 0.0)
     win.main_app.global_vars_set("apples_positions", [])
 
-
+    #
     """
     List of game modes:
 
@@ -187,6 +178,7 @@ def on_bt_click_init_game(win: nd.ND_Window) -> None:
     terrain_h: int = win.main_app.global_vars_get_default("terrain_h", 29)
     snakes_speed: float = win.main_app.global_vars_get_default("snakes_speed", 0.1) # Time between each snakes update
     init_snake_size: int = win.main_app.global_vars_get_default("init_snake_size", 0)  #
+    apples_multiple_values: bool = win.main_app.global_vars_get_default("apples_multiple_values", True)
 
     # Getting Settings
     a: list[SnakePlayerSetting] = win.main_app.global_vars_get("init_snakes")
@@ -367,7 +359,10 @@ def on_bt_click_init_game(win: nd.ND_Window) -> None:
             #
             if p is not None:
                 #
-                food_grid_id: int = random.choice([food_1_grid_id, food_2_grid_id, food_3_grid_id])
+                food_grid_id: int = food_1_grid_id
+                #
+                if apples_multiple_values:
+                    food_grid_id = random.choice([food_1_grid_id, food_2_grid_id, food_3_grid_id])
                 #
                 grid.add_element_position(food_grid_id, p)
                 #
@@ -379,7 +374,25 @@ def on_bt_click_init_game(win: nd.ND_Window) -> None:
     # Setting New State
     win.set_state("game")
 
+#
+def on_bt_click_init_game(win: nd.ND_Window) -> None:
 
+    #
+    win.main_app.global_vars_set("game_mode", "standard_game")
+    win.main_app.global_vars_set("apples_multiple_values", True)
+
+    #
+    init_snake_size: int = win.main_app.global_vars_get_default("game_init_snake_size", 0)
+    win.main_app.global_vars_set("init_snakes", win.main_app.global_vars_get_default("game_init_snakes", [SnakePlayerSetting(name="player1", color_idx=0, init_size=init_snake_size, skin_idx=1, player_type="human", control_name="zqsd")]))
+    win.main_app.global_vars_set("nb_init_apples", win.main_app.global_vars_get_default("game_nb_init_apples", 3))
+    win.main_app.global_vars_set("init_snake_size", init_snake_size)
+    win.main_app.global_vars_set("map_mode", win.main_app.global_vars_get_default("game_map_mode", "together"))
+    win.main_app.global_vars_set("terrain_w", win.main_app.global_vars_get_default("game_terrain_w", 29))
+    win.main_app.global_vars_set("terrain_h", win.main_app.global_vars_get_default("game_terrain_h", 29))
+    win.main_app.global_vars_set("snakes_speed", win.main_app.global_vars_get_default("game_snakes_speed", 0.1))
+
+    #
+    init_really_game(win)
 
 #
 def on_bt_click_quit(win: nd.ND_Window) -> None:
@@ -390,8 +403,6 @@ def on_bt_click_quit(win: nd.ND_Window) -> None:
 def on_bt_click_training_bots(win: nd.ND_Window) -> None:
     #
     win.set_state("training_menu")
-
-
 
 #
 def create_main_menu_scene(win: nd.ND_Window) -> None:
@@ -496,6 +507,3 @@ def create_main_menu_scene(win: nd.ND_Window) -> None:
 
     #
     win.add_scene( main_menu_scene )
-
-
-

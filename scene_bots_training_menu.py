@@ -7,18 +7,49 @@ from lib_nadisplay_rects import ND_Point, ND_Position_Margins, ND_Position, ND_P
 
 import lib_nadisplay as nd
 
+from lib_snake import SnakePlayerSetting
 
 from scene_game_set_up import on_bt_back_clicked
-
+from scene_main_menu import init_really_game, colors_idx_to_colors
 
 
 #
 def on_bt_training_click(win: nd.ND_Window) -> None:
     #
-    pass
+    MAIN_WINDOW_ID: int = win.main_app.global_vars_get("MAIN_WINDOW_ID")
+    #
+    win.main_app.global_vars_set("snakes_speed", 0.001)
+    win.main_app.global_vars_set("game_mode", "training_bots")
+    win.main_app.global_vars_set("apples_multiple_values", False)
+    win.main_app.global_vars_set("init_snake_size", 0)
 
+    #
+    map_mode: str = cast(str, win.main_app.get_element_value(MAIN_WINDOW_ID, "training_menu", "input_map_mode"))
+    min_score_to_reproduce: int = cast(int, win.main_app.get_element_value(MAIN_WINDOW_ID, "training_menu", "input_min_score_to_reproduce"))
+    max_nb_steps: int = cast(int, win.main_app.get_element_value(MAIN_WINDOW_ID, "training_menu", "input_max_nb_steps"))
+    grid_size: int = cast(int, win.main_app.get_element_value(MAIN_WINDOW_ID, "training_menu", "input_grid_size"))
+    nb_bots: int = cast(int, win.main_app.get_element_value(MAIN_WINDOW_ID, "training_menu", "input_nb_bots"))
+    nb_epochs: int = cast(int, win.main_app.get_element_value(MAIN_WINDOW_ID, "training_menu", "input_nb_bots"))
+    min_random_bots_per_epoch: int = cast(int, win.main_app.get_element_value(MAIN_WINDOW_ID, "training_menu", "input_min_random_bots_per_epoch"))
 
+    # TODO: fusion and reproduction between the best snakes that can reproduce
+    init_snakes: list[SnakePlayerSetting] = [
+        SnakePlayerSetting(name=f"bot {i}", color_idx=i%len(colors_idx_to_colors), init_size=win.main_app.global_vars_get("init_snake_size"), skin_idx=1, player_type="bot", control_name="fleches")
+        for i in range(nb_bots)
+    ]
 
+    #
+    win.main_app.global_vars_set("map_mode", map_mode)
+    win.main_app.global_vars_set("min_score_to_reproduce", min_score_to_reproduce)
+    win.main_app.global_vars_set("max_nb_steps", max_nb_steps)
+    win.main_app.global_vars_set("terrain_w", grid_size)
+    win.main_app.global_vars_set("terrain_h", grid_size)
+    win.main_app.global_vars_set("init_snakes", init_snakes)
+    win.main_app.global_vars_set("nb_epochs_tot", nb_epochs)
+    win.main_app.global_vars_set("nb_epochs_cur", 1)
+
+    #
+    init_really_game(win)
 
 
 #
@@ -316,33 +347,33 @@ def create_training_menu_scene(win: nd.ND_Window) -> None:
     row_nb_epochs.add_element(input_nb_epochs)
 
     ##### Min random bots per steps
-    row_min_random_bots_per_steps: nd.ND_Container = nd.ND_Container(
+    row_min_random_bots_per_epoch: nd.ND_Container = nd.ND_Container(
         window=win,
-        elt_id="row_min_random_bots_per_steps",
+        elt_id="row_min_random_bots_per_epoch",
         position=nd.ND_Position_Container(w="100%", h=50, container=right_col),
         element_alignment="row"
     )
-    right_col.add_element(row_min_random_bots_per_steps)
+    right_col.add_element(row_min_random_bots_per_epoch)
 
     #
-    text_min_random_bots_per_steps: nd.ND_Text = nd.ND_Text(
+    text_min_random_bots_per_epoch: nd.ND_Text = nd.ND_Text(
         window=win,
-        elt_id="text_min_random_bots_per_steps",
-        position=nd.ND_Position_Container(w=320, h=40, container=row_min_random_bots_per_steps),
+        elt_id="text_min_random_bots_per_epoch",
+        position=nd.ND_Position_Container(w=320, h=40, container=row_min_random_bots_per_epoch),
         text="min random bots per steps :"
     )
-    row_min_random_bots_per_steps.add_element(text_min_random_bots_per_steps)
+    row_min_random_bots_per_epoch.add_element(text_min_random_bots_per_epoch)
 
     #
-    input_min_random_bots_per_steps: nd.ND_NumberInput = nd.ND_NumberInput(
+    input_min_random_bots_per_epoch: nd.ND_NumberInput = nd.ND_NumberInput(
         window=win,
-        elt_id="input_min_random_bots_per_steps",
-        position=nd.ND_Position_Container(w=400, h=40, container=row_min_random_bots_per_steps),
-        value=win.main_app.global_vars_get_default("training_bots_min_random_bots_per_steps", 5),
+        elt_id="input_min_random_bots_per_epoch",
+        position=nd.ND_Position_Container(w=400, h=40, container=row_min_random_bots_per_epoch),
+        value=win.main_app.global_vars_get_default("training_bots_min_random_bots_per_epoch", 5),
         min_value=0,
         max_value=100
     )
-    row_min_random_bots_per_steps.add_element(input_min_random_bots_per_steps)
+    row_min_random_bots_per_epoch.add_element(input_min_random_bots_per_epoch)
 
 
 

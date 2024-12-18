@@ -15,7 +15,6 @@ def on_bt_go_to_menu(win: nd.ND_Window) -> None:
     #
     win.set_state("main_menu")
 
-
 #
 def create_pause_menu(win: nd.ND_Window) -> None:
     #

@@ -15,7 +15,7 @@ from scene_main_menu import on_bt_click_init_game, controls_names_to_keys, color
 #
 def on_player_name_escaped(line_edit: nd.ND_LineEdit, player_idx: int, main_app: nd.ND_MainApp) -> None:
     #
-    player_setting: Optional[SnakePlayerSetting] = main_app.global_vars_list_get_at_idx("init_snakes", player_idx)
+    player_setting: Optional[SnakePlayerSetting] = main_app.global_vars_list_get_at_idx("game_init_snakes", player_idx)
     #
     if player_setting is None:
         return
@@ -25,7 +25,7 @@ def on_player_name_escaped(line_edit: nd.ND_LineEdit, player_idx: int, main_app:
 #
 def on_player_name_changed(_, new_name: str, player_idx: int, main_app: nd.ND_MainApp) -> None:
     #
-    player_setting: Optional[SnakePlayerSetting] = main_app.global_vars_list_get_at_idx("init_snakes", player_idx)
+    player_setting: Optional[SnakePlayerSetting] = main_app.global_vars_list_get_at_idx("game_init_snakes", player_idx)
     #
     if player_setting is None:
         return
@@ -36,7 +36,7 @@ def on_player_name_changed(_, new_name: str, player_idx: int, main_app: nd.ND_Ma
 #
 def on_player_color_clicked(bt: nd.ND_Button, player_idx: int, main_app: nd.ND_MainApp) -> None:
     #
-    player_setting: Optional[SnakePlayerSetting] = main_app.global_vars_list_get_at_idx("init_snakes", player_idx)
+    player_setting: Optional[SnakePlayerSetting] = main_app.global_vars_list_get_at_idx("game_init_snakes", player_idx)
     #
     if player_setting is None:
         return
@@ -48,7 +48,7 @@ def on_player_color_clicked(bt: nd.ND_Button, player_idx: int, main_app: nd.ND_M
 #
 def on_player_type_changed(_, new_type: str, player_idx: int, main_app: nd.ND_MainApp) -> None:
     #
-    player_setting: Optional[SnakePlayerSetting] = main_app.global_vars_list_get_at_idx("init_snakes", player_idx)
+    player_setting: Optional[SnakePlayerSetting] = main_app.global_vars_list_get_at_idx("game_init_snakes", player_idx)
     #
     if player_setting is None:
         return
@@ -58,13 +58,12 @@ def on_player_type_changed(_, new_type: str, player_idx: int, main_app: nd.ND_Ma
 #
 def on_player_controls_changed(_, new_controls_name: str, player_idx: int, main_app: nd.ND_MainApp) -> None:
     #
-    player_setting: Optional[SnakePlayerSetting] = main_app.global_vars_list_get_at_idx("init_snakes", player_idx)
+    player_setting: Optional[SnakePlayerSetting] = main_app.global_vars_list_get_at_idx("game_init_snakes", player_idx)
     #
     if player_setting is None:
         return
     #
     player_setting.control_name = new_controls_name
-
 
 #
 def add_player_row_to_set_up_player_menu(win: nd.ND_Window, players_container: nd.ND_Container, player_lst_idx: int) -> None:
@@ -72,7 +71,7 @@ def add_player_row_to_set_up_player_menu(win: nd.ND_Window, players_container: n
     if players_container is None:
         return
 
-    player_setting: Optional[SnakePlayerSetting] = win.main_app.global_vars_list_get_at_idx("init_snakes", player_lst_idx)
+    player_setting: Optional[SnakePlayerSetting] = win.main_app.global_vars_list_get_at_idx("game_init_snakes", player_lst_idx)
     #
     if player_setting is None:
         return
@@ -144,8 +143,6 @@ def add_player_row_to_set_up_player_menu(win: nd.ND_Window, players_container: n
     #
     players_container.add_element(player_row)
 
-
-
 #
 def on_bt_add_player_button(win: nd.ND_Window) -> None:
     #
@@ -160,14 +157,11 @@ def on_bt_add_player_button(win: nd.ND_Window) -> None:
     cnks: list[str] = list(controls_names_to_keys.keys())
 
     #
-    n: int = win.main_app.global_vars_list_length("init_snakes")
-    init_snake_size: int = win.main_app.global_vars_get_default("init_snake_size", 0)
-    win.main_app.global_vars_list_append("init_snakes", SnakePlayerSetting(name=f"player {n+1}", color_idx=n % len(colors_idx_to_colors), init_size=init_snake_size, skin_idx=1, player_type="human", control_name=cnks[n % len(cnks)]))
+    n: int = win.main_app.global_vars_list_length("game_init_snakes")
+    init_snake_size: int = win.main_app.global_vars_get_default("game_init_snake_size", 0)
+    win.main_app.global_vars_list_append("game_init_snakes", SnakePlayerSetting(name=f"player {n+1}", color_idx=n % len(colors_idx_to_colors), init_size=init_snake_size, skin_idx=1, player_type="human", control_name=cnks[n % len(cnks)]))
     #
     add_player_row_to_set_up_player_menu(win, players_container, n)
-
-
-
 
 #
 def on_bt_remove_player_button(win: nd.ND_Window) -> None:
@@ -179,14 +173,14 @@ def on_bt_remove_player_button(win: nd.ND_Window) -> None:
     if players_container is None:
         return
     #
-    n: int = win.main_app.global_vars_list_length("init_snakes")
+    n: int = win.main_app.global_vars_list_length("game_init_snakes")
 
     #
     if n <= 1:
         return
 
     #
-    win.main_app.global_vars_list_del_at_idx("init_snakes", n-1)
+    win.main_app.global_vars_list_del_at_idx("game_init_snakes", n-1)
 
     #
     row_elt_id: str = f"player_row_{n-1}"
@@ -203,19 +197,15 @@ def on_bt_remove_player_button(win: nd.ND_Window) -> None:
 
     # TODO: assure that row_elt is well destroyed properly
 
-
-
 #
 def on_bt_game_settings_click(win: nd.ND_Window) -> None:
     # TODO
     pass
 
-
 #
 def on_bt_back_clicked(win: nd.ND_Window) -> None:
     #
     win.set_state("main_menu")
-
 
 #
 def on_bt_map_size_change_clicked(win: nd.ND_Window) -> None:
@@ -250,8 +240,7 @@ def on_bt_map_size_change_clicked(win: nd.ND_Window) -> None:
     map_utils_edit_size_row.visible = True
     #
 
-
-
+#
 def on_bt_map_size_validate_clicked(win: nd.ND_Window) -> None:
     #
     MAIN_WINDOW_ID: int = win.main_app.global_vars_get("MAIN_WINDOW_ID")
@@ -277,8 +266,8 @@ def on_bt_map_size_validate_clicked(win: nd.ND_Window) -> None:
     map_width_bt.text = str(new_w)
     map_height_bt.text = str(new_h)
     #
-    win.main_app.global_vars_set("terrain_w", int(new_w))
-    win.main_app.global_vars_set("terrain_h", int(new_h))
+    win.main_app.global_vars_set("game_terrain_w", int(new_w))
+    win.main_app.global_vars_set("game_terrain_h", int(new_h))
     #
     map_width_line_edit.visible = False
     map_height_line_edit.visible = False
@@ -289,8 +278,7 @@ def on_bt_map_size_validate_clicked(win: nd.ND_Window) -> None:
     map_reset_size_bt.visible = True
     map_utils_edit_size_row.visible = False
 
-
-
+#
 def on_bt_map_size_reset_clicked(win: nd.ND_Window) -> None:
     #
     MAIN_WINDOW_ID: int = win.main_app.global_vars_get("MAIN_WINDOW_ID")
@@ -322,7 +310,7 @@ def on_bt_map_size_reset_clicked(win: nd.ND_Window) -> None:
     map_reset_size_bt.visible = True
     map_utils_edit_size_row.visible = False
 
-
+#
 def on_bt_map_size_cancel_clicked(win: nd.ND_Window) -> None:
     #
     MAIN_WINDOW_ID: int = win.main_app.global_vars_get("MAIN_WINDOW_ID")
@@ -350,8 +338,6 @@ def on_bt_map_size_cancel_clicked(win: nd.ND_Window) -> None:
     #
     map_reset_size_bt.visible = True
     map_utils_edit_size_row.visible = False
-
-
 
 #
 def create_game_setup_scene(win: nd.ND_Window) -> None:
@@ -447,7 +433,7 @@ def create_game_setup_scene(win: nd.ND_Window) -> None:
     main_players_container.add_element(players_container)
 
     #
-    nb_players_configs: int = win.main_app.global_vars_list_length("init_snakes")
+    nb_players_configs: int = win.main_app.global_vars_list_length("game_init_snakes")
     for payer_idx in range(nb_players_configs):
         add_player_row_to_set_up_player_menu(win, players_container, payer_idx)
 
@@ -577,7 +563,7 @@ def create_game_setup_scene(win: nd.ND_Window) -> None:
         elt_id="map_width_bt",
         position=nd.ND_Position_MultiLayer(multilayer=map_width_multilayer, w="100%", h="100%"),
         onclick=on_bt_map_size_change_clicked,
-        text=str(win.main_app.global_vars_get_default("terrain_w", 29))
+        text=str(win.main_app.global_vars_get_default("game_terrain_w", 29))
     )
     map_width_multilayer.add_element(1, map_width_bt)
     #
@@ -585,7 +571,7 @@ def create_game_setup_scene(win: nd.ND_Window) -> None:
         window=win,
         elt_id="map_width_line_edit",
         position=nd.ND_Position_MultiLayer(multilayer=map_width_multilayer, w="100%", h="100%"),
-        value=win.main_app.global_vars_get_default("terrain_w", 29),
+        value=win.main_app.global_vars_get_default("game_terrain_w", 29),
         min_value=5,
         max_value=200,
         digits_after_comma=0,
@@ -618,7 +604,7 @@ def create_game_setup_scene(win: nd.ND_Window) -> None:
         elt_id="map_height_bt",
         position=nd.ND_Position_MultiLayer(multilayer=map_height_multilayer, w="100%", h="100%"),
         onclick=on_bt_map_size_change_clicked,
-        text=str(win.main_app.global_vars_get_default("terrain_h", 29))
+        text=str(win.main_app.global_vars_get_default("game_terrain_h", 29))
     )
     map_height_multilayer.add_element(1, map_height_bt)
     #
@@ -626,7 +612,7 @@ def create_game_setup_scene(win: nd.ND_Window) -> None:
         window=win,
         elt_id="map_height_line_edit",
         position=nd.ND_Position_MultiLayer(multilayer=map_height_multilayer, w="100%", h="100%"),
-        value=win.main_app.global_vars_get_default("terrain_h", 29),
+        value=win.main_app.global_vars_get_default("game_terrain_h", 29),
         min_value=5,
         max_value=200,
         digits_after_comma=0,

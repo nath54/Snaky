@@ -1,6 +1,8 @@
 
 from typing import Optional
 
+import os
+
 import lib_nadisplay as nd
 
 from lib_nadisplay_sdl_sdlgfx import ND_Display_SDL_SDLGFX as DisplayClass, ND_Window_SDL_SDLGFX as WindowClass
@@ -27,6 +29,13 @@ MAIN_WINDOW_ID: int = 0
 
 #
 if __name__ == "__main__":
+
+    #
+    snakes_bot_paths: str = "./bots/"
+    #
+    if not os.path.exists(snakes_bot_paths):
+        os.makedirs(snakes_bot_paths)
+
     #
     app: nd.ND_MainApp = nd.ND_MainApp(
                         DisplayClass=DisplayClass,
@@ -60,16 +69,16 @@ if __name__ == "__main__":
     app.global_vars_set("MAIN_WINDOW_ID", 0)
 
     # On peut facilement remplacer quelques paramètres par défaut ici:
-    app.global_vars_set("nb_init_apples", 1)
-    app.global_vars_set("init_snake_size", 0)
-    app.global_vars_set("map_mode", "separate_close")  # "together", "separate_far", "separate_close"
-    app.global_vars_set("terrain_w", 11)
-    app.global_vars_set("terrain_h", 11)
-    app.global_vars_set("snakes_speed", 0.01)
+    app.global_vars_set("game_nb_init_apples", 1)
+    app.global_vars_set("game_init_snake_size", 0)
+    app.global_vars_set("game_map_mode", "separate_close")  # "together", "separate_far", "separate_close"
+    app.global_vars_set("game_terrain_w", 11)
+    app.global_vars_set("game_terrain_h", 11)
+    app.global_vars_set("game_snakes_speed", 0.01)
 
     #
-    init_snake_size: int = win.main_app.global_vars_get_default("init_snake_size", 0)  #
-    app.global_vars_set("init_snakes",
+    init_snake_size: int = win.main_app.global_vars_get_default("game_init_snake_size", 0)  #
+    app.global_vars_set("game_init_snakes",
         [SnakePlayerSetting(name="player1", color_idx=0, init_size=init_snake_size, skin_idx=1, player_type="human", control_name="zqsd")]
     )
 

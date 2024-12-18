@@ -341,6 +341,23 @@ class ND_MainApp:
         return None
 
     #
+    def get_element_value(self, window_id: int, scene_id: str, elt_id: str) -> Optional[bool | int | float | str]:
+        #
+        elt: Optional[ND_Elt] = self.get_element(window_id, scene_id, elt_id)
+        #
+        if elt is None:
+            return None
+        #
+        if isinstance(elt, ND_LineEdit):
+            return elt.text
+        elif isinstance(elt, ND_Checkbox):
+            return elt.checked
+        elif isinstance(elt, ND_NumberInput):
+            return elt.value
+        #
+        return None
+
+    #
     def get_element_recursively_from_multilayer(self, elt_cont: "ND_MultiLayer", elt_id: str) -> Optional["ND_Elt"]:
         #
         if elt_id in elt_cont.elements_by_id:
