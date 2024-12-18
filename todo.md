@@ -2,7 +2,7 @@
 
 ## Mécaniques
 
-- [ ] Items à collecter de différentes valeurs
+- [x] Items à collecter de différentes valeurs
 - [ ] Cadeaux objets
   - [ ] accélération des adversaires
   - [ ] déccélération
@@ -12,13 +12,14 @@
 
 - [ ] Système : panoplie du dragon à compléter pour devenir un dragon (style dragon chinois -> ca ressemble à un long et grand serpent)
 
-## Environnement
+## Systèmes
 
-- [ ] Implémenter les bots
-- [ ] Implémenter pour n joueurs (actuel : 2)
+- [x] Implémenter les bots
+- [ ] Implémenter l'entraînement des bots
+- [x] Implémenter pour n joueurs (actuel : 2)
 - [x] Afficher scores et map à la fin
   - [ ] Améliorer l'affichage de l'écran de fin
-- [ ] Faire un écran de pause
+- [x] Faire un écran de pause
   - [x] Implémenter le système de pause (fait: appuyer sur 'p' pour mettre en pause)
 
 ## Graphismes

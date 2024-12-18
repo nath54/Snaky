@@ -5,5 +5,4 @@ vulkan
 PySDL2
 pysdl2-dll
 pygame
-tk
-
+numpy

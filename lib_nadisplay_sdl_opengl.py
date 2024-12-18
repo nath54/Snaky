@@ -29,6 +29,7 @@ from lib_nadisplay import ND_MainApp, ND_Display, ND_Window, ND_Scene
 from lib_nadisplay_sdl import to_sdl_color, get_display_info
 from lib_nadisplay_opengl import create_and_validate_gl_shader_program
 
+
 #
 VERTEX_SHADER_SRC: str = """
     #version 330 core
@@ -84,6 +85,8 @@ class ND_Display_SDL_OPENGL(ND_Display):
     #
     def __init__(self, main_app: ND_MainApp, WindowClass: Type[ND_Window]) -> None:
         #
+        self.main_not_threading: bool = False
+        self.events_thread_in_main_thread: bool = True
         self.display_thread_in_main_thread: bool = True
         #
         self.WindowClass: Type[ND_Window] = WindowClass
@@ -615,15 +618,15 @@ class ND_Window_SDL_OPENGL(ND_Window):
 
 
     #
-    def draw_text(self, txt: str, x: int, y: int, font_size: int, font_color: ND_Color, font: Optional[str] = None) -> None:
+    def draw_text(self, txt: str, x: int, y: int, font_size: int, font_color: ND_Color, font_name: Optional[str] = None) -> None:
         #
-        if font is None:
-            font = self.display.default_font
+        if font_name is None:
+            font_name = self.display.default_font
         #
-        tid: str = f"{txt}_|||_{font}_|||_{font_size}_|||_{font_color}"
+        tid: str = f"{txt}_|||_{font_name}_|||_{font_size}_|||_{font_color}"
         #
         if tid not in self.prepared_font_textures:
-            self.prepared_font_textures[tid] = self.prepare_text_to_render(text=txt, color=font_color, font_name=font, font_size=font_size)
+            self.prepared_font_textures[tid] = self.prepare_text_to_render(text=txt, color=font_color, font_name=font_name, font_size=font_size)
         #
         tsize: ND_Point = self.get_prepared_texture_size(self.prepared_font_textures[tid])
         self.render_prepared_texture(self.prepared_font_textures[tid], x, y, tsize.x, tsize.y)

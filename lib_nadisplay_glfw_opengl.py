@@ -25,6 +25,7 @@ from lib_nadisplay_opengl import create_and_validate_gl_shader_program
 from lib_nadisplay_np import get_rendering_buffer
 
 
+
 VERTEX_GEOMETRY_SHADER_SRC: str = """
     #version 330 core
     layout (location = 0) in vec2 position;
@@ -254,6 +255,8 @@ class ND_Display_GLFW_OPENGL(ND_Display):
     #
     def __init__(self, main_app: ND_MainApp, WindowClass: Type[ND_Window]) -> None:
         #
+        self.main_not_threading: bool = False
+        self.events_thread_in_main_thread: bool = True
         self.display_thread_in_main_thread: bool = False
         #
         self.WindowClass: Type[ND_Window] = WindowClass
@@ -595,12 +598,12 @@ class ND_Window_GLFW_OPENGL(ND_Window):
 
 
     #
-    def draw_text(self, txt: str, x: int, y: int, font_size: int, font_color: ND_Color, font: Optional[str] = None) -> None:
+    def draw_text(self, txt: str, x: int, y: int, font_size: int, font_color: ND_Color, font_name: Optional[str] = None) -> None:
         #
-        if font is None:
-            font = self.display.default_font
+        if font_name is None:
+            font_name = self.display.default_font
         #
-        font_renderer: Optional[FontRenderer] = cast(Optional[FontRenderer], self.display.get_font(font, font_size))
+        font_renderer: Optional[FontRenderer] = cast(Optional[FontRenderer], self.display.get_font(font_name, font_size))
         #
         if font_renderer is None:
             return

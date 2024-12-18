@@ -3,7 +3,6 @@ from typing import Optional
 
 import vulkan as vk  # type: ignore
 
-
 # Initialize Vulkan
 def init_vulkan() -> Optional[object]:
     # Application Info

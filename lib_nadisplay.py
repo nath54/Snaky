@@ -10,9 +10,13 @@ import atexit
 import math
 import random
 
+import numpy as np
+
 import lib_nadisplay_events as nd_event
 from lib_nadisplay_colors import ND_Color, cl, ND_Transformations
 from lib_nadisplay_rects import ND_Rect, ND_Point, ND_Position, ND_Position_Constraints, ND_Position_Margins
+
+
 
 #
 def clamp(value: Any, mini: Any, maxi: Any) -> Any:
@@ -62,6 +66,7 @@ class ND_MainApp:
         self.current_fps: int = 0
         #
         self.is_running: bool = False
+        self.is_threading: bool = True
         #
         self.display: Optional["ND_Display"] = DisplayClass(self, WindowClass=WindowClass)
         #
@@ -90,7 +95,8 @@ class ND_MainApp:
         #
         self.is_running = False
         #
-        self.waiting_all_threads()
+        if self.is_threading:
+            self.waiting_all_threads()
 
     #
     def get_time_msec(self) -> float:
@@ -128,11 +134,27 @@ class ND_MainApp:
         self.global_vars_creation_mut.release()
 
     #
-    def global_vars_get(self, var_name: str, default_value: Any = None) -> Any:
+    def global_vars_get_optional(self, var_name: str) -> Optional[Any]:
         #
         if var_name in self.global_vars:
             return self.global_vars[var_name]
+        return None
+
+    # If is in global vars, returns it, else return default_value, all the cases, that is not None
+    def global_vars_get_default(self, var_name: str, default_value: Any) -> Any:
+        #
+        if var_name in self.global_vars:
+            return self.global_vars[var_name]
+        #
         return default_value
+
+    # Get Not None
+    def global_vars_get(self, var_name: str) -> Any:
+        #
+        if var_name in self.global_vars:
+            return self.global_vars[var_name]
+        #
+        raise IndexError(f"CRITICAL ERROR !\nGlobal Vars Error: Index {var_name} not found in global variables !")
 
     #
     def global_vars_set(self, var_name: str, var_value: Any, if_not_exists: str = "create") -> None:
@@ -171,6 +193,81 @@ class ND_MainApp:
                     self.global_vars_muts[var_name] = Lock()
 
     #
+    def global_vars_list_remove(self, var_name: str, obj_value: Any, if_not_exists: str = "ignore") -> None:
+        #
+        if var_name in self.global_vars:
+            #
+            with self.global_vars_muts[var_name]:
+                #
+                self.global_vars[var_name].remove(obj_value)
+            #
+        else:
+            #
+            if not if_not_exists == "error":
+                raise UserWarning("#TODO: complete error message")
+
+    #
+    def global_vars_list_del_at_idx(self, var_name: str, idx: int, if_not_exists: str = "ignore") -> None:
+        #
+        if var_name in self.global_vars:
+            #
+            with self.global_vars_muts[var_name]:
+                #
+                del self.global_vars[var_name][idx]
+            #
+        else:
+            #
+            if not if_not_exists == "error":
+                raise UserWarning("#TODO: complete error message")
+
+    #
+    def global_vars_list_length(self, var_name: str) -> int:
+        #
+        if var_name in self.global_vars:
+            #
+            return len(self.global_vars[var_name])
+            #
+        else:
+            #
+            return 0
+
+    #
+    def global_vars_list_get_at_idx(self, var_name: str, idx: int) -> Optional[Any]:
+        #
+        if var_name in self.global_vars:
+            #
+            if idx < len(self.global_vars[var_name]):
+                return self.global_vars[var_name][idx]
+            #
+            else:
+                return None
+            #
+        else:
+            #
+            return None
+
+    #
+    def global_vars_list_set_at_idx(self, var_name: str, idx: int, obj_value: Any, if_not_exists: str = "error", if_idx_not_in_list_length: str = "error") -> None:
+        #
+        if var_name in self.global_vars:
+            #
+            with self.global_vars_muts[var_name]:
+                #
+                if idx < len(self.global_vars[var_name]):
+                    self.global_vars[var_name][idx] = obj_value
+                else:
+                    #
+                    if if_idx_not_in_list_length == "error":
+                        #
+                        raise UserWarning("Error, #TODO: complete error message")
+            #
+        else:
+            #
+            if if_not_exists == "error":
+                #
+                raise UserWarning("Error, #TODO: complete error message")
+
+    #
     def global_vars_dict_set(self, var_name: str, dict_key: Any, obj_value: Any, if_not_exists: str = "create") -> None:
         #
         if var_name in self.global_vars:
@@ -191,8 +288,110 @@ class ND_MainApp:
                     self.global_vars_muts[var_name] = Lock()
 
     #
+    def global_vars_dict_get(self, var_name: str, dict_key: Any, if_not_exists: str = "none") -> Any:
+        #
+        if var_name in self.global_vars:
+            #
+            return self.global_vars[var_name][dict_key]
+            #
+        else:
+            #
+            if if_not_exists == "error":
+                #
+                raise UserWarning("Error, #TODO: complete error message")
+            #
+            elif if_not_exists == "none":
+                #
+                return None
+
+    #
     def global_vars_exists(self, var_name: str) -> bool:
         return var_name in self.global_vars
+
+    #
+    def get_element(self, window_id: int, scene_id: str, elt_id: str) -> Optional["ND_Elt"]:
+        #
+        if not self.display:
+            return None
+        #
+        if window_id not in self.display.windows:
+            return None
+        #
+        win: Optional[ND_Window] = self.display.windows[window_id]
+        #
+        if not win:
+            return None
+        #
+        if scene_id not in win.scenes:
+            return None
+        #
+        if elt_id in win.scenes[scene_id].elements_by_id:
+            return win.scenes[scene_id].elements_by_id[elt_id]
+        #
+        for elt in win.scenes[scene_id].elements_by_id.values():
+            if isinstance(elt, ND_Container):
+                r: Optional[ND_Elt] = self.get_element_recursively_from_container(elt, elt_id)
+                if r is not None:
+                    return r
+            if isinstance(elt, ND_MultiLayer):
+                r = self.get_element_recursively_from_multilayer(elt, elt_id)
+                if r is not None:
+                    return r
+        #
+        return None
+
+    #
+    def get_element_value(self, window_id: int, scene_id: str, elt_id: str) -> Optional[bool | int | float | str]:
+        #
+        elt: Optional[ND_Elt] = self.get_element(window_id, scene_id, elt_id)
+        #
+        if elt is None:
+            return None
+        #
+        if isinstance(elt, ND_LineEdit):
+            return elt.text
+        elif isinstance(elt, ND_Checkbox):
+            return elt.checked
+        elif isinstance(elt, ND_NumberInput):
+            return elt.value
+        #
+        return None
+
+    #
+    def get_element_recursively_from_multilayer(self, elt_cont: "ND_MultiLayer", elt_id: str) -> Optional["ND_Elt"]:
+        #
+        if elt_id in elt_cont.elements_by_id:
+            return elt_cont.elements_by_id[elt_id]
+        #
+        for elt in elt_cont.elements_by_id.values():
+            if isinstance(elt, ND_Container):
+                r: Optional[ND_Elt] = self.get_element_recursively_from_container(elt, elt_id)
+                if r is not None:
+                    return r
+            if isinstance(elt, ND_MultiLayer):
+                r = self.get_element_recursively_from_multilayer(elt, elt_id)
+                if r is not None:
+                    return r
+        #
+        return None
+
+    #
+    def get_element_recursively_from_container(self, elt_cont: "ND_Container", elt_id: str) -> Optional["ND_Elt"]:
+        #
+        if elt_id in elt_cont.elements_by_id:
+            return elt_cont.elements_by_id[elt_id]
+        #
+        for elt in elt_cont.elements_by_id.values():
+            if isinstance(elt, ND_Container):
+                r: Optional[ND_Elt] = self.get_element_recursively_from_container(elt, elt_id)
+                if r is not None:
+                    return r
+            if isinstance(elt, ND_MultiLayer):
+                r = self.get_element_recursively_from_multilayer(elt, elt_id)
+                if r is not None:
+                    return r
+        #
+        return None
 
     #
     def add_function_to_mainloop_fns_queue(self, mainloop_name: str, function: Callable) -> None:
@@ -330,13 +529,13 @@ class ND_MainApp:
         return ""
 
     #
-    def manage_events(self) -> None:
+    def manage_events(self) -> bool:
         #
         event: Optional[nd_event.ND_Event] = self.events_manager.poll_next_event()
 
         #
         if event is None:
-            return
+            return False
 
         #
         event_name: str = ""
@@ -346,7 +545,7 @@ class ND_MainApp:
             #
             self.quit()
             #
-            return
+            return True
 
         #
         elif isinstance(event, nd_event.ND_EventKeyDown) and event.key != "":
@@ -360,7 +559,7 @@ class ND_MainApp:
         elif isinstance(event, nd_event.ND_EventWindow):
             #
             if isinstance(event, nd_event.ND_EventWindowShown) or isinstance(event, nd_event.ND_EventWindowHidden):
-                return
+                return True
             #
             event_name = self.handle_windows_event(event)
 
@@ -377,10 +576,10 @@ class ND_MainApp:
             for fn in self.events_functions[event_name]:
                 fn(self)
         #
+        return True
 
     #
     def events_thread(self) -> None:
-
         #
         while self.is_running:
             #
@@ -388,6 +587,13 @@ class ND_MainApp:
 
     #
     def start_events_thread(self) -> None:
+        #
+        if not self.is_threading:
+            return
+        #
+        if self.display is not None and not self.display.events_thread_in_main_thread:
+            return
+        #
         self.create_thread( self.events_thread, thread_name = "events_threads")
         print(f" - thread {self.threads[-1]} for events created")
 
@@ -436,6 +642,9 @@ class ND_MainApp:
     #
     def create_all_threads(self) -> None:
         #
+        if not self.is_threading:
+            return
+        #
         print("\nBegin to start threads\n")
 
         # Display thread
@@ -468,6 +677,9 @@ class ND_MainApp:
     #
     def create_thread(self, fn_to_call: Callable, fn_to_call_args: list[Any] = [], thread_name: str = "unknown thread") -> int:
         #
+        if not self.is_threading:
+            return -1
+        #
         id_thread: int = -1
 
         #
@@ -488,12 +700,16 @@ class ND_MainApp:
     #
     def waiting_all_threads(self) -> None:
         #
+        if not self.is_threading:
+            return
+        #
         print("\nWaiting for threads to finish...\n")
 
         # While not all threads are done
         while self.threads_ids_not_joined:
             #
-            print(f"Threads to wait :\n  - {'\n  - '.join([str(self.threads_names[t]) for t in list(self.threads_ids_not_joined)])}")
+            spc: str = "\n - "
+            print(f"Threads to wait :\n  - {spc.join([str(self.threads_names[t]) for t in list(self.threads_ids_not_joined)])}")
             #
             with self.threads_condition:
                 #
@@ -515,6 +731,86 @@ class ND_MainApp:
         print("\nAll threads joined\n")
 
     #
+    def mainloop_without_threads(self) -> None:
+        #
+        start_time: float = 0.0
+        elapsed_time: float = 0.0
+        delay: float = 0.0  # Delay with first frame
+
+        #
+        while self.is_running:
+            #
+            elapsed_time = self.get_time_msec()
+            if start_time != 0:
+                delay = elapsed_time - start_time
+                if delay != 0:
+                    self.current_fps = int(1.0 / delay)
+            #
+            start_time = elapsed_time    # Start of the frame in milliseconds
+
+            # Manage events
+            max_events_per_frame: int = 200
+            current_events_per_frame: int = 0
+            while self.manage_events() and current_events_per_frame < max_events_per_frame:
+                current_events_per_frame += 1
+
+            # Manage all the other mainloop runs
+            queue_name: str
+            fn: Callable[[ND_MainApp, float], None]
+            for queue_name in self.mainloop_queue_functions:
+                for fn in self.mainloop_queue_functions[queue_name]:
+                    fn(self, elapsed_time)
+
+            #
+            if self.display is not None:
+                #
+                self.display.update_display()
+
+            # Calculate the time taken for this frame
+            elapsed_time = self.get_time_msec() - start_time
+
+            # If the frame was rendered faster than the target duration, delay
+            if elapsed_time < self.frame_duration_display:
+                self.wait_time_msec(self.frame_duration_display - elapsed_time)
+
+    #
+    def mainloop_threads_display_and_events(self) -> None:
+        #
+        start_time: float = 0.0
+        elapsed_time: float = 0.0
+        delay: float = 0.0  # Delay with first frame
+
+        #
+        while self.is_running:
+            #
+            elapsed_time = self.get_time_msec()
+            if start_time != 0:
+                delay = elapsed_time - start_time
+                if delay != 0:
+                    self.current_fps = int(1.0 / delay)
+                print(f"Fps : {self.current_fps}")
+            #
+            start_time = elapsed_time    # Start of the frame in milliseconds
+
+            # Manage events
+            max_events_per_frame: int = 200
+            current_events_per_frame: int = 0
+            while self.manage_events() and current_events_per_frame < max_events_per_frame:
+                current_events_per_frame += 1
+
+            #
+            if self.display is not None:
+                #
+                self.display.update_display()
+
+            # Calculate the time taken for this frame
+            elapsed_time = self.get_time_msec() - start_time
+
+            # If the frame was rendered faster than the target duration, delay
+            if elapsed_time < self.frame_duration_display:
+                self.wait_time_msec(self.frame_duration_display - elapsed_time)
+
+    #
     def run(self) -> None:
         #
         atexit.register(self.atexit)
@@ -525,12 +821,26 @@ class ND_MainApp:
         #
         self.start_init_queue_functions()
         #
-        self.create_all_threads()
+        if self.display is not None and not self.display.main_not_threading:
+            self.is_threading = False
+        self.is_threading = False
         #
-        if self.display is not None and self.display.display_thread_in_main_thread:
-            self.display_thread()
+        if self.is_threading:
+            self.create_all_threads()
         #
-        self.waiting_all_threads()
+        if self.display is not None:
+            if not self.display.main_not_threading:
+                if self.display.display_thread_in_main_thread and not self.display.events_thread_in_main_thread:
+                    self.display_thread()
+                elif not self.display.display_thread_in_main_thread and self.display.events_thread_in_main_thread:
+                    self.events_thread()
+                elif not self.display.display_thread_in_main_thread and self.display.events_thread_in_main_thread:
+                    self.mainloop_threads_display_and_events()
+            else:
+                self.mainloop_without_threads()
+        #
+        if self.is_threading:
+            self.waiting_all_threads()
 
     #
     def quit(self) -> None:
@@ -548,6 +858,8 @@ class ND_Display:
     #
     def __init__(self, main_app: ND_MainApp, WindowClass: Type["ND_Window"]) -> None:
         #
+        self.main_not_threading: bool = False
+        self.events_thread_in_main_thread: bool = False
         self.display_thread_in_main_thread: bool = False
         #
         self.main_app: ND_MainApp = main_app
@@ -771,9 +1083,19 @@ class ND_Window:
         return
 
     #
-    def draw_text(self, txt: str, x: int, y: int, font_size: int, font_color: ND_Color, font: Optional[str] = None) -> None:
+    def draw_text(self, txt: str, x: int, y: int, font_size: int, font_color: ND_Color, font_name: Optional[str] = None) -> None:
         #
         return
+
+    #
+    def get_text_size_with_font(self, txt: str, font_size: int, font_name: Optional[str] = None) -> ND_Point:
+        #
+        return ND_Point(0, 0)
+
+    #
+    def get_count_of_renderable_chars_fitting_given_width(self, txt: str, given_width: int, font_size: int, font_name: Optional[str] = None) -> tuple[int, int]:
+        #
+        return 0, 0
 
     #
     def draw_pixel(self, x: int, y: int, color: ND_Color) -> None:
@@ -975,7 +1297,24 @@ class ND_Elt:
         self.position: ND_Position = position
         #
         self.visible: bool = True
+        self._visible: bool = True
         self.clickable: bool = True
+
+    #
+    @property
+    def visible(self) -> bool:
+        #
+        if isinstance(self.position, ND_Position_Container):
+            return self._visible and self.position.container.visible
+        elif isinstance(self.position, ND_Position_MultiLayer):
+            return self._visible and self.position.multilayer.visible
+        else:
+            return self._visible
+
+    #
+    @visible.setter
+    def visible(self, value: bool) -> None:
+        self._visible = value
 
     #
     def render(self) -> None:
@@ -1350,6 +1689,9 @@ class ND_Scene:
     #
     def handle_event(self, event) -> None:
         #
+        if event.blocked:
+            return
+        #
         if self.on_window_state_test is not None and self.on_window_state_test(self.window.state):
             return
 
@@ -1357,7 +1699,9 @@ class ND_Scene:
         for elt in self.elements_by_id.values():
 
             #
-            elt.handle_event(event)
+            if hasattr(elt, "handle_event"):
+                #
+                elt.handle_event(event)
 
         # #
         # layer: int
@@ -1521,7 +1865,7 @@ class ND_Text(ND_Elt):
                 txt=self.text,
                 x=x,
                 y=y,
-                font=self.font_name,
+                font_name=self.font_name,
                 font_size=self.font_size,
                 font_color=self.font_color
         )
@@ -1535,17 +1879,37 @@ class ND_Clickable(ND_Elt):
             window: ND_Window,
             elt_id: str,
             position: ND_Position,
-            onclick: Optional[Callable] = None
+            onclick: Optional[Callable] = None,
+            active: bool = True,
+            block_events_below: bool = True
         ) -> None:
 
         #
         super().__init__(window=window, elt_id=elt_id, position=position)
         self.onclick: Optional[Callable] = onclick
         self.state: str = "normal"  # Can be "normal", "hover", or "clicked"
+        self.mouse_bt_down_on_hover: bool = False
+        self.block_events_below: bool = block_events_below
         #
+        self.active: bool = active
 
     #
     def handle_event(self, event: nd_event.ND_Event) -> None:
+        #
+        if event.blocked:
+            return
+        #
+        if not self.visible:
+            self.state = "normal"
+            return
+        #
+        if not self.clickable:
+            self.state = "normal"
+            return
+        #
+        if not self.active:
+            self.state = "normal"
+            return
         #
         if isinstance(event, nd_event.ND_EventMouseMotion):
             #
@@ -1557,16 +1921,27 @@ class ND_Clickable(ND_Elt):
         elif isinstance(event, nd_event.ND_EventMouseButtonDown):
             if event.button_id == 1:
                 if self.position.rect.contains_point(ND_Point(event.x, event.y)):
+                    #
                     self.state = "clicked"
+                    #
+                    self.mouse_bt_down_on_hover = True
+                else:
+                    self.mouse_bt_down_on_hover = False
         #
         elif isinstance(event, nd_event.ND_EventMouseButtonUp):
             if event.button_id == 1:
                 #
                 self.state = "hover" if self.position.rect.contains_point(ND_Point(event.x, event.y)) else "normal"
                 #
-                if self.state == "hover":
+                if self.state == "hover" and self.mouse_bt_down_on_hover:
+                    #
+                    if self.block_events_below:
+                        event.blocked = True
+                    #
                     if self.onclick:
                         self.onclick(self.window)
+            #
+            self.mouse_bt_down_on_hover = False
 
 
 # ND_Rectangle class implementation
@@ -1580,6 +1955,7 @@ class ND_Rectangle(ND_Clickable):
             border_radius: int = 5,
             border: bool = True,
             onclick: Optional[Callable] = None,
+            mouse_active: bool = True,
             base_bg_color: Optional[ND_Color] = None,
             base_fg_color: Optional[ND_Color] = None,
             base_bg_texture: Optional[int | str] = None,
@@ -1592,7 +1968,7 @@ class ND_Rectangle(ND_Clickable):
         ) -> None:
 
         #
-        super().__init__(window=window, elt_id=elt_id, position=position, onclick=onclick)
+        super().__init__(window=window, elt_id=elt_id, position=position, onclick=onclick, active=mouse_active)
         self.base_bg_color: ND_Color = base_bg_color if base_bg_color is not None else cl("gray")
         self.base_fg_color: ND_Color = base_fg_color if base_fg_color is not None else cl("black")
         self.base_bg_texture: Optional[int] = self.window.prepare_image_to_render(base_bg_texture) if isinstance(base_bg_texture, str) else base_bg_texture
@@ -1650,13 +2026,14 @@ class ND_Sprite(ND_Clickable):
             elt_id: str,
             position: ND_Position,
             onclick: Optional[Callable] = None,
+            mouse_active: bool = True,
             base_texture: Optional[int | str] = None,
             hover_texture: Optional[int | str] = None,
             clicked_texture: Optional[int | str] = None
         ) -> None:
 
         #
-        super().__init__(window=window, elt_id=elt_id, position=position, onclick=onclick)
+        super().__init__(window=window, elt_id=elt_id, position=position, onclick=onclick, active=mouse_active)
         self.base_texture: Optional[int | str] = base_texture
         self.hover_texture: Optional[int | str] = self.window.prepare_image_to_render(hover_texture) if isinstance(hover_texture, str) else hover_texture
         self.clicked_texture: Optional[int | str] = self.window.prepare_image_to_render(clicked_texture) if isinstance(clicked_texture, str) else clicked_texture
@@ -1918,6 +2295,7 @@ class ND_Button(ND_Clickable):
             position: ND_Position,
             onclick: Optional[Callable],
             text: str,
+            mouse_active: bool = True,
             font_name: Optional[str] = None,
             font_size: int = 24,
             border_radius: int = 5,
@@ -1930,11 +2308,12 @@ class ND_Button(ND_Clickable):
             hover_bg_texture: Optional[int | str] = None,
             clicked_bg_color: Optional[ND_Color] = None,
             clicked_fg_color: Optional[ND_Color] = None,
-            clicked_bg_texture: Optional[int | str] = None
+            clicked_bg_texture: Optional[int | str] = None,
+            texture_transformations: ND_Transformations = ND_Transformations()
         ) -> None:
 
         #
-        super().__init__(window=window, elt_id=elt_id, position=position, onclick=onclick)
+        super().__init__(window=window, elt_id=elt_id, position=position, onclick=onclick, active=mouse_active)
         self.text: str = text
         self.font_name: Optional[str] = font_name
         self.font_size: int = font_size
@@ -1956,6 +2335,7 @@ class ND_Button(ND_Clickable):
         #
         self.base_text_w, self.base_text_h = get_font_size(self.text, self.font_size, font_ratio=0.5)
         #
+        self.texture_transformations: ND_Transformations = texture_transformations
 
     #
     def render(self) -> None:
@@ -1975,13 +2355,13 @@ class ND_Button(ND_Clickable):
         if self.state == "normal":
             bg_color, fg_color, bg_texture = self.base_bg_color, self.base_fg_color, self.base_bg_texture
         elif self.state == "hover":
-            bg_color, fg_color, bg_texture = self.hover_bg_color, self.hover_fg_color, self.hover_bg_texture
+            bg_color, fg_color, bg_texture = self.hover_bg_color, self.hover_fg_color, self.hover_bg_texture if self.hover_bg_texture is not None else self.base_bg_texture
         else:  # clicked
-            bg_color, fg_color, bg_texture = self.clicked_bg_color, self.clicked_fg_color, self.clicked_bg_texture
+            bg_color, fg_color, bg_texture = self.clicked_bg_color, self.clicked_fg_color, self.clicked_bg_texture if self.clicked_bg_texture is not None else self.base_bg_texture
 
         # Drawing the background rect color or texture
         if bg_texture:
-            self.window.render_prepared_texture(bg_texture, x, y, self.w, self.h)
+            self.window.render_prepared_texture(bg_texture, x, y, self.w, self.h, transformations=self.texture_transformations)
         else:
             if not self.border and self.border_radius <= 0:
                 self.window.draw_filled_rect(x, y, self.w, self.h, bg_color)
@@ -1995,7 +2375,7 @@ class ND_Button(ND_Clickable):
                 txt=self.text,
                 x=x + (self.w - self.base_text_w) // 2,
                 y=y + (self.h - self.base_text_h) // 2,
-                font=self.font_name,
+                font_name=self.font_name,
                 font_size=self.font_size,
                 font_color=fg_color
         )
@@ -2014,6 +2394,11 @@ class ND_H_ScrollBar(ND_Elt):
         #
         self.bg_cl: ND_Color = bg_cl
         self.fg_cl: ND_Color = fg_cl
+
+    #
+    def get_scroll_ratio(self) -> float:
+        #
+        return self.scroll_position / float(self.content_width)
 
     #
     @property
@@ -2037,6 +2422,9 @@ class ND_H_ScrollBar(ND_Elt):
 
     #
     def handle_event(self, event: nd_event.ND_Event) -> None:
+        #
+        if event.blocked:
+            return
         #
         if isinstance(event, nd_event.ND_EventMouse):
             #
@@ -2081,6 +2469,11 @@ class ND_V_ScrollBar(ND_Elt):
         self.scroll_position = 0
         self.dragging = False
 
+    #
+    def get_scroll_ratio(self) -> float:
+        #
+        return self.scroll_position / float(self.content_height)
+
     @property
     def thumb_height(self) -> int:
         return max(20, int(self.w * (self.w / self.content_height)))
@@ -2100,6 +2493,9 @@ class ND_V_ScrollBar(ND_Elt):
     #
     def handle_event(self, event: nd_event.ND_Event) -> None:
         #
+        if event.blocked:
+            return
+        #
         if isinstance(event, nd_event.ND_EventMouseButtonDown):
             if event.button_id == 1:
                 if self.position.rect.contains_point(ND_Point(event.x, event.y)):
@@ -2116,6 +2512,668 @@ class ND_V_ScrollBar(ND_Elt):
                                                   int(relative_y * self.content_height / self.h)))
 
 
+#
+class ND_LineEdit(ND_Elt):
+    def __init__(
+        self,
+        window: ND_Window,
+        elt_id: str,
+        position: ND_Position,
+        text: str = "",
+        place_holder: str = "",
+        max_text_length: int = -1,
+        mouse_active: bool = True,
+        font_name: Optional[str] = None,
+        font_size: int = 24,
+        border_radius: int = 5,
+        border: bool = True,
+        base_bg_color: Optional[ND_Color] = None,
+        base_fg_color: Optional[ND_Color] = None,
+        hover_bg_color: Optional[ND_Color] = None,
+        hover_fg_color: Optional[ND_Color] = None,
+        clicked_bg_color: Optional[ND_Color] = None,
+        clicked_fg_color: Optional[ND_Color] = None,
+        characters_restrictions: Optional[set[str]] = None,
+        password_mode: bool = False,
+        on_line_edit_validated: Optional[Callable[["ND_LineEdit", str], None]] = None,
+        on_line_edit_escaped: Optional[Callable[["ND_LineEdit"], None]] = None
+    ) -> None:
+        super().__init__(window=window, elt_id=elt_id, position=position)
+        self.state: str = "normal"
+        self.text: str = text
+        self.place_holder: str = place_holder
+        self.font_name: Optional[str] = font_name
+        self.font_size: int = font_size
+        self.base_bg_color: ND_Color = base_bg_color if base_bg_color else cl("gray")
+        self.base_fg_color: ND_Color = base_fg_color if base_fg_color else cl("black")
+        self.hover_bg_color: ND_Color = hover_bg_color if hover_bg_color else cl("dark gray")
+        self.hover_fg_color: ND_Color = hover_fg_color if hover_fg_color else cl("black")
+        self.clicked_bg_color: ND_Color = clicked_bg_color if clicked_bg_color else cl("very dark gray")
+        self.clicked_fg_color: ND_Color = clicked_fg_color if clicked_fg_color else cl("black")
+        self.border: bool = border
+        self.border_radius: int = border_radius
+        self.cursor: int = len(text)
+        self.cursor_width: int = 2
+        self.cursor_height: int = self.font_size
+        self.focused: bool = False
+        self.max_text_length: int = max_text_length
+        self.characters_restrictions: Optional[set[str]] = characters_restrictions   # Do not accept others character that theses
+        self.password_mode: bool = password_mode
+        self.on_line_edit_validated: Optional[Callable[[ND_LineEdit, str], None]] = on_line_edit_validated
+        self.on_line_edit_escaped: Optional[Callable[[ND_LineEdit], None]] = on_line_edit_escaped
+
+        # Scrollbar-related
+        self.scrollbar_height: int = 10
+        self.full_text_width: int = 0
+        self.scroll_offset: int = 0
+        self.scrollbar: ND_H_ScrollBar = ND_H_ScrollBar(
+            window = self.window,
+            elt_id = f"scrollbar_{self.elt_id}",
+            position = ND_Position(self.x, self.y + self.h - self.scrollbar_height, self.w, self.scrollbar_height),
+            content_width = self.window.get_text_size_with_font(self.text, self.font_size, self.font_name).x
+        )
+
+    #
+    def set_text(self, txt: str) -> None:
+        #
+        self.text = txt
+        self.cursor = len(self.text)
+
+    #
+    def render(self) -> None:
+        if not self.visible:
+            return
+
+        # Determine background and text color based on the state
+        bg_color = self.base_bg_color
+        fg_color = self.base_fg_color
+        if self.state == "hover":
+            bg_color = self.hover_bg_color
+            fg_color = self.hover_fg_color
+        elif self.state == "clicked":
+            bg_color = self.clicked_bg_color
+            fg_color = self.clicked_fg_color
+
+        # Draw the background rectangle
+        if self.border:
+            self.window.draw_rounded_rect(
+                self.x, self.y, self.w, self.h, self.border_radius, bg_color, fg_color
+            )
+        else:
+            self.window.draw_filled_rect(self.x, self.y, self.w, self.h, bg_color)
+
+        # Determine the visible portion of the text
+        render_text = self.text if self.text else self.place_holder
+        text_color = fg_color if self.text else cl("light gray")
+
+        self.full_text_width = self.window.get_text_size_with_font(render_text, self.font_size, self.font_name).x
+
+        #
+        if self.scrollbar.scroll_position > 0:
+            size_hidden: int
+            count_hidden: int
+            size_hidden, count_hidden = self.window.get_count_of_renderable_chars_fitting_given_width(txt=render_text, given_width=int(self.scrollbar.scroll_position), font_name=self.font_name, font_size=self.font_size)
+            #
+            if count_hidden > 0:
+                render_text = render_text[count_hidden:]
+                self.scroll_offset = int(self.scrollbar.scroll_position) - size_hidden
+        else:
+            self.scroll_offset = 0
+
+        visible_text = render_text
+
+        visible_text_width: int = self.full_text_width
+        if self.full_text_width > self.w:
+            while visible_text_width > self.w:
+                visible_text = visible_text[1:]
+                visible_text_width = self.window.get_text_size_with_font(visible_text, self.font_size, self.font_name).x
+
+        # TODO: correct the text that is displayed and visible
+
+
+        # Render the text
+        self.window.draw_text(
+            txt=visible_text,
+            x=self.x + 5 - self.scroll_offset,
+            y=self.y + (self.h - self.cursor_height) // 2,
+            font_size=self.font_size,
+            font_color=text_color,
+            font_name=self.font_name,
+        )
+
+        # Render the cursor if focused
+        if self.focused and len(self.text) >= self.cursor:
+
+            txt_before_cursor_width: int = self.window.get_text_size_with_font(self.text[: self.cursor], self.font_size, self.font_name).x
+
+            cursor_x = self.x + 5 + txt_before_cursor_width - self.scroll_offset
+            self.window.draw_filled_rect(cursor_x, self.y + 5, self.cursor_width, self.cursor_height, fg_color)
+
+        # Render horizontal scrollbar if necessary
+        if self.full_text_width > self.w:
+            self.scrollbar.render()
+
+    #
+    def write(self, char: str) -> None:
+        #
+        if self.max_text_length > 0 and len(self.text) + len(char) > self.max_text_length:
+            return
+        #
+        self.text = self.text[: self.cursor] + char + self.text[self.cursor :]
+        self.cursor += len(char)
+        #
+        self.full_text_width = self.window.get_text_size_with_font(self.text, self.font_size, self.font_name).x
+        self.scrollbar.content_width = self.full_text_width
+
+    #
+    def print_debug_infos(self) -> None:
+        #
+        print(f"\nDEBUG | line_edit={self.elt_id} | visible={self.visible} | focused={self.focused} | text={self.text} | cursor={self.cursor} | full_text_width={self.full_text_width} | scroll_position={self.scrollbar.scroll_position}\n")
+
+    #
+    def handle_event(self, event: nd_event.ND_Event) -> None:
+        #
+        if event.blocked:
+            return
+        #
+        if isinstance(event, nd_event.ND_EventKeyDown) and event.key == "F3":
+            self.print_debug_infos()
+        #
+        if not self.visible:
+            return
+        #
+        if isinstance(event, nd_event.ND_EventMouse):
+            if event.x >= self.x and event.x <= self.x + self.w and event.y >= self.y and event.y <= self.y + self.h:
+                if isinstance(event, nd_event.ND_EventMouseButtonDown):
+                    if self.state == "clicked":
+                        # TODO: move the cursor to the closest place possible of the click
+                        pass
+                    else:
+                        self.state = "clicked"
+                        self.focused = True
+                elif isinstance(event, nd_event.ND_EventMouseMotion):
+                    self.state = "hover"
+            elif isinstance(event, nd_event.ND_EventMouseButtonDown):
+                self.state = "normal"
+                self.focused = False
+                #
+                if self.on_line_edit_escaped is not None:
+                    self.on_line_edit_escaped(self)
+            else:
+                self.state = "normal"
+
+            # Delegate scrollbar events
+            if self.full_text_width > self.w:
+                self.scrollbar.handle_event(event)
+                self.scroll_offset = int(self.scrollbar.get_scroll_ratio() * (self.full_text_width - self.w))
+
+        elif isinstance(event, nd_event.ND_EventKeyDown) and self.focused:
+            # TODO: complete with all the keys, for instance the numpad keys, etc...
+            if event.key == "escape":
+                self.state = "normal"
+                self.focused = False
+                #
+                if self.on_line_edit_escaped is not None:
+                    self.on_line_edit_escaped(self)
+            elif event.key == "return":
+                self.state = "normal"
+                self.focused = False
+                #
+                if self.on_line_edit_validated is not None:
+                    self.on_line_edit_validated(self, self.text)
+            #
+            elif event.key == "backspace" and self.cursor > 0:
+                self.text = self.text[: self.cursor - 1] + self.text[self.cursor :]
+                self.cursor -= 1
+                self.full_text_width = self.window.get_text_size_with_font(self.text, self.font_size, self.font_name).x
+                self.scrollbar.content_width = self.full_text_width
+            #
+            elif event.key == "left arrow" and self.cursor > 0:
+                self.cursor -= 1
+            #
+            elif event.key == "right arrow" and self.cursor < len(self.text):
+                self.cursor += 1
+                text_width = self.window.get_text_size_with_font(self.text[:self.cursor], self.font_size, self.font_name).x
+                if text_width - self.scroll_offset > self.w:
+                    self.scroll_offset = text_width - self.w
+            #
+            elif len(event.key) == 1:
+                self.write(event.key)
+            #
+            elif event.key == "espace":
+                self.write(" ")
+
+            # Update scrollbar position
+            if self.full_text_width > self.w:
+                self.scrollbar.scroll_position = self.scroll_offset / (self.full_text_width - self.w)
+            #
+            # print(f"DEBUG | event = {event}")
+            # self.print_debug_infos()
+
+
+# TODO: ND_Checkbox
+class ND_Checkbox(ND_Elt):
+    def __init__(
+        self,
+        window: ND_Window,
+        elt_id: str,
+        position: ND_Position,
+        checked: bool = False
+    ) -> None:
+        #
+        super().__init__(window=window, elt_id=elt_id, position=position)
+        #
+        self.checked: bool = checked
+        #
+        self.bt_checked: ND_Button = ND_Button(
+            window=self.window,
+            elt_id=f"{self.elt_id}_bt_checked",
+            position=self.position,
+            onclick=self.on_bt_checked_pressed,
+            text="v",
+            # TODO: style
+        )
+        #
+        self.bt_unchecked: ND_Button = ND_Button(
+            window=self.window,
+            elt_id=f"{self.elt_id}_bt_unchecked",
+            position=self.position,
+            onclick=self.on_bt_unchecked_pressed,
+            text="x",
+            # TODO: style
+        )
+
+    #
+    def render(self) -> None:
+        if self.checked:
+            self.bt_checked.render()
+        else:
+            self.bt_unchecked.render()
+
+    #
+    def on_bt_checked_pressed(self, _) -> None:
+        #
+        self.checked = False
+        #
+        self.bt_checked.visible = False
+        self.bt_unchecked.visible = True
+
+    #
+    def on_bt_unchecked_pressed(self, _) -> None:
+        #
+        self.checked = True
+        #
+        self.bt_checked.visible = True
+        self.bt_unchecked.visible = False
+
+    #
+    def is_checked(self) -> bool:
+        return self.checked
+
+
+# TODO: ND_NumberInput
+class ND_NumberInput(ND_Elt):
+    def __init__(
+        self,
+        window: ND_Window,
+        elt_id: str,
+        position: ND_Position,
+        value: float = 0,
+        min_value: float = 0,
+        max_value: float = 100,
+        step: float = 1,
+        digits_after_comma: int = 0
+    ) -> None:
+        #
+        super().__init__(window=window, elt_id=elt_id, position=position)
+        #
+        self.min_value: float = min_value
+        self.max_value: float = max_value
+        self.step: float = step
+        self.digits_after_comma: int = digits_after_comma
+        if self.digits_after_comma > 0:
+            self.value = round(clamp(value, self.min_value, self.max_value), self.digits_after_comma)
+        else:
+            self.value = int(clamp(value, self.min_value, self.max_value))
+        #
+        self.main_row_container: ND_Container = ND_Container(
+            window=self.window,
+            elt_id=f"{self.elt_id}_main_row_container",
+            position=self.position,
+            element_alignment="row"
+        )
+        #
+        self.line_edit: ND_LineEdit = ND_LineEdit(
+            window=self.window,
+            elt_id=f"{self.elt_id}_line_edit",
+            position=ND_Position_Container(w="80%", h="100%", container=self.main_row_container),
+            text=str(self.value),
+            place_holder="value",
+            font_name="FreeSans",
+            font_size=24,
+            on_line_edit_escaped=self.on_line_edit_escaped,
+            on_line_edit_validated=self.on_line_edit_validated
+        )
+        #
+        self.main_row_container.add_element(self.line_edit)
+        #
+        self.col_bts_container: ND_Container = ND_Container(
+            window=self.window,
+            elt_id=f"{self.elt_id}_col_bts_container",
+            position=ND_Position_Container(w="20%", h="100%", container=self.main_row_container)
+        )
+        self.main_row_container.add_element(self.col_bts_container)
+        #
+        self.bt_up: ND_Button = ND_Button(
+            window=self.window,
+            elt_id=f"{self.elt_id}_bt_up",
+            position=ND_Position_Container(w="100%", h="50%", container=self.col_bts_container),
+            onclick=self.on_bt_up_pressed,
+            text="^",
+            font_name="FreeSans",
+            font_size=12
+        )
+        self.col_bts_container.add_element(self.bt_up)
+        #
+        self.bt_down: ND_Button = ND_Button(
+            window=self.window,
+            elt_id=f"{self.elt_id}_bt_down",
+            position=ND_Position_Container(w="100%", h="50%", container=self.col_bts_container),
+            onclick=self.on_bt_down_pressed,
+            text="v",
+            font_name="FreeSans",
+            font_size=12
+        )
+        self.col_bts_container.add_element(self.bt_down)
+
+    #
+    def update_layout(self) -> None:
+        self.main_row_container.update_layout()
+
+    #
+    def render(self) -> None:
+        #
+        if not self.visible:
+            return
+        #
+        self.main_row_container.render()
+        #
+
+    #
+    def handle_event(self, event: nd_event.ND_Event) -> None:
+        #
+        if event.blocked:
+            return
+        #
+        self.line_edit.handle_event(event)
+        self.bt_up.handle_event(event)
+        self.bt_down.handle_event(event)
+
+    #
+    def on_bt_up_pressed(self, _) -> None:
+        #
+        new_value: float = self.value + self.step
+        #
+        if self.digits_after_comma > 0:
+            self.value = round(clamp(new_value, self.min_value, self.max_value), self.digits_after_comma)
+        else:
+            self.value = int(clamp(new_value, self.min_value, self.max_value))
+        #
+        self.line_edit.set_text(str(self.value))
+
+    #
+    def on_bt_down_pressed(self, _) -> None:
+        #
+        new_value: float = self.value - self.step
+        #
+        if self.digits_after_comma > 0:
+            self.value = round(clamp(new_value, self.min_value, self.max_value), self.digits_after_comma)
+        else:
+            self.value = int(clamp(new_value, self.min_value, self.max_value))
+        #
+        self.line_edit.set_text(str(self.value))
+
+    #
+    def on_line_edit_validated(self, _, value: str) -> None:
+        #
+        try:
+            new_value: float = float(self.line_edit.text)
+            #
+            if self.digits_after_comma > 0:
+                self.value = round(clamp(new_value, self.min_value, self.max_value), self.digits_after_comma)
+            else:
+                self.value = int(clamp(new_value, self.min_value, self.max_value))
+        except Exception as _:
+            pass
+        finally:
+            self.line_edit.set_text(str(self.value))
+
+    #
+    def on_line_edit_escaped(self, _) -> None:
+        #
+        value: str = self.line_edit.text
+        #
+        self.on_line_edit_validated(_, value)
+        #
+        # self.line_edit.set_text(str(self.value))
+
+
+# TODO: ND_SelectOptions
+class ND_SelectOptions(ND_Elt):
+    def __init__(
+        self,
+        window: ND_Window,
+        elt_id: str,
+        position: ND_Position,
+        value: str,
+        options: set[str],
+        option_list_buttons_height: int = 300,
+        on_value_selected: Optional[Callable[["ND_SelectOptions", str], None]] = None,
+        font_size: int = 24,
+        font_name: Optional[str] = None
+    ) -> None:
+        #
+        super().__init__(window=window, elt_id=elt_id, position=position)
+        #
+        self.font_name: Optional[str] = font_name
+        self.font_size: int = font_size
+        #
+        self.on_value_selected: Optional[Callable[[ND_SelectOptions, str], None]] = on_value_selected
+        #
+        self.value: str = value
+        self.options: set[str] = options
+        #
+        self.options_bts: dict[str, ND_Button] = {}
+        #
+        self.option_list_buttons_height: int = option_list_buttons_height
+        #
+        self.state: str = "base"  # "base" or "selection"
+        #
+        # 1st side: the main button to show which element is selected, and if clicked, hide itself and show the 2nd part of it
+        #
+        self.main_button: ND_Button = ND_Button(
+            window=self.window,
+            elt_id=f"{self.elt_id}_main_button",
+            position=self.position,
+            text=self.value,
+            onclick=self.on_main_button_clicked,
+            font_name=font_name,
+            font_size=font_size
+        )
+        #
+        # 2nd side: the buttons list to select a new option / see all the available options
+        #
+        self.bts_options_container: ND_Container = ND_Container(
+            window=self.window,
+            elt_id=f"{self.elt_id}_bts_options_container",
+            position=ND_Position(x=self.x, y=self.y, w=self.w, h=option_list_buttons_height)
+        )
+        self.bts_options_container.visible = False
+        #
+        option: str
+        for option in self.options:
+            self.options_bts[option] = ND_Button(
+                window=self.window,
+                elt_id=f"{self.elt_id}_bt_option_{option}",
+                position=ND_Position_Container(w=self.w, h=self.h, container=self.bts_options_container),
+                text=option,
+                onclick=lambda x, option=option: self.on_option_button_clicked(option),
+                font_name=self.font_name,
+                font_size=self.font_size
+            )
+            self.bts_options_container.add_element(self.options_bts[option])
+
+    #
+    def render(self) -> None:
+        #
+        if self.state == "base":
+            self.main_button.render()
+        else:
+            self.bts_options_container.render()
+
+    #
+    def update_layout(self) -> None:
+        #
+        self.bts_options_container.position = ND_Position(x=self.x, y=self.y, w=self.w, h=self.option_list_buttons_height)
+        #
+        self.bts_options_container.update_layout()
+
+    #
+    def add_option(self, option_value: str) -> None:
+        #
+        if option_value in self.options:
+            return
+        #
+        self.options.add(option_value)
+
+        #
+        self.options_bts[option_value] = ND_Button(
+            window=self.window,
+            elt_id=f"{self.elt_id}_bt_option_{option_value}",
+            position=ND_Position_Container(w=self.w, h=self.h, container=self.bts_options_container),
+            text=option_value,
+            onclick=lambda x, option=option_value: self.on_option_button_clicked(option),
+            font_name=self.font_name,
+            font_size=self.font_size
+        )
+        self.bts_options_container.add_element(self.options_bts[option_value])
+
+        #
+        self.update_layout()
+
+    #
+    def remove_option(self, option_value: str, new_value: Optional[str] = None) -> None:
+        #
+        if option_value not in self.options:
+            return
+        #
+        if len(self.options) == 1:  # On ne veut pas ne plus avoir d'options possibles
+            return
+        #
+        self.bts_options_container.remove_element(self.options_bts[option_value])
+        #
+        del self.options_bts[option_value]
+        self.options.remove(option_value)
+        #
+        if self.value == option_value:
+            #
+            if new_value is not None and new_value in self.options:
+                self.value = new_value
+            #
+            else:
+                #
+                self.value = next(iter(self.options))
+            #
+            self.main_button.text = self.value
+        #
+        self.update_layout()
+
+    #
+    def update_options(self, new_options: set[str], new_value: Optional[str] = None) -> None:
+        #
+        if len(new_options) == 0:
+            return
+        #
+        for bt in self.options_bts.values():
+            self.bts_options_container.remove_element(bt)
+        #
+        self.options_bts = {}
+        #
+        self.options = new_options
+        #
+        option: str
+        for option in self.options:
+            self.options_bts[option] = ND_Button(
+                window=self.window,
+                elt_id=f"{self.elt_id}_bt_option_{option}",
+                position=ND_Position_Container(w=self.w, h=self.h, container=self.bts_options_container),
+                text=option,
+                onclick=lambda x, option=option: self.on_option_button_clicked(option),
+                font_name=self.font_name,
+                font_size=self.font_size
+            )
+            self.bts_options_container.add_element(self.options_bts[option])
+
+        #
+        if self.value not in self.options:
+            #
+            if new_value is not None and new_value in self.options:
+                self.value = new_value
+            #
+            else:
+                #
+                self.value = next(iter(self.options))
+            #
+            self.main_button.text = self.value
+        #
+        self.update_layout()
+
+    #
+    def set_state_base(self) -> None:
+        #
+        self.state = "base"
+        self.bts_options_container.visible = False
+        self.main_button.visible = True
+
+    #
+    def set_state_selection(self) -> None:
+        #
+        self.state = "selection"
+        self.bts_options_container.visible = True
+        self.main_button.visible = False
+
+    #
+    def handle_event(self, event: nd_event.ND_Event) -> None:
+        #
+        if event.blocked:
+            return
+        #
+        if self.state == "base":
+            self.main_button.handle_event(event)
+        else:
+            self.bts_options_container.handle_event(event)
+            #
+            if isinstance(event, nd_event.ND_EventMouseButtonDown):
+                if not self.bts_options_container.position.rect.contains_point(ND_Point(event.x, event.y)):
+                    self.set_state_base()
+
+    #
+    def on_main_button_clicked(self, _) -> None:
+        #
+        self.set_state_selection()
+
+    #
+    def on_option_button_clicked(self, new_option: str) -> None:
+        #
+        self.value = new_option
+        self.main_button.text = self.value
+        #
+        self.set_state_base()
+        #
+        if self.on_value_selected is not None:
+            self.on_value_selected(self, self.value)
+
+
 # ND_Container class implementation
 class ND_Container(ND_Elt):
     #
@@ -2129,6 +3187,7 @@ class ND_Container(ND_Elt):
             scroll_h: bool = False,
             element_alignment: str = "row_wrap",
             element_alignment_kargs: dict[str, int | float | str | bool] = {},
+            inverse_z_order: bool = False,
             min_space_width_containing_elements: int = 0,
             min_space_height_containing_elements: int = 0,
             scrollbar_w_height: int = 20,
@@ -2151,9 +3210,12 @@ class ND_Container(ND_Elt):
         # If the elements are aligned in a row, a column, a row with wrap, a column with wrap or a grid
         self.element_alignment: str = element_alignment
         self.element_alignment_kargs: dict[str, int | float | str | bool] = element_alignment_kargs
+        self.inverse_z_order: bool = inverse_z_order
 
         # List of contained elements
         self.elements: list[ND_Elt] = []
+        #
+        self.elements_by_id: dict[str, ND_Elt] = {}
 
         # Elements that represents the scrollbar if there is one
         self.h_scrollbar: Optional[ND_H_ScrollBar] = None
@@ -2172,9 +3234,13 @@ class ND_Container(ND_Elt):
         self.min_space_height_containing_elements: int = min_space_height_containing_elements
 
     #
-    def add_element(self, element: ND_Elt):
+    def add_element(self, element: ND_Elt) -> None:
+        #
+        if element.elt_id in self.elements_by_id:
+            raise IndexError(f"Error: Trying to add an element with id {element.elt_id} in container {self.elt_id}, but there was already an element with the same id in there!")
         #
         self.elements.append(element)
+        self.elements_by_id[element.elt_id] = element
         #
         self.update_layout()
         #
@@ -2182,7 +3248,31 @@ class ND_Container(ND_Elt):
             element.update_layout()
 
     #
-    def update_layout(self):
+    def remove_element(self, element: ND_Elt) -> None:
+        #
+        if element.elt_id not in self.elements_by_id:
+            raise IndexError(f"Error: Trying to remove an element with id {element.elt_id} in container {self.elt_id}, but there aren't such elements in there !")
+        #
+        self.elements.remove(element)
+        del self.elements_by_id[element.elt_id]
+        #
+        self.update_layout()
+
+    #
+    def remove_element_from_elt_id(self, elt_id: str) -> None:
+        #
+        if elt_id not in self.elements_by_id:
+            raise IndexError(f"Error: Trying to remove an element with id {elt_id} in container {self.elt_id}, but there aren't such elements in there !")
+        #
+        element: ND_Elt = self.elements_by_id[elt_id]
+        #
+        self.elements.remove(element)
+        del self.elements_by_id[element.elt_id]
+        #
+        self.update_layout()
+
+    #
+    def update_layout(self) -> None:
         #
         if self.element_alignment == "row_wrap":
             self._layout_row_wrap()
@@ -2205,8 +3295,8 @@ class ND_Container(ND_Elt):
             if self.content_width > self.w:
                 if not self.h_scrollbar:
                     self.h_scrollbar = ND_H_ScrollBar(self.window, f"{self.elt_id}_hscroll",
-                                                    ND_Position(self.x, self.y + self.h - self.scrollbar_w_height, self.w, self.scrollbar_w_height),
-                                                    self.content_width)
+                                                      ND_Position(self.x, self.y + self.h - self.scrollbar_w_height, self.w, self.scrollbar_w_height),
+                                                      self.content_width)
                 else:
                     self.h_scrollbar.content_width = self.content_width
                     self.h_scrollbar.position.set_w(self.w)
@@ -2329,6 +3419,9 @@ class ND_Container(ND_Elt):
 
         ##
         self.content_width = row_width
+        #
+        if isinstance(self.position, ND_Position_Container) and self.position.is_w_auto():
+            self.position._w = self.content_width
         #
         crt_y: int = self.y
         space_left: int = 0
@@ -2468,6 +3561,13 @@ class ND_Container(ND_Elt):
         crt_x: int = self.x
         space_left: int = 0
 
+
+        ##
+        self.content_height = col_height
+        #
+        if isinstance(self.position, ND_Position_Container) and self.position.is_h_auto():
+            self.position._h = col_height
+
         # Second pass
         #
         self.content_width = 0
@@ -2546,7 +3646,14 @@ class ND_Container(ND_Elt):
 
         # Render each element with the scrollbar offsets applied
         elt: ND_Elt
-        for elt in self.elements:
+        rendering_order = range(len(self.elements))
+        #
+        if self.inverse_z_order:
+            rendering_order = rendering_order[::-1]
+        #
+        for i in rendering_order:
+            #
+            elt = self.elements[i]
 
             # Set scroll effect
             elt.position._x -= int(scroll_x)
@@ -2572,13 +3679,23 @@ class ND_Container(ND_Elt):
     #
     def handle_event(self, event):
         #
+        if event.blocked:
+            return
+        #
         if self.h_scrollbar:
             self.h_scrollbar.handle_event(event)
         if self.v_scrollbar:
             self.v_scrollbar.handle_event(event)
 
         # Propagate events to child elements
-        for element in self.elements:
+        elt_order = range(len(self.elements))
+        #
+        if not self.inverse_z_order:
+            elt_order = elt_order[::-1]
+        #
+        for i in elt_order:
+            #
+            element = self.elements[i]
             if hasattr(element, 'handle_event'):
                 element.handle_event(event)
 
@@ -2623,10 +3740,16 @@ class ND_MultiLayer(ND_Elt):
     #
     def handle_event(self, event) -> None:
         #
+        if event.blocked:
+            return
+        #
         for elt in self.elements_by_id.values():
 
             #
-            elt.handle_event(event)
+            if hasattr(elt, "handle_event"):
+                elt.handle_event(event)
+
+        # TODO: gérer les évenenements en fonctions de si un layer du dessus bloque les évenements en dessous
 
         # #
         # layer: int
@@ -2841,7 +3964,7 @@ class ND_CameraGrid(ND_Elt):
         #
 
     #
-    def move_camera_to_grid_area(self, grid_area: ND_Rect) -> None:
+    def move_camera_to_grid_area(self, grid_area: ND_Rect, force_square_tiles: bool = True) -> None:
         #
         if not self.grids_to_render:
             return
@@ -2852,6 +3975,10 @@ class ND_CameraGrid(ND_Elt):
         self.zoom_x = float(self.w) / float((grid_area.w+3) * (self.grids_to_render[0].grid_tx+self.grid_lines_width))
         self.zoom_y = float(self.h) / float((grid_area.h+3) * (self.grids_to_render[0].grid_ty+self.grid_lines_width))
         #
+        if force_square_tiles:
+            mz: float = min(self.zoom_x, self.zoom_y)
+            self.zoom_x = mz
+            self.zoom_y = mz
 
 
 #
@@ -3046,6 +4173,26 @@ class ND_RectGrid(ND_Elt):
         # Do nothing here, because it is a camera that have to render
         return
 
+    #
+    def export_chunk_of_grid_to_numpy(self, x_0: int, y_0: int, x_1: int, y_1: int, fn_elt_to_value: Callable[[Optional[ND_Elt], Optional[int]], int | float], np_type: type = np.float32) -> np.ndarray:
+        #
+        dtx: int = x_1 - x_0
+        dty: int = y_1 - y_0
+        #
+        grid: np.ndarray = np.zeros((dtx, dty), dtype=np_type)
+        #
+        for dx in range(dtx):
+            for dy in range(dty):
+                #
+                case_point: ND_Point = ND_Point(x_0 + dx, y_0 + dy)
+                #
+                elt: Optional[ND_Elt] = self.get_element_at_grid_case(case_point)
+                elt_id: Optional[int] = self.get_element_id_at_grid_case(case_point)
+                #
+                grid[dx, dy] = fn_elt_to_value(elt, elt_id)
+        #
+        return grid
+
 
 #
 class ND_Position_RectGrid(ND_Position):
@@ -3143,11 +4290,22 @@ class ND_Position_Container(ND_Position):
         self.position_margins: Optional[ND_Position_Margins] = position_margins
 
     #
+    def is_w_auto(self) -> bool:
+        return self.w_str == "auto"
+
+    #
+    def is_h_auto(self) -> bool:
+        return self.h_str == "auto"
+
+    #
     @property
     def w(self) -> int:
         #
         if self.w_str is None:
             return self._w
+        #
+        elif self.w_str == "auto":
+            return max(self._w, 0)
         #
         elif self.w_str == "square":
             return self.h
@@ -3172,6 +4330,9 @@ class ND_Position_Container(ND_Position):
         #
         if self.h_str is None:
             return self._h
+        #
+        elif self.h_str == "auto":
+            return max(self._h, 0)
         #
         elif self.h_str == "square":
             return self.w

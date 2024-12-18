@@ -12,6 +12,8 @@ import sdl2.sdlimage as sdlimage  # type: ignore
 import sdl2.sdlgfx as sdlgfx  # type: ignore
 import ctypes
 
+from ctypes import c_int, byref
+
 from lib_nadisplay_colors import ND_Color, ND_Transformations
 from lib_nadisplay_rects import ND_Rect, ND_Point
 from lib_nadisplay import ND_MainApp, ND_Display, ND_Window, ND_Scene
@@ -26,6 +28,8 @@ class ND_Display_SDL_SDLGFX(ND_Display):
         # TODO: super()
         # super().__init__()
         #
+        self.main_not_threading: bool = True
+        self.events_thread_in_main_thread: bool = True
         self.display_thread_in_main_thread: bool = True
         #
         self.WindowClass: Type[ND_Window] = WindowClass
@@ -121,6 +125,16 @@ class ND_Display_SDL_SDLGFX(ND_Display):
             #
             w.destroy_window()
 
+        # Destroy fonts
+        font: str
+        font_size: int
+        ttf_fonts_keys: list[str] = list(self.ttf_fonts.keys())
+        for font in ttf_fonts_keys:
+            font_sizes_keys: list[int] = list(self.ttf_fonts[font].keys())
+            for font_size in font_sizes_keys:
+                sdlttf.TTF_CloseFont(self.ttf_fonts[font][font_size])
+                del self.ttf_fonts[font][font_size]
+
         #
         sdlttf.TTF_Quit()
         sdl2.SDL_Quit()
@@ -137,6 +151,9 @@ class ND_Display_SDL_SDLGFX(ND_Display):
         #
         if font not in self.ttf_fonts:
             self.ttf_fonts[font] = {}
+        #
+        if font not in self.font_names:
+            return None
         #
         if font_size < 8:
             font_size = 8
@@ -240,6 +257,9 @@ class ND_Window_SDL_SDLGFX(ND_Window):
         super().__init__(display=display, window_id=window_id, init_state=init_state)
 
         #
+        self.clip_rect_stack: list[sdl2.SDL_Rect] = []
+
+        #
         if isinstance(size, str):
             #
             infos: Optional[sdl2.SDL_DisplayMode] = get_display_info()
@@ -293,7 +313,6 @@ class ND_Window_SDL_SDLGFX(ND_Window):
         self.textures_dimensions: dict[int, tuple[int, int]] = {}
         self.texture_moduled: set[int] = set()
         self.sdl_textures: dict[int, object] = {}
-        self.sdl_textures_surfaces: dict[int, object] = {}
         self.mutex_sdl_textures: Lock = Lock()
         #
         self.prepared_font_textures: dict[str, int] = {}
@@ -367,7 +386,8 @@ class ND_Window_SDL_SDLGFX(ND_Window):
 
     #
     def prepare_text_to_render(self, text: str, color: ND_Color, font_size: int, font_name: Optional[str] = None) -> int:
-
+        #
+        return -1
         #
         if font_name is None:
             font_name = self.display.default_font
@@ -381,12 +401,21 @@ class ND_Window_SDL_SDLGFX(ND_Window):
 
         # Create rendered text surface
         surface = sdlttf.TTF_RenderText_Blended(font, text.encode('utf-8'), to_sdl_color(color))
+        #
+        if not surface:
+            print(f"Warning error : sdlttf.TTF_RenderText_Blended couldn't not create a surface for the font : {font} and the text {text} !")
+            return -1
 
         width: int = surface.contents.w
         height: int = surface.contents.h
 
         # Convert surface into texture
         texture = sdl2.SDL_CreateTextureFromSurface(self.renderer, surface)
+        sdl2.SDL_FreeSurface(surface)
+        #
+        if not texture:
+            print(f"Warning error : sdl2.SDL_CreateTextureFromSurface couldn't not create a texture for the surface : {surface} that was rendered with the font {font} and the text {text} !")
+            return -1
 
         #
         texture_id: int = -1
@@ -396,7 +425,6 @@ class ND_Window_SDL_SDLGFX(ND_Window):
             self.next_texture_id += 1
             #
             self.sdl_textures[texture_id] = texture
-            self.sdl_textures_surfaces[texture_id] = surface
             self.textures_dimensions[texture_id] = (width, height)
 
         #
@@ -405,6 +433,9 @@ class ND_Window_SDL_SDLGFX(ND_Window):
 
     #
     def prepare_image_to_render(self, img_path: str) -> int:
+
+        #
+        # return -1
 
         # Chargement de l'image
         image_surface = sdlimage.IMG_Load(img_path.encode('utf-8'))
@@ -433,7 +464,6 @@ class ND_Window_SDL_SDLGFX(ND_Window):
             self.next_texture_id += 1
             #
             self.sdl_textures[texture_id] = texture
-            self.sdl_textures_surfaces[texture_id] = image_surface
             self.textures_dimensions[texture_id] = (width, height)
 
         #
@@ -578,23 +608,110 @@ class ND_Window_SDL_SDLGFX(ND_Window):
         with self.mutex_sdl_textures:
             if texture_id in self.sdl_textures:
                 sdl2.SDL_DestroyTexture(self.sdl_textures[texture_id])
-                sdl2.SDL_FreeSurface(self.sdl_textures_surfaces[texture_id])
                 del self.sdl_textures[texture_id]
+                del self.textures_dimensions[texture_id]
 
 
     #
-    def draw_text(self, txt: str, x: int, y: int, font_size: int, font_color: ND_Color, font: Optional[str] = None) -> None:
+    def draw_text(self, txt: str, x: int, y: int, font_size: int, font_color: ND_Color, font_name: Optional[str] = None) -> None:
+        #
+        # return  # There are other parts of the code that cause malloc / realloc errors, because still getting without rendering any text
+        #
+        if font_name is None:
+            font_name = self.display.default_font
+        #
+        if not txt:
+            return
+
+        #
+        font: Optional[sdlttf.TTF_OpenFont] = self.display.get_font(font_name, font_size)
+
+        #
+        if not font:
+            return
+
+        #
+        # tid: str = f"{txt}_|||_{font}_|||_{font_size}_|||_{font_color}"
+        # #
+        # if tid not in self.prepared_font_textures:
+        #     self.prepared_font_textures[tid] = self.prepare_text_to_render(text=txt, color=font_color, font_name=font, font_size=font_size)
+        # #
+        # tsize: ND_Point = self.get_prepared_texture_size(self.prepared_font_textures[tid])
+        # self.render_prepared_texture(self.prepared_font_textures[tid], x, y, tsize.x, tsize.y)
+
+        # TODO: render directly text instead of creating texture, and etc...
+        surface: sdl2.SDL_Surface = sdlttf.TTF_RenderUTF8_Blended(font, txt.encode("utf-8"), to_sdl_color(font_color))
+        #
+        if not surface:
+            print(f"Warning error : sdlttf.TTF_RenderUTF8_Blended couldn't not create a surface for the font : {font} and the text {txt} !")
+            return
+        #
+        width: int = surface.contents.w
+        height: int = surface.contents.h
+        #
+        texture = sdl2.SDL_CreateTextureFromSurface(self.renderer, surface)
+        sdl2.SDL_FreeSurface(surface)
+        #
+        if not texture:
+            print(f"Warning error : sdl2.SDL_CreateTextureFromSurface couldn't not create a texture for the surface : {surface} that was rendered with the font {font_name} and the text {txt} !")
+            return
+        #
+        sdl2.SDL_RenderCopy(self.renderer, texture, None, sdl2.SDL_Rect(x, y, width, height))
+
+
+    #
+    def get_text_size_with_font(self, txt: str, font_size: int, font_name: Optional[str] = None) -> ND_Point:
+        #
+        if font_name is None:
+            font_name = self.display.default_font
+        #
+        if not txt:
+            return ND_Point(0, 0)
+
+        #
+        font: Optional[sdlttf.TTF_OpenFont] = self.display.get_font(font_name, font_size)
+
         #
         if font is None:
-            font = self.display.default_font
+            print(f"DEBUG ERROR | error : no fonts found with font_name={font_name} and font_size={font_size} ")
+            return ND_Point(-1, -1)
         #
-        tid: str = f"{txt}_|||_{font}_|||_{font_size}_|||_{font_color}"
+        if sdlttf.TTF_WasInit() == 0:
+            print("DEBUG ERROR | SDL_ttf is not initialized")
+            return ND_Point(-1, -1)
         #
-        if tid not in self.prepared_font_textures:
-            self.prepared_font_textures[tid] = self.prepare_text_to_render(text=txt, color=font_color, font_name=font, font_size=font_size)
+        text_w, text_h = c_int(0), c_int(0)
+        sdlttf.TTF_SizeUTF8(font, txt.encode("utf-8"), byref(text_w), byref(text_h))
+        text_size = [x.value for x in (text_w, text_h)]
         #
-        tsize: ND_Point = self.get_prepared_texture_size(self.prepared_font_textures[tid])
-        self.render_prepared_texture(self.prepared_font_textures[tid], x, y, tsize.x, tsize.y)
+        return ND_Point(*text_size)
+
+
+    #
+    def get_count_of_renderable_chars_fitting_given_width(self, txt: str, given_width: int, font_size: int, font_name: Optional[str] = None) -> tuple[int, int]:
+        #
+        if font_name is None:
+            font_name = self.display.default_font
+        #
+        if not txt:
+            return 0, 0
+
+        #
+        font: Optional[sdlttf.TTF_OpenFont] = self.display.get_font(font_name, font_size)
+
+        #
+        if font is None:
+            print(f"DEBUG ERROR | error : no fonts found with font_name={font_name} and font_size={font_size} ")
+            return -1, -1
+
+        #
+        if sdlttf.TTF_WasInit() == 0:
+            print("DEBUG ERROR | SDL_ttf is not initialized")
+            return (-1, -1)
+        #
+        extent, count = c_int(0), c_int(0)
+        sdlttf.TTF_MeasureUTF8(font, txt.encode("utf-8"), byref(extent), byref(count))
+        return extent.value, count.value
 
 
     #
@@ -778,14 +895,29 @@ class ND_Window_SDL_SDLGFX(ND_Window):
         # Define a clipping area
         clip_rect: sdl2.SDL_Rect = sdl2.SDL_Rect(x, y, width, height)
 
+        #
+        self.clip_rect_stack.append(clip_rect)
+
         # Enable clipping area
         sdl2.SDL_RenderSetClipRect(self.renderer, clip_rect)
 
 
     #
     def disable_area_drawing_constraints(self) -> None:
-        # Reset clipping (disable clipping by passing None)
-        sdl2.SDL_RenderSetClipRect(self.renderer, None)
+
+        #
+        self.clip_rect_stack.pop(-1)
+
+        #
+        if not self.clip_rect_stack:
+
+            # Reset clipping (disable clipping by passing None)
+            sdl2.SDL_RenderSetClipRect(self.renderer, None)
+
+        else:
+
+            # If there was another clip rect
+            sdl2.SDL_RenderSetClipRect(self.renderer, self.clip_rect_stack[-1])
 
 
     #

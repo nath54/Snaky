@@ -4,7 +4,7 @@ from dataclasses import dataclass
 
 @dataclass
 class ND_Event:
-    pass
+    blocked: bool = False
 
 
 @dataclass
