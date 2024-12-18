@@ -4,6 +4,7 @@ from typing import Optional, Callable, cast
 
 import random
 import math
+import json
 
 import numpy as np
 
@@ -29,6 +30,8 @@ class SnakeBot:  # Default base class is full random bot
     #
     def __init__(self, main_app: nd.ND_MainApp, security: bool = True) -> None:
         #
+        self.main_app: nd.ND_MainApp = main_app
+        #
         self.security: bool = security
         #
         self.all_directions: tuple[ND_Point, ND_Point, ND_Point, ND_Point] = (ND_Point(1, 0), ND_Point(0, 1), ND_Point(-1, 0), ND_Point(0, -1))
@@ -39,6 +42,10 @@ class SnakeBot:  # Default base class is full random bot
         self.food_ids.add( main_app.global_vars_get("food_1_grid_id") )
         self.food_ids.add( main_app.global_vars_get("food_2_grid_id") )
         self.food_ids.add( main_app.global_vars_get("food_3_grid_id") )
+
+    #
+    def add_to_score(self, score: int) -> None:
+        return
 
     #
     def possible_direction(self, snake: "Snake", grid: nd.ND_RectGrid, main_app: nd.ND_MainApp) -> list[int]:
@@ -141,7 +148,7 @@ class SnakeBot_PerfectButSlowAndBoring(SnakeBot):  # Default base class is full 
 #
 class SnakeBot_Version1(SnakeBot):
     #
-    def __init__(self, main_app: nd.ND_MainApp, security: bool = True, radius: int = 5, include_direction_of_apples_to_context: bool = False, random_weights: int = 3) -> None:
+    def __init__(self, main_app: nd.ND_MainApp, security: bool = True, radius: int = 5, nb_apples_to_context: int = 0, random_weights: int = 3) -> None:
         #
         super().__init__(main_app=main_app, security=security)
         #
@@ -151,10 +158,8 @@ class SnakeBot_Version1(SnakeBot):
         #
         self.dim_in: int = self.grid_tot_size + self.random_weights
         #
-        self.nb_apples_to_include: int = 0
-        self.include_direction_of_apples_to_context: int = include_direction_of_apples_to_context
-        if include_direction_of_apples_to_context:
-            self.nb_apples_to_include = main_app.global_vars_get_default("nb_init_apples", 3)
+        self.nb_apples_to_include: int = nb_apples_to_context
+        if self.nb_apples_to_include > 0:
             self.dim_in += 2 * self.nb_apples_to_include
         #
         self.dim_out: int = 4
@@ -166,6 +171,54 @@ class SnakeBot_Version1(SnakeBot):
         self.radius: int = radius
         #
         self.name: str = self.create_name()
+        #
+        self.scores: list[int] = []
+        self.max_score: int = 0
+        #
+        self.snakes_bot_paths: str = main_app.global_vars_get("snakes_bot_paths")
+        self.weights_path: str = f"{self.snakes_bot_paths}{self.name}_weight_"
+        self.save_bot_dict_path: str = f"{self.snakes_bot_paths}{self.name}.json"
+
+    #
+    def add_to_score(self, score: int) -> None:
+        #
+        self.scores.append(score)
+        if score > self.max_score:
+            self.max_score = score
+            #
+            self.main_app.global_vars_dict_set("bots", self.name, self.export_bot_dict())
+            #
+            self.save_bot_dict()
+
+    #
+    def export_bot_dict(self) -> dict:
+        #
+        return {
+            "type": "bot_v2",
+            "name": self.name,
+            "scores": self.scores,
+            "max_score": self.max_score,
+            "weights_path": self.weights_path,
+            "nb_apples": self.nb_apples_to_include,
+            "random_weights": self.random_weights,
+            "radius": self.radius
+        }
+
+    #
+    def save_bot(self) -> None:
+        #
+        self.main_app.global_vars_dict_set("bots", self.name, self.export_bot_dict())
+        #
+        self.save_weights_to_path(self.weights_path)
+        self.save_bot_dict()
+
+    #
+    def save_bot_dict(self) -> None:
+        #
+        bot_dict: dict = self.export_bot_dict()
+        #
+        with open(self.save_bot_dict_path, "w", encoding="utf-8") as f:
+            json.dump(bot_dict, f)
 
     #
     def save_weights_to_path(self, path: str) -> None:
@@ -305,7 +358,7 @@ class SnakeBot_Version1(SnakeBot):
 #
 class SnakeBot_Version2(SnakeBot):
     #
-    def __init__(self, main_app: nd.ND_MainApp, security: bool = True, radius: int = 4, include_direction_of_apples_to_context: bool = True, random_weights: int = 2) -> None:
+    def __init__(self, main_app: nd.ND_MainApp, security: bool = True, radius: int = 4, nb_apples_to_context: int = 0, random_weights: int = 2) -> None:
         #
         super().__init__(main_app=main_app, security=security)
         #
@@ -315,10 +368,8 @@ class SnakeBot_Version2(SnakeBot):
         #
         self.dim_in: int = self.grid_tot_size + self.random_weights
         #
-        self.nb_apples_to_include: int = 0
-        self.include_direction_of_apples_to_context: int = include_direction_of_apples_to_context
-        if include_direction_of_apples_to_context:
-            self.nb_apples_to_include = main_app.global_vars_get_default("nb_init_apples", 5)
+        self.nb_apples_to_include: int = nb_apples_to_context
+        if self.nb_apples_to_include > 0:
             self.dim_in += 2 * self.nb_apples_to_include
         #
         self.dim_out: int = 4
@@ -333,26 +384,72 @@ class SnakeBot_Version2(SnakeBot):
         self.radius: int = radius
         #
         self.name: str = self.create_name()
+        #
+        self.scores: list[int] = []
+        self.max_score: int = 0
+        #
+        self.snakes_bot_paths: str = main_app.global_vars_get("snakes_bot_paths")
+        self.weights_path: str = f"{self.snakes_bot_paths}{self.name}_weight_"
+        self.save_bot_dict_path: str = f"{self.snakes_bot_paths}{self.name}.json"
+
+    #
+    def add_to_score(self, score: int) -> None:
+        #
+        self.scores.append(score)
+        if score > self.max_score:
+            self.max_score = score
+            #
+            self.main_app.global_vars_dict_set("bots", self.name, self.export_bot_dict())
+
+    #
+    def export_bot_dict(self) -> dict:
+        #
+        return {
+            "type": "bot_v2",
+            "name": self.name,
+            "scores": self.scores,
+            "max_score": self.max_score,
+            "weights_path": self.weights_path,
+            "nb_apples": self.nb_apples_to_include,
+            "random_weights": self.random_weights,
+            "radius": self.radius
+        }
+
+    #
+    def save_bot(self) -> None:
+        #
+        self.main_app.global_vars_dict_set("bots", self.name, self.export_bot_dict())
+        #
+        self.save_weights_to_path(self.weights_path)
+        self.save_bot_dict()
+
+    #
+    def save_bot_dict(self) -> None:
+        #
+        bot_dict: dict = self.export_bot_dict()
+        #
+        with open(self.save_bot_dict_path, "w", encoding="utf-8") as f:
+            json.dump(bot_dict, f)
 
     #
     def save_weights_to_path(self, path: str) -> None:
         #
-        self.weigths_1.tofile(path+"_1.dat")
-        self.weigths_2.tofile(path+"_2.dat")
+        self.weigths_1.tofile(path+"_1.npy")
+        self.weigths_2.tofile(path+"_2.npy")
 
     #
     def load_weights_from_path(self, path: str) -> None:
         #
-        arr_1: np.ndarray = np.fromfile(path+"_1.dat", dtype=self.dtype)
-        arr_2: np.ndarray = np.fromfile(path+"_2.dat", dtype=self.dtype)
+        arr_1: np.ndarray = np.fromfile(path+"_1.npy", dtype=self.dtype)
+        arr_2: np.ndarray = np.fromfile(path+"_2.npy", dtype=self.dtype)
         #
         if arr_1.shape != self.weigths_1.shape:
-            raise UserWarning(f"Error: the matrix from file \"{path}_1.dat\" has shape {arr_1.shape} while expected shape was {self.weigths_1.shape} !")
+            raise UserWarning(f"Error: the matrix from file \"{path}_1.npy\" has shape {arr_1.shape} while expected shape was {self.weigths_1.shape} !")
         #
         self.weigths_1 = arr_1
         #
         if arr_2.shape != self.weigths_2.shape:
-            raise UserWarning(f"Error: the matrix from file \"{path}_2.dat\" has shape {arr_2.shape} while expected shape was {self.weigths_2.shape} !")
+            raise UserWarning(f"Error: the matrix from file \"{path}_2.npy\" has shape {arr_2.shape} while expected shape was {self.weigths_2.shape} !")
         #
         self.weigths_2 = arr_2
         #
@@ -497,7 +594,9 @@ class SnakeBot_Version2(SnakeBot):
 #
 class Snake:
     #
-    def __init__(self, pseudo: str, init_position: ND_Point, color: ND_Color, score_elt: nd.ND_Text, map_area: nd.ND_Rect, speed: float, init_direction: ND_Point = ND_Point(1, 0), init_size: int = 4) -> None:
+    def __init__(self, idx: int, pseudo: str, init_position: ND_Point, color: ND_Color, score_elt: nd.ND_Text, map_area: nd.ND_Rect, speed: float, init_direction: ND_Point = ND_Point(1, 0), init_size: int = 4) -> None:
+        #
+        self.idx: int = idx
         #
         self.dead: bool = False
         #
@@ -527,7 +626,49 @@ class Snake:
 #
 def create_bot_from_bot_dict(main_app: nd.ND_MainApp, bot_dict: dict) -> SnakeBot:
     #
-    # TODO
+    if bot_dict["type"] == "bot_v1":
+        #
+        bot1: SnakeBot_Version1 = SnakeBot_Version1(main_app=main_app, radius=bot_dict["radius"], random_weights=bot_dict["random_weights"], nb_apples_to_context=bot_dict["nb_apples"])
+        bot1.load_weights_from_path(bot_dict["weights_path"])
+        bot1.name = bot_dict["name"]
+        #
+        return bot1
+    #
+    elif bot_dict["type"] == "bot_v2":
+        #
+        bot2: SnakeBot_Version2 = SnakeBot_Version2(main_app=main_app, radius=bot_dict["radius"], random_weights=bot_dict["random_weights"], nb_apples_to_context=bot_dict["nb_apples"])
+        bot2.load_weights_from_path(bot_dict["weights_path"])
+        bot2.name = bot_dict["name"]
+        #
+        return bot2
+    #
+    return SnakeBot(main_app=main_app)
+
+
+#
+def create_new_bot(main_app: nd.ND_MainApp, bot_type: str) -> SnakeBot:
+    #
+    bots: dict[str, dict] = main_app.global_vars_get("bots")
+    #
+    if bot_type == "bot_v1":
+        #
+        bot1: SnakeBot_Version1 = SnakeBot_Version1(main_app=main_app)
+        bot1.name = bot1.create_name()
+        #
+        while bot1.name in bots:
+            bot1.name = bot1.create_name()
+        #
+        bot1.save_bot()
+    #
+    elif bot_type == "bot_v2":
+        #
+        bot2: SnakeBot_Version2 = SnakeBot_Version2(main_app=main_app)
+        bot2.name = bot2.create_name()
+        #
+        while bot2.name in bots:
+            bot2.name = bot1.create_name()
+        #
+        bot2.save_bot()
     #
     return SnakeBot(main_app=main_app)
 

@@ -11,7 +11,7 @@ import math
 import random
 import time
 
-from lib_snake import SnakePlayerSetting, Snake, SnakeBot, SnakeBot_Version1, SnakeBot_Version2, SnakeBot_PerfectButSlowAndBoring, create_bot_from_bot_dict, create_map1, snake_skin_1, snake_skin_2
+from lib_snake import SnakePlayerSetting, Snake, SnakeBot, create_new_bot, SnakeBot_PerfectButSlowAndBoring, create_bot_from_bot_dict, create_map1, snake_skin_1, snake_skin_2
 
 
 #
@@ -37,6 +37,9 @@ colors_idx_to_colors: dict[int, ND_Color] = {
 
 #
 snake_base_types: list[str] = ["human", "bot_random", "bot_perfect"]
+
+#
+map_modes: set[str] = set(["together", "separate_close", "separate_far"])
 
 
 #
@@ -224,8 +227,11 @@ def init_really_game(win: nd.ND_Window) -> None:
     maps_areas: list[nd.ND_Rect]
     maps_areas, init_snake_positions = create_map1(win, terrain_w, terrain_h, map_mode, len(init_snakes))
 
-    win.main_app.global_vars_set("maps_areas", maps_areas)
+    #
+    print(f"DEBUG | MAP_MODE = {map_mode} | len(init_snakes) = {len(init_snakes)} | len(init_snake_positions) = {len(init_snake_positions)}")
 
+    #
+    win.main_app.global_vars_set("maps_areas", maps_areas)
 
     # Food
     food_1_elt_name: str = win.main_app.global_vars_get("food_1_elt_name")
@@ -245,7 +251,6 @@ def init_really_game(win: nd.ND_Window) -> None:
     win.main_app.global_vars_set("food_1_grid_id", food_1_grid_id)
     win.main_app.global_vars_set("food_2_grid_id", food_2_grid_id)
     win.main_app.global_vars_set("food_3_grid_id", food_3_grid_id)
-
 
     #
     snk_idx: int
@@ -297,7 +302,7 @@ def init_really_game(win: nd.ND_Window) -> None:
         # Create Snake
         init_pos: ND_Point = init_snake_positions[snk_idx]
         map_area: nd.ND_Rect = maps_areas[0] if map_mode == "together" else maps_areas[snk_idx]
-        snake: Snake = Snake( pseudo=snk.name, init_position=init_pos, color=snk_color, init_size=snk.init_size, score_elt=snake_score, map_area=map_area, speed=snakes_speed )
+        snake: Snake = Snake( idx=snk_idx, pseudo=snk.name, init_position=init_pos, color=snk_color, init_size=snk.init_size, score_elt=snake_score, map_area=map_area, speed=snakes_speed )
         snake.last_update = time.time()
 
         #
@@ -351,15 +356,15 @@ def init_really_game(win: nd.ND_Window) -> None:
         #
         elif snk.player_type == "bot_perfect":
             #
-            snake.bot = snake.bot = SnakeBot_PerfectButSlowAndBoring(main_app=win.main_app)
+            snake.bot = SnakeBot_PerfectButSlowAndBoring(main_app=win.main_app)
         #
         elif snk.player_type == "new_bot_v1":
             #
-            pass
+            snake.bot = create_new_bot(main_app=win.main_app, bot_type=snk.player_type)
         #
         elif snk.player_type == "new_bot_v2":
             #
-            pass
+            snake.bot = create_new_bot(main_app=win.main_app, bot_type=snk.player_type)
         #
         elif snk.player_type in win.main_app.global_vars_get("bots"):
             #

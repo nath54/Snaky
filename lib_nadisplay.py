@@ -354,6 +354,8 @@ class ND_MainApp:
             return elt.checked
         elif isinstance(elt, ND_NumberInput):
             return elt.value
+        elif isinstance(elt, ND_SelectOptions):
+            return elt.value
         #
         return None
 

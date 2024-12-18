@@ -2,14 +2,18 @@
 
 from typing import Optional, cast
 
+import random
+
+import numpy as np
+
 from lib_nadisplay_colors import cl, ND_Color, ND_Transformations
 from lib_nadisplay_rects import ND_Point, ND_Position_Margins, ND_Position, ND_Position_Constraints
 
 import lib_nadisplay as nd
 
-from lib_snake import SnakePlayerSetting, SnakeBot_Version2
+from lib_snake import SnakePlayerSetting, SnakeBot_Version1, SnakeBot_Version2, create_bot_from_bot_dict
 
-from scene_main_menu import init_really_game, colors_idx_to_colors, snake_base_types
+from scene_main_menu import init_really_game, colors_idx_to_colors, snake_base_types, map_modes
 
 
 #
@@ -34,13 +38,157 @@ def on_bt_black_to_menu_clicked(win: nd.ND_Window) -> None:
     #
     win.set_state("main_menu")
 
+
 #
-def reproduce_bots_v2(bots: dict[str, dict], bots_to_reproduce: list[str]) -> str:
+def new_genes_from_bot_dict(bots: dict[str, dict], bot_dict: dict, main_app: nd.ND_MainApp) -> str:
     #
-    # TODO
-    pass
+    if bot_dict["type"] == "bot_v1":
+        #
+        bot1: SnakeBot_Version1 = cast(SnakeBot_Version1, create_bot_from_bot_dict(bot_dict=bot_dict, main_app=main_app))
+        #
+        new_bot1: SnakeBot_Version1 = SnakeBot_Version1(main_app=main_app, security=bot1.security, radius=bot1.radius, nb_apples_to_context=bot1.nb_apples_to_include, random_weights=bot1.random_weights)
+        #
+        w_shape: tuple[int, int] = bot1.weigths.shape
+        #
+        delta: np.ndarray = np.random.normal(loc=0.0, scale=0.01, size=w_shape).astype(bot1.dtype)
+        #
+        new_bot1.weigths = bot1.weigths + delta
+        #
+        new_bot1.name = new_bot1.create_name()
+        #
+        while new_bot1.name in bots:
+            new_bot1.name = new_bot1.create_name()
+        #
+        new_bot1.save_bot()
+        #
+        return new_bot1.name
+
     #
-    return ""
+    elif bot_dict["type"] == "bot_v2":
+        #
+        bot2: SnakeBot_Version2 = cast(SnakeBot_Version2, create_bot_from_bot_dict(bot_dict=bot_dict, main_app=main_app))
+        #
+        new_bot2: SnakeBot_Version2 = SnakeBot_Version2(main_app=main_app, security=bot2.security, radius=bot2.radius, nb_apples_to_context=bot2.nb_apples_to_include, random_weights=bot2.random_weights)
+        #
+        w1_shape: tuple[int, int] = bot2.weigths_1.shape
+        w2_shape: tuple[int, int] = bot2.weigths_2.shape
+        #
+        delta1: np.ndarray = np.random.normal(loc=0.0, scale=0.01, size=w1_shape).astype(bot2.dtype)
+        delta2: np.ndarray = np.random.normal(loc=0.0, scale=0.01, size=w2_shape).astype(bot2.dtype)
+        #
+        new_bot2.weigths_1 = bot2.weigths_1 + delta1
+        new_bot2.weigths_2 = bot2.weigths_2 + delta2
+        #
+        new_bot2.name = new_bot2.create_name()
+        #
+        while new_bot2.name in bots:
+            new_bot2.name = new_bot2.create_name()
+        #
+        new_bot2.save_bot()
+        #
+        return new_bot2.name
+    #
+    return "new_bot_v2"
+
+#
+def new_genes_from_fusion_of_two_bot_dict(bots: dict[str, dict], bot1_dict: dict, bot2_dict: dict, main_app: nd.ND_MainApp) -> str:
+    #
+    fusion_factor: float = random.uniform(0.1, 0.9)
+    #
+    if bot1_dict["type"] == "bot_v1":
+        #
+        bot1_a: SnakeBot_Version1 = cast(SnakeBot_Version1, create_bot_from_bot_dict(bot_dict=bot1_dict, main_app=main_app))
+        bot1_b: SnakeBot_Version1 = cast(SnakeBot_Version1, create_bot_from_bot_dict(bot_dict=bot2_dict, main_app=main_app))
+        #
+        new_bot1: SnakeBot_Version1 = SnakeBot_Version1(main_app=main_app, security=bot1_a.security, radius=bot1_a.radius, nb_apples_to_context=bot1_a.nb_apples_to_include, random_weights=bot1_a.random_weights)
+        #
+        new_bot1.weigths = bot1_a.weigths * fusion_factor + bot1_b.weigths * (1.0 - fusion_factor)
+        #
+        new_bot1.name = new_bot1.create_name()
+        #
+        while new_bot1.name in bots:
+            new_bot1.name = new_bot1.create_name()
+        #
+        new_bot1.save_bot()
+        #
+        return new_bot1.name
+
+    #
+    elif bot1_dict["type"] == "bot_v2":
+        #
+        bot2_a: SnakeBot_Version2 = cast(SnakeBot_Version2, create_bot_from_bot_dict(bot_dict=bot1_dict, main_app=main_app))
+        bot2_b: SnakeBot_Version2 = cast(SnakeBot_Version2, create_bot_from_bot_dict(bot_dict=bot2_dict, main_app=main_app))
+        #
+        new_bot2: SnakeBot_Version2 = SnakeBot_Version2(main_app=main_app, security=bot2_a.security, radius=bot2_a.radius, nb_apples_to_context=bot2_a.nb_apples_to_include, random_weights=bot2_a.random_weights)
+        #
+        new_bot2.weigths_1 = bot2_a.weigths_1 * fusion_factor + bot2_b.weigths_1 * (1.0 - fusion_factor)
+        new_bot2.weigths_2 = bot2_a.weigths_2 * fusion_factor + bot2_b.weigths_2 * (1.0 - fusion_factor)
+        #
+        new_bot2.name = new_bot2.create_name()
+        #
+        while new_bot2.name in bots:
+            new_bot2.name = new_bot2.create_name()
+        #
+        new_bot2.save_bot()
+        #
+        return new_bot2.name
+    #
+    return "new_bot_v2"
+
+
+#
+def are_two_bots_dict_compatible(bot1_dict: dict, bot2_dict: dict) -> bool:
+    #
+    if bot1_dict["type"] != bot2_dict["type"]:
+        return False
+    #
+    if bot1_dict["type"] == "bot_v1" or bot1_dict == "bot_b2":
+        #
+        if bot1_dict["radius"] != bot2_dict["radius"]:
+            return False
+        #
+        if bot1_dict["random_weights"] != bot2_dict["random_weights"]:
+            return False
+        #
+        if bot1_dict["nb_apples"] != bot2_dict["nb_apples"]:
+            return False
+    #
+    return True
+
+
+#
+def reproduce_bots_v2(bots: dict[str, dict], bots_to_reproduce: list[str], main_app: nd.ND_MainApp) -> str:
+    #
+    nb_possibilities: int = 1
+    #
+    if len(bots_to_reproduce) >= 2:
+        nb_possibilities += 1
+    #
+    a = random.randint(1, nb_possibilities)
+    #
+    if a == 1:  # On prend un serpent et on modifie un peu ses paramètres
+        #
+        bot_name: str = random.choice(bots_to_reproduce)
+        bot_dict: dict = bots[bot_name]
+        #
+        return new_genes_from_bot_dict(bots, bot_dict, main_app)
+    #
+    else:       # On prend deux serpents et on les fusionne entre eux
+        #
+        bot1_name: str = random.choice(bots_to_reproduce)
+        bot1_dict: dict = bots[bot1_name]
+        #
+        bot2_name: str = random.choice(bots_to_reproduce)
+        bot2_dict: dict = bots[bot2_name]
+        #
+        if bot1_name == bot2_name or not are_two_bots_dict_compatible(bot1_dict, bot2_dict):
+            #
+            return new_genes_from_bot_dict(bots, bot1_dict, main_app)
+        #
+        return new_genes_from_fusion_of_two_bot_dict(bots, bot1_dict, bot2_dict, main_app)
+
+    #
+    return "new_bot_v2"
 
 #
 def on_bt_training_click(win: nd.ND_Window) -> None:
@@ -80,7 +228,11 @@ def on_bt_training_click(win: nd.ND_Window) -> None:
     #
     for i in range(len(init_snakes), nb_bots):
         #
-        init_snakes.append( SnakePlayerSetting(name=f"bot {i}", color_idx=i%len(colors_idx_to_colors), init_size=win.main_app.global_vars_get("init_snake_size"), skin_idx=1, player_type=reproduce_bots_v2(bots=bots, bots_to_reproduce=bots_to_reproduce), control_name="fleches") )
+        if bots_to_reproduce:
+            init_snakes.append( SnakePlayerSetting(name=f"bot {i}", color_idx=i%len(colors_idx_to_colors), init_size=win.main_app.global_vars_get("init_snake_size"), skin_idx=1, player_type=reproduce_bots_v2(bots=bots, bots_to_reproduce=bots_to_reproduce, main_app=win.main_app), control_name="fleches") )
+        #
+        else:
+            init_snakes.append( SnakePlayerSetting(name=f"bot {i}", color_idx=i%len(colors_idx_to_colors), init_size=win.main_app.global_vars_get("init_snake_size"), skin_idx=1, player_type="new_bot_v2", control_name="fleches") )
 
     #
     win.main_app.global_vars_set("map_mode", map_mode)
@@ -96,9 +248,20 @@ def on_bt_training_click(win: nd.ND_Window) -> None:
     init_really_game(win)
 
 #
-def at_traning_epoch_end(main_app: nd.ND_MainApp) -> None:
-    # TODO
-    pass
+def at_traning_epoch_end(win: nd.ND_Window) -> None:
+    #
+    if win.main_app.global_vars_get("nb_epoch_cur") >= win.main_app.global_vars_get("nb_epoch_tot"):
+        #
+        # TODO: update display of new created bots
+        #
+        win.set_state("training_menu")
+        #
+        return
+    #
+    win.main_app.global_vars_set("nb_epoch_cur", win.main_app.global_vars_get("nb_epoch_cur")+1)
+    #
+    on_bt_training_click(win)
+
 
 #
 def create_training_menu_scene(win: nd.ND_Window) -> None:
@@ -239,7 +402,7 @@ def create_training_menu_scene(win: nd.ND_Window) -> None:
         elt_id="input_map_mode",
         position=nd.ND_Position_Container(w=400, h=40, container=row_map_mode),
         value=win.main_app.global_vars_get_default("training_bots_map_mode", "separate_close"),
-        options=set(["together", "separate_close", "separate_far"]),
+        options=map_modes,
         option_list_buttons_height=300,
         font_name="FreeSans"
     )

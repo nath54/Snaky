@@ -112,7 +112,8 @@ def add_player_row_to_set_up_player_menu(win: nd.ND_Window, players_container: n
         position=nd.ND_Position_Container(w="20%", h=40, container=player_row, position_margins=margin_center),
         value=player_setting.player_type,
         options=ptypes,
-        on_value_selected=lambda elt, new_value, idx=player_lst_idx, main_app=win.main_app: on_player_type_changed(elt, new_value, idx, main_app)  # type: ignore
+        on_value_selected=lambda elt, new_value, idx=player_lst_idx, main_app=win.main_app: on_player_type_changed(elt, new_value, idx, main_app),  # type: ignore
+        font_name="FreeSans"
     )
     player_row.add_element(player_type)
 
@@ -138,7 +139,8 @@ def add_player_row_to_set_up_player_menu(win: nd.ND_Window, players_container: n
         position=nd.ND_Position_Container(w="10%", h=40, container=player_row, position_margins=margin_center),
         value=player_setting.control_name,
         options=set(controls_names_to_keys.keys()),
-        on_value_selected=lambda elt, new_value, idx=player_lst_idx, main_app=win.main_app: on_player_controls_changed(elt, new_value, idx, main_app)  # type: ignore
+        on_value_selected=lambda elt, new_value, idx=player_lst_idx, main_app=win.main_app: on_player_controls_changed(elt, new_value, idx, main_app), # type: ignore
+        font_name="FreeSans"
     )
     player_row.add_element(player_controls)
 

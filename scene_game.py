@@ -10,6 +10,7 @@ import lib_nadisplay as nd
 from lib_snake import Snake
 
 from scene_main_menu import center_game_camera
+from scene_bots_training_menu import at_traning_epoch_end
 
 import random
 import time
@@ -158,7 +159,12 @@ def update_physic(main_app: nd.ND_MainApp, delta_time: float) -> None:
                         grid.remove_at_position(pos)
                         grid.add_element_position(wall_grid_id, pos)
 
+                    #
                     snak.dead = True
+
+                    #
+                    if snak.bot is not None:
+                        snak.bot.add_to_score(snak.score)
 
                     #
                     snaks_to_die.append(snak_idx)
@@ -254,7 +260,9 @@ def update_physic(main_app: nd.ND_MainApp, delta_time: float) -> None:
         if snaks_to_die:
             #
             for snak_idx in snaks_to_die:
-                if snak_idx <= len(snakes):
+                #
+                if snak_idx in snakes:
+                    #
                     dead_snakes[snak_idx] = snakes[snak_idx]
                     del snakes[snak_idx]
 
@@ -264,11 +272,20 @@ def update_physic(main_app: nd.ND_MainApp, delta_time: float) -> None:
             #
             if not snakes:  # Plus de serpents en vie => Partie finie
                 #
-                win.state = "end_menu"
-                #
                 updates = False
                 #
                 break
+
+    # Game end
+    if not snakes:
+        #
+        gtype: str = win.main_app.global_vars_get("game_type")
+        #
+        if gtype == "standard_game":
+            win.state = "end_menu"
+        elif gtype == "training_bots":
+            at_traning_epoch_end(win)
+
 
 #
 def create_game_scene(win: nd.ND_Window) -> None:

@@ -30,8 +30,8 @@ MAIN_WINDOW_ID: int = 0
 
 #
 bots_types_keys: dict[str, list[str]] = {
-    "bot_v1": ["path_weights", "radius", "nb_apples", "random_weights"],
-    "bot_v2": ["path_weights_1", "path_weights_2", "radius", "nb_apples", "random_weights"]
+    "bot_v1": ["weights_path", "radius", "nb_apples", "random_weights"],
+    "bot_v2": ["weights_path", "radius", "nb_apples", "random_weights"]
 }
 
 
@@ -102,6 +102,7 @@ if __name__ == "__main__":
 
     #
     app.global_vars_set("MAIN_WINDOW_ID", 0)
+    app.global_vars_set("snakes_bot_paths", snakes_bot_paths)
 
     # Chargement des bots qui ont déjà été sauvegardés
     app.global_vars_set("bots", {})
