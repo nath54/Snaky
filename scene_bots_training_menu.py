@@ -9,9 +9,30 @@ import lib_nadisplay as nd
 
 from lib_snake import SnakePlayerSetting, SnakeBot_Version2
 
-from scene_game_set_up import on_bt_back_clicked
-from scene_main_menu import init_really_game, colors_idx_to_colors
+from scene_main_menu import init_really_game, colors_idx_to_colors, snake_base_types
 
+
+#
+def on_bt_black_to_menu_clicked(win: nd.ND_Window) -> None:
+    #
+    MAIN_WINDOW_ID: int = win.main_app.global_vars_get("MAIN_WINDOW_ID")
+    #
+    new_options: set[str] = set(snake_base_types + list(win.main_app.global_vars_get("bots").keys()))
+    #
+    n: int = win.main_app.global_vars_list_length("game_init_snakes")
+    #
+    for i in range(n):
+        #
+        row_elt_id: str = f"player_row_{i}"
+        #
+        sel_opt: nd.ND_SelectOptions = cast(nd.ND_SelectOptions, win.main_app.get_element(MAIN_WINDOW_ID, "game_setup", f"{row_elt_id}_player_type"))
+        #
+        if i > 0 or sel_opt.options != new_options:
+            sel_opt.update_options(new_options)
+        else:  # Ils sont sensé avoir tous les mêmes options, donc s'il y en a un qui est à jour, on est bon, pas besoin de tous les voir
+            break
+    #
+    win.set_state("main_menu")
 
 #
 def reproduce_bots_v2() -> str:
@@ -64,6 +85,10 @@ def on_bt_training_click(win: nd.ND_Window) -> None:
     #
     init_really_game(win)
 
+#
+def at_traning_epoch_end(main_app: nd.ND_MainApp) -> None:
+    # TODO
+    pass
 
 #
 def create_training_menu_scene(win: nd.ND_Window) -> None:
@@ -106,7 +131,7 @@ def create_training_menu_scene(win: nd.ND_Window) -> None:
         window=win,
         elt_id="bt_back",
         position=nd.ND_Position_Container(w=150, h=40, container=header_row, position_margins=ND_Position_Margins(margin_left=15, margin_top="50%", margin_bottom="50%", margin_right=15)),
-        onclick=on_bt_back_clicked,
+        onclick=on_bt_black_to_menu_clicked,
         text="back"
     )
     header_row.add_element(bt_back)

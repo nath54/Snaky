@@ -11,7 +11,7 @@ import math
 import random
 import time
 
-from lib_snake import SnakePlayerSetting, Snake, SnakeBot, SnakeBot_Version1, SnakeBot_Version2, SnakeBot_PerfectButSlowAndBoring, create_map1, snake_skin_1, snake_skin_2
+from lib_snake import SnakePlayerSetting, Snake, SnakeBot, SnakeBot_PerfectButSlowAndBoring, create_bot_from_bot_dict, create_map1, snake_skin_1, snake_skin_2
 
 
 #
@@ -34,6 +34,10 @@ colors_idx_to_colors: dict[int, ND_Color] = {
     7: cl("orange"),
     8: cl("purple")
 }
+
+#
+snake_base_types: list[str] = ["human", "bot_random", "perfect_bot"]
+
 
 #
 def event_set_snake_direction(main_app: nd.ND_MainApp, direction: ND_Point, snake_idx: int) -> None:
@@ -341,12 +345,15 @@ def init_really_game(win: nd.ND_Window) -> None:
             win.main_app.add_function_to_event_fns_queue(control_keys[3],
                 lambda main_app, snk_idx=snk_idx: event_set_snake_direction(main_app, ND_Point(1, 0), snk_idx))
 
-        # TODO: bots
-        elif snk.player_type == "bot":
-            # snake.bot = SnakeBot_PerfectButSlowAndBoring(main_app=win.main_app)
-            snake.bot = SnakeBot_Version2(main_app=win.main_app)
+        elif snk.player_type == "bot_random":
+            snake.bot = SnakeBot(main_app=win.main_app)
+        elif snk.player_type == "bot_perfect":
+            snake.bot = snake.bot = SnakeBot_PerfectButSlowAndBoring(main_app=win.main_app)
+        elif snk.player_type in win.main_app.global_vars_get("bots"):
             #
-            # print(f"DEBUG  | Bot name : {snake.bot.name}")
+            bot_dict: dict = win.main_app.global_vars_dict_get("bots", snk.player_type)
+            #
+            snake.bot = create_bot_from_bot_dict(main_app=win.main_app, bot_dict=bot_dict)
 
 
     # Init Food

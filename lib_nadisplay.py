@@ -288,7 +288,7 @@ class ND_MainApp:
                     self.global_vars_muts[var_name] = Lock()
 
     #
-    def global_vars_dict_get(self, var_name: str, dict_key: Any, if_not_exists: str = "none") -> None:
+    def global_vars_dict_get(self, var_name: str, dict_key: Any, if_not_exists: str = "none") -> Any:
         #
         if var_name in self.global_vars:
             #
@@ -2975,6 +2975,9 @@ class ND_SelectOptions(ND_Elt):
         #
         super().__init__(window=window, elt_id=elt_id, position=position)
         #
+        self.font_name: Optional[str] = font_name
+        self.font_size: int = font_size
+        #
         self.on_value_selected: Optional[Callable[[ND_SelectOptions, str], None]] = on_value_selected
         #
         self.value: str = value
@@ -3015,8 +3018,8 @@ class ND_SelectOptions(ND_Elt):
                 position=ND_Position_Container(w=self.w, h=self.h, container=self.bts_options_container),
                 text=option,
                 onclick=lambda x, option=option: self.on_option_button_clicked(option),
-                font_name=font_name,
-                font_size=font_size
+                font_name=self.font_name,
+                font_size=self.font_size
             )
             self.bts_options_container.add_element(self.options_bts[option])
 
@@ -3034,6 +3037,96 @@ class ND_SelectOptions(ND_Elt):
         self.bts_options_container.position = ND_Position(x=self.x, y=self.y, w=self.w, h=self.option_list_buttons_height)
         #
         self.bts_options_container.update_layout()
+
+    #
+    def add_option(self, option_value: str) -> None:
+        #
+        if option_value in self.options:
+            return
+        #
+        self.options.add(option_value)
+
+        #
+        self.options_bts[option_value] = ND_Button(
+            window=self.window,
+            elt_id=f"{self.elt_id}_bt_option_{option_value}",
+            position=ND_Position_Container(w=self.w, h=self.h, container=self.bts_options_container),
+            text=option_value,
+            onclick=lambda x, option=option_value: self.on_option_button_clicked(option),
+            font_name=self.font_name,
+            font_size=self.font_size
+        )
+        self.bts_options_container.add_element(self.options_bts[option_value])
+
+        #
+        self.update_layout()
+
+    #
+    def remove_option(self, option_value: str, new_value: Optional[str] = None) -> None:
+        #
+        if option_value not in self.options:
+            return
+        #
+        if len(self.options) == 1:  # On ne veut pas ne plus avoir d'options possibles
+            return
+        #
+        self.bts_options_container.remove_element(self.options_bts[option_value])
+        #
+        del self.options_bts[option_value]
+        self.options.remove(option_value)
+        #
+        if self.value == option_value:
+            #
+            if new_value is not None and new_value in self.options:
+                self.value = new_value
+            #
+            else:
+                #
+                self.value = next(iter(self.options))
+            #
+            self.main_button.text = self.value
+        #
+        self.update_layout()
+
+    #
+    def update_options(self, new_options: set[str], new_value: Optional[str] = None) -> None:
+        #
+        if len(new_options) == 0:
+            return
+        #
+        for bt in self.options_bts.values():
+            self.bts_options_container.remove_element(bt)
+        #
+        self.options_bts = {}
+        #
+        self.options = new_options
+        #
+        option: str
+        for option in self.options:
+            self.options_bts[option] = ND_Button(
+                window=self.window,
+                elt_id=f"{self.elt_id}_bt_option_{option}",
+                position=ND_Position_Container(w=self.w, h=self.h, container=self.bts_options_container),
+                text=option,
+                onclick=lambda x, option=option: self.on_option_button_clicked(option),
+                font_name=self.font_name,
+                font_size=self.font_size
+            )
+            self.bts_options_container.add_element(self.options_bts[option])
+
+        #
+        if self.value not in self.options:
+            #
+            if new_value is not None and new_value in self.options:
+                self.value = new_value
+            #
+            else:
+                #
+                self.value = next(iter(self.options))
+            #
+            self.main_button.text = self.value
+        #
+        self.update_layout()
 
     #
     def set_state_base(self) -> None:

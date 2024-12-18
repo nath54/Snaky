@@ -9,7 +9,7 @@ import lib_nadisplay as nd
 
 from lib_snake import SnakePlayerSetting
 
-from scene_main_menu import on_bt_click_init_game, controls_names_to_keys, colors_idx_to_colors
+from scene_main_menu import on_bt_click_init_game, controls_names_to_keys, colors_idx_to_colors, snake_base_types
 
 
 #
@@ -104,12 +104,14 @@ def add_player_row_to_set_up_player_menu(win: nd.ND_Window, players_container: n
     player_row.add_element(player_name)
 
     #
+    ptypes: set[str] = set(snake_base_types + list(win.main_app.global_vars_get("bots").keys()))
+    #
     player_type: nd.ND_SelectOptions = nd.ND_SelectOptions(
         window=win,
         elt_id=f"{row_elt_id}_player_type",
         position=nd.ND_Position_Container(w="20%", h=40, container=player_row, position_margins=margin_center),
         value=player_setting.player_type,
-        options=set(["human", "bot"]),
+        options=ptypes,
         on_value_selected=lambda elt, new_value, idx=player_lst_idx, main_app=win.main_app: on_player_type_changed(elt, new_value, idx, main_app)  # type: ignore
     )
     player_row.add_element(player_type)

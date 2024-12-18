@@ -525,6 +525,14 @@ class Snake:
 
 
 #
+def create_bot_from_bot_dict(main_app: nd.ND_MainApp, bot_dict: dict) -> SnakeBot:
+    #
+    # TODO
+    #
+    return SnakeBot(main_app=main_app)
+
+
+#
 def distribute_points(X: int, Y: int, W: int, H: int, N: int) -> list[ND_Point]:
     """
     Distribute N points on a rectangle with integer coordinates.
