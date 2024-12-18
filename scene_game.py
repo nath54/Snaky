@@ -90,6 +90,9 @@ def update_physic(main_app: nd.ND_MainApp, delta_time: float) -> None:
         return
 
     #
+    gtype: str = win.main_app.global_vars_get("game_mode")
+
+    #
     now: float = time.time()
 
     #
@@ -104,6 +107,9 @@ def update_physic(main_app: nd.ND_MainApp, delta_time: float) -> None:
 
     #
     snaks_to_die: list[int] = []
+
+    #
+    end_training: bool = False
 
     #
     updates: bool = True
@@ -164,6 +170,7 @@ def update_physic(main_app: nd.ND_MainApp, delta_time: float) -> None:
 
                     #
                     if snak.bot is not None:
+                        #
                         snak.bot.add_to_score(snak.score)
 
                     #
@@ -276,10 +283,24 @@ def update_physic(main_app: nd.ND_MainApp, delta_time: float) -> None:
                 #
                 break
 
+        #
+        if gtype == "training_bots":
+            #
+            nb_steps: int = win.main_app.global_vars_get("nb_steps")
+            nb_steps += 1
+            win.main_app.global_vars_set("nb_steps", nb_steps)
+            #
+            if nb_steps >= win.main_app.global_vars_get("max_nb_steps"):
+                updates = False
+                end_training = True
+                break
+
+    #
+    if end_training:
+        at_traning_epoch_end(win)
+
     # Game end
     if not snakes:
-        #
-        gtype: str = win.main_app.global_vars_get("game_mode")
         #
         if gtype == "standard_game":
             win.state = "end_menu"

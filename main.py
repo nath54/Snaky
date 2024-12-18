@@ -54,8 +54,10 @@ def verify_json_dict_is_bot(bot_dict: dict) -> bool:
         return False
     #
     key: str
-    for key in bots_types_keys:
+    for key in bots_types_keys[bot_dict["type"]]:
         if key not in bot_dict:
+            return False
+        if "path" in key and not os.path.exists(bot_dict[key]):
             return False
     #
     return True
@@ -66,7 +68,7 @@ def verify_json_dict_is_bot(bot_dict: dict) -> bool:
 if __name__ == "__main__":
 
     #
-    snakes_bot_paths: str = "./bots/"
+    snakes_bot_paths: str = "bots/"
     #
     if not os.path.exists(snakes_bot_paths):
         os.makedirs(snakes_bot_paths)
@@ -122,9 +124,14 @@ if __name__ == "__main__":
         #
         if not verify_json_dict_is_bot(bot_dict):
             #
+            print(f"DEBUG | {filepath} is not a valid bot config | (keys = {bot_dict.keys()})")
+            #
             continue
         #
         app.global_vars_dict_set("bots", bot_dict["name"], bot_dict)
+
+    bots: dict[str, dict] = app.global_vars_get("bots")
+    print(f"Loaded {len(bots)} bots.")
 
     # On peut facilement remplacer quelques paramètres par défaut ici:
     app.global_vars_set("game_nb_init_apples", 10)

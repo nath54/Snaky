@@ -1,13 +1,13 @@
 
 
-from typing import Optional, cast
+from typing import cast
 
 import random
+import os
 
 import numpy as np
 
-from lib_nadisplay_colors import cl, ND_Color, ND_Transformations
-from lib_nadisplay_rects import ND_Point, ND_Position_Margins, ND_Position, ND_Position_Constraints
+from lib_nadisplay_rects import ND_Point, ND_Position_Margins
 
 import lib_nadisplay as nd
 
@@ -43,9 +43,9 @@ def new_genes_from_bot_dict(bots: dict[str, dict], bot_dict: dict, main_app: nd.
     #
     if bot_dict["type"] == "bot_v1":
         #
-        bot1: SnakeBot_Version1 = cast(SnakeBot_Version1, create_bot_from_bot_dict(bot_dict=bot_dict, main_app=main_app))
+        bot1: SnakeBot_Version1 = cast(SnakeBot_Version1, create_bot_from_bot_dict(bot_dict=bot_dict, main_app=main_app, ignore_food_grid_id=True))
         #
-        new_bot1: SnakeBot_Version1 = SnakeBot_Version1(main_app=main_app, security=bot1.security, radius=bot1.radius, nb_apples_to_context=bot1.nb_apples_to_include, random_weights=bot1.random_weights)
+        new_bot1: SnakeBot_Version1 = SnakeBot_Version1(main_app=main_app, security=bot1.security, radius=bot1.radius, nb_apples_to_context=bot1.nb_apples_to_include, random_weights=bot1.random_weights, ignore_food_grid_id=True)
         #
         w_shape: tuple[int, int] = bot1.weigths.shape
         #
@@ -65,9 +65,9 @@ def new_genes_from_bot_dict(bots: dict[str, dict], bot_dict: dict, main_app: nd.
     #
     elif bot_dict["type"] == "bot_v2":
         #
-        bot2: SnakeBot_Version2 = cast(SnakeBot_Version2, create_bot_from_bot_dict(bot_dict=bot_dict, main_app=main_app))
+        bot2: SnakeBot_Version2 = cast(SnakeBot_Version2, create_bot_from_bot_dict(bot_dict=bot_dict, main_app=main_app, ignore_food_grid_id=True))
         #
-        new_bot2: SnakeBot_Version2 = SnakeBot_Version2(main_app=main_app, security=bot2.security, radius=bot2.radius, nb_apples_to_context=bot2.nb_apples_to_include, random_weights=bot2.random_weights)
+        new_bot2: SnakeBot_Version2 = SnakeBot_Version2(main_app=main_app, security=bot2.security, radius=bot2.radius, nb_apples_to_context=bot2.nb_apples_to_include, random_weights=bot2.random_weights, ignore_food_grid_id=True)
         #
         w1_shape: tuple[int, int] = bot2.weigths_1.shape
         w2_shape: tuple[int, int] = bot2.weigths_2.shape
@@ -87,7 +87,7 @@ def new_genes_from_bot_dict(bots: dict[str, dict], bot_dict: dict, main_app: nd.
         #
         return new_bot2.name
     #
-    return "new_bot_v2"
+    return "new_bot_v1"
 
 #
 def new_genes_from_fusion_of_two_bot_dict(bots: dict[str, dict], bot1_dict: dict, bot2_dict: dict, main_app: nd.ND_MainApp) -> str:
@@ -96,10 +96,10 @@ def new_genes_from_fusion_of_two_bot_dict(bots: dict[str, dict], bot1_dict: dict
     #
     if bot1_dict["type"] == "bot_v1":
         #
-        bot1_a: SnakeBot_Version1 = cast(SnakeBot_Version1, create_bot_from_bot_dict(bot_dict=bot1_dict, main_app=main_app))
-        bot1_b: SnakeBot_Version1 = cast(SnakeBot_Version1, create_bot_from_bot_dict(bot_dict=bot2_dict, main_app=main_app))
+        bot1_a: SnakeBot_Version1 = cast(SnakeBot_Version1, create_bot_from_bot_dict(bot_dict=bot1_dict, main_app=main_app, ignore_food_grid_id=True))
+        bot1_b: SnakeBot_Version1 = cast(SnakeBot_Version1, create_bot_from_bot_dict(bot_dict=bot2_dict, main_app=main_app, ignore_food_grid_id=True))
         #
-        new_bot1: SnakeBot_Version1 = SnakeBot_Version1(main_app=main_app, security=bot1_a.security, radius=bot1_a.radius, nb_apples_to_context=bot1_a.nb_apples_to_include, random_weights=bot1_a.random_weights)
+        new_bot1: SnakeBot_Version1 = SnakeBot_Version1(main_app=main_app, security=bot1_a.security, radius=bot1_a.radius, nb_apples_to_context=bot1_a.nb_apples_to_include, random_weights=bot1_a.random_weights, ignore_food_grid_id=True)
         #
         new_bot1.weigths = bot1_a.weigths * fusion_factor + bot1_b.weigths * (1.0 - fusion_factor)
         #
@@ -115,10 +115,10 @@ def new_genes_from_fusion_of_two_bot_dict(bots: dict[str, dict], bot1_dict: dict
     #
     elif bot1_dict["type"] == "bot_v2":
         #
-        bot2_a: SnakeBot_Version2 = cast(SnakeBot_Version2, create_bot_from_bot_dict(bot_dict=bot1_dict, main_app=main_app))
-        bot2_b: SnakeBot_Version2 = cast(SnakeBot_Version2, create_bot_from_bot_dict(bot_dict=bot2_dict, main_app=main_app))
+        bot2_a: SnakeBot_Version2 = cast(SnakeBot_Version2, create_bot_from_bot_dict(bot_dict=bot1_dict, main_app=main_app, ignore_food_grid_id=True))
+        bot2_b: SnakeBot_Version2 = cast(SnakeBot_Version2, create_bot_from_bot_dict(bot_dict=bot2_dict, main_app=main_app, ignore_food_grid_id=True))
         #
-        new_bot2: SnakeBot_Version2 = SnakeBot_Version2(main_app=main_app, security=bot2_a.security, radius=bot2_a.radius, nb_apples_to_context=bot2_a.nb_apples_to_include, random_weights=bot2_a.random_weights)
+        new_bot2: SnakeBot_Version2 = SnakeBot_Version2(main_app=main_app, security=bot2_a.security, radius=bot2_a.radius, nb_apples_to_context=bot2_a.nb_apples_to_include, random_weights=bot2_a.random_weights, ignore_food_grid_id=True)
         #
         new_bot2.weigths_1 = bot2_a.weigths_1 * fusion_factor + bot2_b.weigths_1 * (1.0 - fusion_factor)
         new_bot2.weigths_2 = bot2_a.weigths_2 * fusion_factor + bot2_b.weigths_2 * (1.0 - fusion_factor)
@@ -132,7 +132,7 @@ def new_genes_from_fusion_of_two_bot_dict(bots: dict[str, dict], bot1_dict: dict
         #
         return new_bot2.name
     #
-    return "new_bot_v2"
+    return "new_bot_v1"
 
 #
 def are_two_bots_dict_compatible(bot1_dict: dict, bot2_dict: dict) -> bool:
@@ -185,7 +185,7 @@ def reproduce_bots_v2(bots: dict[str, dict], bots_to_reproduce: list[str], main_
         return new_genes_from_fusion_of_two_bot_dict(bots, bot1_dict, bot2_dict, main_app)
 
     #
-    return "new_bot_v2"
+    return "new_bot_v1"
 
 #
 def really_init_training_mode(win: nd.ND_Window) -> None:
@@ -200,7 +200,7 @@ def really_init_training_mode(win: nd.ND_Window) -> None:
 
     #
     init_snakes: list[SnakePlayerSetting] = [
-        SnakePlayerSetting(name=f"bot {i}", color_idx=i%len(colors_idx_to_colors), init_size=win.main_app.global_vars_get("init_snake_size"), skin_idx=1, player_type="new_bot_v2", control_name="fleches")
+        SnakePlayerSetting(name=f"bot {i}", color_idx=i%len(colors_idx_to_colors), init_size=win.main_app.global_vars_get("init_snake_size"), skin_idx=1, player_type="new_bot_v1", control_name="fleches")
         for i in range(min(nb_bots, min_random_bots_per_epoch))
     ]
 
@@ -221,7 +221,7 @@ def really_init_training_mode(win: nd.ND_Window) -> None:
             init_snakes.append( SnakePlayerSetting(name=f"bot {i}", color_idx=i%len(colors_idx_to_colors), init_size=win.main_app.global_vars_get("init_snake_size"), skin_idx=1, player_type=reproduce_bots_v2(bots=bots, bots_to_reproduce=bots_to_reproduce, main_app=win.main_app), control_name="fleches") )
         #
         else:
-            init_snakes.append( SnakePlayerSetting(name=f"bot {i}", color_idx=i%len(colors_idx_to_colors), init_size=win.main_app.global_vars_get("init_snake_size"), skin_idx=1, player_type="new_bot_v2", control_name="fleches") )
+            init_snakes.append( SnakePlayerSetting(name=f"bot {i}", color_idx=i%len(colors_idx_to_colors), init_size=win.main_app.global_vars_get("init_snake_size"), skin_idx=1, player_type="new_bot_v1", control_name="fleches") )
 
     #
     win.main_app.global_vars_set("init_snakes", init_snakes)
@@ -230,43 +230,70 @@ def really_init_training_mode(win: nd.ND_Window) -> None:
     init_really_game(win)
 
 #
+def get_best_bots_score(main_app: nd.ND_MainApp) -> int:
+    #
+    bots: dict[str, dict] = main_app.global_vars_get("bots")
+    #
+    max_score: int = 0
+    #
+    bot_dict: dict
+    for bot_dict in bots.values():
+        #
+        if bot_dict["max_score"] > max_score:
+            max_score = bot_dict["max_score"]
+    #
+    return max_score
+
+#
 def on_bt_training_click(win: nd.ND_Window) -> None:
     #
     MAIN_WINDOW_ID: int = win.main_app.global_vars_get("MAIN_WINDOW_ID")
     #
-    win.main_app.global_vars_set("snakes_speed", 0.001)
+    win.main_app.global_vars_set("snakes_speed", 0.002)
     win.main_app.global_vars_set("game_mode", "training_bots")
     win.main_app.global_vars_set("apples_multiple_values", False)
     win.main_app.global_vars_set("init_snake_size", 0)
 
     #
     map_mode: str = cast(str, win.main_app.get_element_value(MAIN_WINDOW_ID, "training_menu", "input_map_mode"))
-    max_nb_steps: int = cast(int, win.main_app.get_element_value(MAIN_WINDOW_ID, "training_menu", "input_max_nb_steps"))
+    max_nb_steps: int = cast(int, win.main_app.get_element_value(MAIN_WINDOW_ID, "training_menu", "input_max_steps"))
     grid_size: int = cast(int, win.main_app.get_element_value(MAIN_WINDOW_ID, "training_menu", "input_grid_size"))
-    nb_epochs: int = cast(int, win.main_app.get_element_value(MAIN_WINDOW_ID, "training_menu", "input_nb_bots"))
+    nb_epochs: int = cast(int, win.main_app.get_element_value(MAIN_WINDOW_ID, "training_menu", "input_nb_epochs"))
     min_score_to_reproduce: int = cast(int, win.main_app.get_element_value(MAIN_WINDOW_ID, "training_menu", "input_min_score_to_reproduce"))
 
     #
     win.main_app.global_vars_set("map_mode", map_mode)
     win.main_app.global_vars_set("min_score_to_reproduce", min_score_to_reproduce)
     win.main_app.global_vars_set("max_nb_steps", max_nb_steps)
+    win.main_app.global_vars_set("nb_steps", 0)
     win.main_app.global_vars_set("terrain_w", grid_size)
     win.main_app.global_vars_set("terrain_h", grid_size)
     win.main_app.global_vars_set("nb_epoch_tot", nb_epochs)
     win.main_app.global_vars_set("nb_epoch_cur", 1)
 
     #
+    print(f"\nBegin Bots Training. (Current max bot score:  {get_best_bots_score(main_app=win.main_app)}, nb_bots = {len(win.main_app.global_vars_get("bots"))})")
+
+    #
     really_init_training_mode(win)
 
 #
-def continue_training_botss(win: nd.ND_Window) -> None:
+def continue_training_bots(win: nd.ND_Window) -> None:
+    #
+    win.main_app.global_vars_set("nb_steps", 0)
     #
     really_init_training_mode(win)
 
 #
 def at_traning_epoch_end(win: nd.ND_Window) -> None:
     #
-    print(f"DEBUG | epoch {win.main_app.global_vars_get("nb_epoch_cur")} / {win.main_app.global_vars_get("nb_epoch_tot")}")
+    print(f"Training epoch {win.main_app.global_vars_get("nb_epoch_cur")} / {win.main_app.global_vars_get("nb_epoch_tot")}.  (Current max bot score:  {get_best_bots_score(main_app=win.main_app)}, nb_bots = {len(win.main_app.global_vars_get("bots"))})")
+    #
+    # Saving bots
+    for snakes in win.main_app.global_vars_get("dead_snakes").values():
+        snakes.bot.save_bot_dict()
+        win.main_app.global_vars_dict_set("bots", snakes.bot.name, snakes.bot.export_bot_dict())
+
     #
     if win.main_app.global_vars_get("nb_epoch_cur") >= win.main_app.global_vars_get("nb_epoch_tot"):
         #
@@ -278,7 +305,51 @@ def at_traning_epoch_end(win: nd.ND_Window) -> None:
     #
     win.main_app.global_vars_set("nb_epoch_cur", win.main_app.global_vars_get("nb_epoch_cur")+1)
     #
-    continue_training_botss(win)
+    continue_training_bots(win)
+
+#
+def on_bt_del_bad_bots_clicked(win: nd.ND_Window) -> None:
+    #
+    MAIN_WINDOW_ID: int = win.main_app.global_vars_get("MAIN_WINDOW_ID")
+    #
+    min_score_to_reproduce: int = cast(int, win.main_app.get_element_value(MAIN_WINDOW_ID, "training_menu", "input_min_score_to_reproduce"))
+    #
+    bots: dict[str, dict] = win.main_app.global_vars_get("bots")
+    #
+    bots_to_remove: list[str] = []
+    #
+    snakes_bot_paths: str = win.main_app.global_vars_get("snakes_bot_paths")
+    #
+    bot_name: str
+    bot_dict: dict
+    for bot_dict in bots.values():
+        #
+        bot_name = bot_dict["name"]
+        #
+        if bot_dict["max_score"] < min_score_to_reproduce:
+            #
+            bots_to_remove.append( bot_name )
+    #
+    for bot_name in bots_to_remove:
+        #
+        bot_dict = bots[bot_name]
+        #
+        if bot_dict["type"] == "bot_v1":
+            if os.path.exists(bot_dict["weights_path"]+".npy"):
+                os.remove(bot_dict["weights_path"]+".npy")
+        elif bot_dict["type"] == "bot_v2":
+            if os.path.exists(bot_dict["weights_path"]+"_1.npy"):
+                os.remove(bot_dict["weights_path"]+"_1.npy")
+            if os.path.exists(bot_dict["weights_path"]+"_2.npy"):
+                os.remove(bot_dict["weights_path"]+"_2.npy")
+        #
+        print(f"DEBUG | {snakes_bot_paths+bot_name+".json"}")
+        if os.path.exists(snakes_bot_paths+bot_name+".json"):
+            os.remove(snakes_bot_paths+bot_name+".json")
+        #
+        del bots[bot_name]
+
+
 
 #
 def create_training_menu_scene(win: nd.ND_Window) -> None:
@@ -375,6 +446,16 @@ def create_training_menu_scene(win: nd.ND_Window) -> None:
     left_col.add_element(bots_container)
 
     #
+    bt_del_bad_bots: nd.ND_Button = nd.ND_Button(
+        window=win,
+        elt_id="bt_del_bad_bots",
+        position=nd.ND_Position_Container(w=350, h=40, container=left_col, position_margins=margin_center),
+        onclick=on_bt_del_bad_bots_clicked,
+        text="Delete bad bots"
+    )
+    left_col.add_element(bt_del_bad_bots)
+
+    #
     bt_start_training: nd.ND_Button = nd.ND_Button(
         window=win,
         elt_id="bt_start_training",
@@ -449,7 +530,7 @@ def create_training_menu_scene(win: nd.ND_Window) -> None:
         window=win,
         elt_id="input_min_score_to_reproduce",
         position=nd.ND_Position_Container(w=400, h=40, container=row_min_score_to_reproduce),
-        value=win.main_app.global_vars_get_default("training_bots_min_score_to_reproduce", 10),
+        value=win.main_app.global_vars_get_default("training_bots_min_score_to_reproduce", 6),
         min_value=0,
         max_value=1000
     )
@@ -479,7 +560,7 @@ def create_training_menu_scene(win: nd.ND_Window) -> None:
         window=win,
         elt_id="input_max_steps",
         position=nd.ND_Position_Container(w=400, h=40, container=row_max_steps),
-        value=win.main_app.global_vars_get_default("training_bots_max_steps", 1000),
+        value=win.main_app.global_vars_get_default("training_bots_max_steps", 300),
         min_value=50,
         max_value=10000
     )
@@ -539,7 +620,7 @@ def create_training_menu_scene(win: nd.ND_Window) -> None:
         window=win,
         elt_id="input_nb_bots",
         position=nd.ND_Position_Container(w=400, h=40, container=row_nb_bots),
-        value=win.main_app.global_vars_get_default("training_bots_nb_bots", 11),
+        value=win.main_app.global_vars_get_default("training_bots_nb_bots", 9),
         min_value=1,
         max_value=100
     )
@@ -568,7 +649,7 @@ def create_training_menu_scene(win: nd.ND_Window) -> None:
         window=win,
         elt_id="input_nb_epochs",
         position=nd.ND_Position_Container(w=400, h=40, container=row_nb_epochs),
-        value=win.main_app.global_vars_get_default("training_bots_nb_epochs", 10),
+        value=win.main_app.global_vars_get_default("training_bots_nb_epochs", 20),
         min_value=1,
         max_value=100
     )
@@ -597,7 +678,7 @@ def create_training_menu_scene(win: nd.ND_Window) -> None:
         window=win,
         elt_id="input_min_random_bots_per_epoch",
         position=nd.ND_Position_Container(w=400, h=40, container=row_min_random_bots_per_epoch),
-        value=win.main_app.global_vars_get_default("training_bots_min_random_bots_per_epoch", 5),
+        value=win.main_app.global_vars_get_default("training_bots_min_random_bots_per_epoch", 4),
         min_value=0,
         max_value=100
     )

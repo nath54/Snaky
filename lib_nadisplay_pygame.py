@@ -31,7 +31,7 @@ class ND_Display_Pygame(ND_Display):
         # TODO: super()
         # super().__init__()
         #
-        self.main_not_threading: bool = False
+        self.main_not_threading: bool = True
         self.events_thread_in_main_thread: bool = True
         self.display_thread_in_main_thread: bool = True
         #
@@ -949,7 +949,7 @@ class ND_EventsManager_Pygame(ND_EventsManager):
             #
             if pygame_event.type == pygame.WINDOWCLOSE:
                 #
-                return nd_event.ND_EventWindowClose(nd_window_id)
+                return nd_event.ND_EventWindowClose(window_id=nd_window_id)
             #
             # elif pygame_event.type == pygame.WINDOWEVENT_SHOWN:
             #     #
@@ -964,14 +964,14 @@ class ND_EventsManager_Pygame(ND_EventsManager):
                 new_window_width: int = pygame_event.w  # width
                 new_window_height: int = pygame_event.h  # height
                 #
-                return nd_event.ND_EventWindowResized(nd_window_id, new_window_width, new_window_height)
+                return nd_event.ND_EventWindowResized(window_id=nd_window_id, w=new_window_width, h=new_window_height)
             #
             elif pygame_event.type == pygame.WINDOWMOVED:
                 #
                 new_window_x: int = pygame_event.x
                 new_window_y: int = pygame_event.y
                 #
-                return nd_event.ND_EventWindowMoved(nd_window_id, new_window_x, new_window_y)
+                return nd_event.ND_EventWindowMoved(window_id=nd_window_id, x=new_window_x, y=new_window_y)
             #
             # elif pygame_event.type == pygame.WINDOWFOCUSGAINED:
             #     #
