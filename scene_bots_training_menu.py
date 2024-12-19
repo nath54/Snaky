@@ -221,7 +221,6 @@ def really_init_training_mode(win: nd.ND_Window) -> None:
     min_random_bots_per_epoch: int = cast(int, win.main_app.get_element_value(MAIN_WINDOW_ID, "training_menu", "input_min_random_bots_per_epoch"))
     min_score_to_reproduce: int = cast(int, win.main_app.get_element_value(MAIN_WINDOW_ID, "training_menu", "input_min_score_to_reproduce"))
 
-
     #
     init_snakes: list[SnakePlayerSetting] = [
         SnakePlayerSetting(name=f"bot {i}", color_idx=i%len(colors_idx_to_colors), init_size=win.main_app.global_vars_get("init_snake_size"), skin_idx=1, player_type="new_bot_v1", control_name="fleches")
@@ -307,6 +306,8 @@ def on_bt_training_click(win: nd.ND_Window) -> None:
     grid_size: int = cast(int, win.main_app.get_element_value(MAIN_WINDOW_ID, "training_menu", "input_grid_size"))
     nb_epochs: int = cast(int, win.main_app.get_element_value(MAIN_WINDOW_ID, "training_menu", "input_nb_epochs"))
     min_score_to_reproduce: int = cast(int, win.main_app.get_element_value(MAIN_WINDOW_ID, "training_menu", "input_min_score_to_reproduce"))
+    nb_apples: int = cast(int, win.main_app.get_element_value(MAIN_WINDOW_ID, "training_menu", "input_nb_apples"))
+
 
     #
     win.main_app.global_vars_set("map_mode", map_mode)
@@ -317,6 +318,7 @@ def on_bt_training_click(win: nd.ND_Window) -> None:
     win.main_app.global_vars_set("terrain_h", grid_size)
     win.main_app.global_vars_set("nb_epoch_tot", nb_epochs)
     win.main_app.global_vars_set("nb_epoch_cur", 1)
+    win.main_app.global_vars_set("nb_init_apples", nb_apples)
 
     #
     print(f"\nBegin Bots Training. (Current global max bot score:  {get_best_bots_score(main_app=win.main_app)}, nb_bots = {len(win.main_app.global_vars_get("bots"))})")
@@ -330,6 +332,17 @@ def continue_training_bots(win: nd.ND_Window) -> None:
     win.main_app.global_vars_set("nb_steps", 0)
     #
     really_init_training_mode(win)
+
+#
+def clean_snakes_bot(main_app: nd.ND_MainApp) -> None:
+    #
+    snake: Snake
+    for snake in list(main_app.global_vars_get("snakes").values()) + list(main_app.global_vars_get("dead_snakes").values()):
+        #
+        del snake # With python, it should recursively delete all its attributes, and the attributes of its attributes, etc...
+    #
+    main_app.global_vars_set("snakes", {})
+    main_app.global_vars_set("dead_snakes", {})
 
 #
 def at_traning_epoch_end(win: nd.ND_Window) -> None:
@@ -351,6 +364,9 @@ def at_traning_epoch_end(win: nd.ND_Window) -> None:
         elif snakes.bot.max_score < min_score_to_reproduce:
             #
             snakes.bot.delete_all_data()
+
+    #
+    clean_snakes_bot(win.main_app)
 
     #
     if win.main_app.global_vars_get("nb_epoch_cur") >= win.main_app.global_vars_get("nb_epoch_tot"):
@@ -690,6 +706,37 @@ def create_training_menu_scene(win: nd.ND_Window) -> None:
         max_value=100
     )
     row_nb_bots.add_element(input_nb_bots)
+
+
+    ##### Nb apples
+    row_nb_apples: nd.ND_Container = nd.ND_Container(
+        window=win,
+        elt_id="row_nb_apples",
+        position=nd.ND_Position_Container(w="100%", h=50, container=right_col),
+        element_alignment="row"
+    )
+    right_col.add_element(row_nb_apples)
+
+    #
+    text_nb_apples: nd.ND_Text = nd.ND_Text(
+        window=win,
+        elt_id="text_nb_apples",
+        position=nd.ND_Position_Container(w=320, h=40, container=row_nb_apples),
+        text="nb apples : "
+    )
+    row_nb_apples.add_element(text_nb_apples)
+
+    #
+    input_nb_apples: nd.ND_NumberInput = nd.ND_NumberInput(
+        window=win,
+        elt_id="input_nb_apples",
+        position=nd.ND_Position_Container(w=400, h=40, container=row_nb_apples),
+        value=win.main_app.global_vars_get_default("training_bots_nb_apples", 1),
+        min_value=1,
+        max_value=100
+    )
+    row_nb_apples.add_element(input_nb_apples)
+
 
     ##### Nb Epochs
     row_nb_epochs: nd.ND_Container = nd.ND_Container(
