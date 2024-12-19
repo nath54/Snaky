@@ -172,10 +172,10 @@ def create_game_settings(win: nd.ND_Window) -> None:
         window=win,
         elt_id="input_init_snakes_size",
         position=nd.ND_Position_Container(w=400, h=40, container=row_init_snakes_size),
-        value=win.main_app.global_vars_get_default("game_init_snakes_size", 0),
+        value=win.main_app.global_vars_get_default("game_init_snake_size", 0),
         min_value=0,
         max_value=100,
-        on_new_value_validated=lambda elt, new_val: elt.window.main_app.global_vars_set("game_init_snakes_size", new_val)
+        on_new_value_validated=lambda elt, new_val: elt.window.main_app.global_vars_set("game_init_snake_size", new_val)
     )
     row_init_snakes_size.add_element(input_init_snakes_size)
 
