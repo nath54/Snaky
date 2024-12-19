@@ -80,7 +80,8 @@ def create_game_settings(win: nd.ND_Window) -> None:
         window=win,
         elt_id="left_col",
         position=nd.ND_Position_Container(w="50%", h="100%", container=body_row),
-        element_alignment="col"
+        element_alignment="col",
+        inverse_z_order=True
     )
     body_row.add_element(left_col)
 
@@ -108,11 +109,11 @@ def create_game_settings(win: nd.ND_Window) -> None:
         window=win,
         elt_id="input_map_mode",
         position=nd.ND_Position_Container(w=400, h=40, container=row_map_mode),
-        value=win.main_app.global_vars_get_default("game_settings_map_mode", "separate_close"),
+        value=win.main_app.global_vars_get_default("game_map_mode", "together"),
         options=map_modes,
         option_list_buttons_height=300,
         font_name="FreeSans",
-        on_value_selected=lambda elt, new_val: elt.window.main_app.global_vars_set("game_settings_map_mode", new_val)
+        on_value_selected=lambda elt, new_val: elt.window.main_app.global_vars_set("game_map_mode", new_val)
     )
     row_map_mode.add_element(input_map_mode)
 

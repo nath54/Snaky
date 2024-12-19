@@ -168,7 +168,7 @@ if __name__ == "__main__":
     if "game_init_snake_size" not in app.global_vars:
         app.global_vars_set("game_init_snake_size", 0)
     if "game_map_mode" not in app.global_vars:
-        app.global_vars_set("game_map_mode", "separate_close")  # "together", "separate_far", "separate_close"
+        app.global_vars_set("game_map_mode", "together")  # "together", "separate_far", "separate_close"
     if "game_terrain_w" not in app.global_vars:
         app.global_vars_set("game_terrain_w", 11)
     if "game_terrain_h" not in app.global_vars:

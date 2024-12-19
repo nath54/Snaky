@@ -11,7 +11,7 @@ import math
 import random
 import time
 
-from lib_snake import SnakePlayerSetting, Snake, SnakeBot, create_new_bot, SnakeBot_PerfectButSlowAndBoring, create_bot_from_bot_dict, create_map1, snake_skin_1, snake_skin_2
+from lib_snake import SnakePlayerSetting, Snake, SnakeBot, create_new_bot, SnakeBot_PerfectButSlowAndBoring, create_bot_from_bot_dict, create_map1, snake_skin_1, snake_skin_2, snake_skin_3
 
 
 #
@@ -34,6 +34,9 @@ colors_idx_to_colors: dict[int, ND_Color] = {
     7: cl("orange"),
     8: cl("purple")
 }
+
+#
+snakes_skins_to_skin_idx: dict[str, int] = {"snake": 1, "dragon":3, "monster": 2}
 
 #
 snake_base_types: list[str] = ["human", "bot_random", "bot_perfect"]
@@ -334,13 +337,17 @@ def init_really_game(win: nd.ND_Window) -> None:
         win.main_app.global_vars_dict_set("snakes", snk_idx, snake)
 
         #
-        if snk.skin_idx == 1:
-            #
-            snake_skin_1(win, snake, snk_idx, grid)
-        #
-        elif snk.skin_idx == 2:
+        if snk.skin_idx == 2:
             #
             snake_skin_2(win, snake, snk_idx, grid)
+        #
+        elif snk.skin_idx == 3:
+            #
+            snake_skin_3(win, snake, snk_idx, grid)
+        #
+        else:
+            #
+            snake_skin_1(win, snake, snk_idx, grid)
 
         #
         dir_angle: int = min(0, snake.direction.x) * 180 + 90 * snake.direction.y

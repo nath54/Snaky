@@ -9,7 +9,7 @@ import lib_nadisplay as nd
 
 from lib_snake import SnakePlayerSetting
 
-from scene_main_menu import on_bt_click_init_game, controls_names_to_keys, colors_idx_to_colors, snake_base_types
+from scene_main_menu import on_bt_click_init_game, controls_names_to_keys, colors_idx_to_colors, snake_base_types, snakes_skins_to_skin_idx
 
 
 #
@@ -54,6 +54,16 @@ def on_player_type_changed(_, new_type: str, player_idx: int, main_app: nd.ND_Ma
         return
     #
     player_setting.player_type = new_type
+
+#
+def on_player_skin_changed(_, new_skin: str, player_idx: int, main_app: nd.ND_MainApp) -> None:
+    #
+    player_setting: Optional[SnakePlayerSetting] = main_app.global_vars_list_get_at_idx("game_init_snakes", player_idx)
+    #
+    if player_setting is None:
+        return
+    #
+    player_setting.skin_idx = snakes_skins_to_skin_idx[new_skin]
 
 #
 def on_player_controls_changed(_, new_controls_name: str, player_idx: int, main_app: nd.ND_MainApp) -> None:
@@ -116,6 +126,18 @@ def add_player_row_to_set_up_player_menu(win: nd.ND_Window, players_container: n
         font_name="FreeSans"
     )
     player_row.add_element(player_type)
+
+    #
+    player_skin: nd.ND_SelectOptions = nd.ND_SelectOptions(
+        window=win,
+        elt_id=f"{row_elt_id}_player_skin",
+        position=nd.ND_Position_Container(w="20%", h=40, container=player_row, position_margins=margin_center),
+        value="snake",
+        options=set(list(snakes_skins_to_skin_idx.keys())),
+        on_value_selected=lambda elt, new_value, idx=player_lst_idx, main_app=win.main_app: on_player_skin_changed(elt, new_value, idx, main_app),  # type: ignore
+        font_name="FreeSans"
+    )
+    player_row.add_element(player_skin)
 
     #
     player_icon: nd.ND_Button = nd.ND_Button(

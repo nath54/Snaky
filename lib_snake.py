@@ -1233,3 +1233,118 @@ def snake_skin_2(win: nd.ND_Window, snake: Snake, snk_idx: int, grid: nd.ND_Rect
     snake.sprites["body_corner"] = (sprite_body_corner, grid.add_element_to_grid(sprite_body_corner, []))
 
 
+
+def snake_skin_3(win: nd.ND_Window, snake: Snake, snk_idx: int, grid: nd.ND_RectGrid) -> None:
+
+    #
+    dragon_head_atlas: Optional[nd.ND_AtlasTexture] = win.main_app.global_vars_get_optional("dragon_head_atlas")
+    if dragon_head_atlas is None:
+        #
+        dragon_head_atlas = nd.ND_AtlasTexture(
+            window=win,
+            texture_atlas_path="res/sprites/Dragon_head.png",
+            tiles_size=ND_Point(32, 32)
+        )
+        #
+        win.main_app.global_vars_set("dragon_head_atlas", dragon_head_atlas)
+
+    #
+    dragon_body_with_horns_sprite_atlas: Optional[nd.ND_AtlasTexture] = win.main_app.global_vars_get_optional("dragon_body_with_horns_sprite_atlas")
+    if dragon_body_with_horns_sprite_atlas is None:
+        #
+        dragon_body_with_horns_sprite_atlas = nd.ND_AtlasTexture(
+            window=win,
+            texture_atlas_path="res/sprites/Dragon_Body_With_Horns.png",
+            tiles_size=ND_Point(32, 32)
+        )
+        #
+        win.main_app.global_vars_set("dragon_body_with_horns_sprite_atlas", dragon_body_with_horns_sprite_atlas)
+
+    #
+    dragon_body_atlas: Optional[nd.ND_AtlasTexture] = win.main_app.global_vars_get_optional("dragon_body_atlas")
+    if dragon_body_atlas is None:
+        #
+        dragon_body_atlas = nd.ND_AtlasTexture(
+            window=win,
+            texture_atlas_path="res/sprites/Dragon_Body.png",
+            tiles_size=ND_Point(32, 32)
+        )
+        #
+        win.main_app.global_vars_set("dragon_body_atlas", dragon_body_atlas)
+
+    #
+    dragon_body_corner_atlas: Optional[nd.ND_AtlasTexture] = win.main_app.global_vars_get_optional("dragon_body_corner_atlas")
+    if dragon_body_corner_atlas is None:
+        #
+        dragon_body_corner_atlas = nd.ND_AtlasTexture(
+            window=win,
+            texture_atlas_path="res/sprites/Dragon_Corner.png",
+            tiles_size=ND_Point(32, 32)
+        )
+        #
+        win.main_app.global_vars_set("dragon_body_corner_atlas", dragon_body_corner_atlas)
+
+    #
+    dragon_tail_atlas: Optional[nd.ND_AtlasTexture] = win.main_app.global_vars_get_optional("dragon_tail_atlas")
+    if dragon_tail_atlas is None:
+        #
+        dragon_tail_atlas = nd.ND_AtlasTexture(
+            window=win,
+            texture_atlas_path="res/sprites/Dragon_Tail.png",
+            tiles_size=ND_Point(32, 32)
+        )
+        #
+        win.main_app.global_vars_set("dragon_tail_atlas", dragon_tail_atlas)
+
+
+    # Snake head
+    #
+    sprite_head: nd.ND_Sprite_of_AtlasTexture = nd.ND_Sprite_of_AtlasTexture(
+        window=win,
+        elt_id=f"snake_{snk_idx}_head",
+        position=nd.ND_Position_RectGrid(rect_grid=grid),
+        atlas_texture=dragon_head_atlas,
+        tile_x=0, tile_y=0
+    )
+    sprite_head.transformations.rotation = 90
+    # sprite_head.transformations.color_modulation = snake.color
+    #
+    snake.sprites["head"] = (sprite_head, grid.add_element_to_grid(sprite_head, []))
+
+    #
+    sprite_tail: nd.ND_Sprite_of_AtlasTexture = nd.ND_Sprite_of_AtlasTexture(
+        window=win,
+        elt_id=f"snake_{snk_idx}_tail",
+        position=nd.ND_Position_RectGrid(rect_grid=grid),
+        atlas_texture=dragon_tail_atlas,
+        tile_x=0, tile_y=0
+    )
+    sprite_tail.transformations.rotation = 90
+    # sprite_tail.transformations.color_modulation = snake.color
+    snake.sprites["tail"] = (sprite_tail, grid.add_element_to_grid(sprite_tail, []))
+
+    #
+    sprite_body: nd.ND_Sprite_of_AtlasTexture = nd.ND_Sprite_of_AtlasTexture(
+        window=win,
+        elt_id=f"snake_{snk_idx}_body",
+        position=nd.ND_Position_RectGrid(rect_grid=grid),
+        atlas_texture=dragon_body_atlas,
+        tile_x=0, tile_y=0
+    )
+    sprite_body.transformations.rotation = 90
+    # sprite_body.transformations.color_modulation = snake.color
+    snake.sprites["body"] = (sprite_body, grid.add_element_to_grid(sprite_body, []))
+
+    #
+    sprite_body_corner: nd.ND_Sprite_of_AtlasTexture = nd.ND_Sprite_of_AtlasTexture(
+        window=win,
+        elt_id=f"snake_{snk_idx}_body_corner",
+        position=nd.ND_Position_RectGrid(rect_grid=grid),
+        atlas_texture=dragon_body_corner_atlas,
+        tile_x=0, tile_y=0
+    )
+    sprite_body_corner.transformations.rotation = 0
+    # sprite_body_corner.transformations.color_modulation = snake.color
+    snake.sprites["body_corner"] = (sprite_body_corner, grid.add_element_to_grid(sprite_body_corner, []))
+
+
