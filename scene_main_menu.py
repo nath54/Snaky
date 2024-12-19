@@ -2,7 +2,7 @@
 
 from typing import Optional, cast
 
-from lib_nadisplay_colors import cl, ND_Color
+from lib_nadisplay_colors import cl, ND_Color, ND_Transformations
 from lib_nadisplay_rects import ND_Point, ND_Rect, ND_Position_Margins, ND_Position_Constraints
 
 import lib_nadisplay as nd
@@ -63,15 +63,33 @@ def event_set_snake_direction(main_app: nd.ND_MainApp, direction: ND_Point, snak
 def animate_main_menu(main_app: nd.ND_MainApp, delta_time: float) -> None:
     #
     game_title: Optional[nd.ND_Text] = main_app.global_vars_get_optional("main_menu_title")
+    snaky_sprite: Optional[nd.ND_Sprite] = main_app.global_vars_get_optional("snaky_sprite")
+    #
     t: float = main_app.get_time_msec()
+    #
+    r: int = int(((math.sin(0.00002 * t ) + 1) / 2 ) * 255)
+    g: int = int(((math.sin(0.0002 * t + 0.023 * (t ** 0.1)) + 1) / 2 ) * 255)
+    b: int = int(((math.sin(0.00004 * t - 0.0121 * (t ** 0.1)) + 1) / 2 ) * 255)
     #
     if game_title is not None:
         #
-        game_title.font_color.r = int(((math.sin(0.0002 * t ) + 1) / 2 ) * 255)
-        game_title.font_color.g = int(((math.sin(0.002 * t + 0.023 * (t ** 0.1)) + 1) / 2 ) * 255)
-        game_title.font_color.b = int(((math.sin(0.0004 * t - 0.0121 * (t ** 0.1)) + 1) / 2 ) * 255)
+        game_title.font_color.r = r
+        game_title.font_color.g = g
+        game_title.font_color.b = b
         #
-        game_title.text = "Snaky" + "." * ( round(((math.sin(0.00002 * t ) + 1) / 2 ) * 255) % 4)
+        game_title.text = "Snaky" # + "." * ( round(((math.sin(0.00002 * t ) + 1) / 2 ) * 255) % 4)
+    #
+    if snaky_sprite is not None:
+        #
+        if snaky_sprite.transformations is None:
+            snaky_sprite.transformations = ND_Transformations()
+        #
+        if snaky_sprite.transformations.color_modulation is None:
+            snaky_sprite.transformations.color_modulation = ND_Color(255, 255, 255)
+        #
+        snaky_sprite.transformations.color_modulation.r = r
+        snaky_sprite.transformations.color_modulation.g = g
+        snaky_sprite.transformations.color_modulation.b = b
     #
     if False and main_app.display is not None:
         #
@@ -458,22 +476,7 @@ def create_main_menu_scene(win: nd.ND_Window) -> None:
         position=nd.ND_Position_FullWindow(win),
         element_alignment="col"
     )
-
-    #
-    bottom_row_container: nd.ND_Container = nd.ND_Container(
-        window=win,
-        elt_id="bottom_row_container",
-        position=nd.ND_Position_Container(w="100%", h="75%", container=main_menu_container),
-        element_alignment="row"
-    )
-
-    #
-    bts_container: nd.ND_Container = nd.ND_Container(
-        window=win,
-        elt_id="bts_container",
-        position=nd.ND_Position_Container(w="30%", h="100%", container=bottom_row_container),
-        element_alignment="col"
-    )
+    main_menu_scene.add_element(0, main_menu_container)
 
     #
     game_title: nd.ND_Text = nd.ND_Text(
@@ -484,6 +487,25 @@ def create_main_menu_scene(win: nd.ND_Window) -> None:
                             font_size=50,
                             font_color=cl("violet"),
     )
+    main_menu_container.add_element(game_title)
+
+    #
+    bottom_row_container: nd.ND_Container = nd.ND_Container(
+        window=win,
+        elt_id="bottom_row_container",
+        position=nd.ND_Position_Container(w="100%", h="75%", container=main_menu_container),
+        element_alignment="row"
+    )
+    main_menu_container.add_element(bottom_row_container)
+
+    #
+    bts_container: nd.ND_Container = nd.ND_Container(
+        window=win,
+        elt_id="bts_container",
+        position=nd.ND_Position_Container(w="30%", h="100%", container=bottom_row_container),
+        element_alignment="col"
+    )
+    bottom_row_container.add_element(bts_container)
 
     #
     win.main_app.global_vars_set("main_menu_title", game_title)
@@ -498,6 +520,7 @@ def create_main_menu_scene(win: nd.ND_Window) -> None:
         text="Play !",
         font_size=35
     )
+    bts_container.add_element(bt_play)
     #
     bt_train: nd.ND_Button = nd.ND_Button(
         window=win,
@@ -507,6 +530,7 @@ def create_main_menu_scene(win: nd.ND_Window) -> None:
         text="Train Bots",
         font_size=35
     )
+    bts_container.add_element(bt_train)
     #
     bt_settings: nd.ND_Button = nd.ND_Button(
         window=win,
@@ -516,6 +540,7 @@ def create_main_menu_scene(win: nd.ND_Window) -> None:
         text="Settings",
         font_size=35
     )
+    bts_container.add_element(bt_settings)
     #
     bt_quit: nd.ND_Button = nd.ND_Button(
         window=win,
@@ -525,21 +550,17 @@ def create_main_menu_scene(win: nd.ND_Window) -> None:
         text="Quit",
         font_size=35
     )
-
-    #
-    bts_container.add_element(bt_play)
-    bts_container.add_element(bt_train)
-    bts_container.add_element(bt_settings)
     bts_container.add_element(bt_quit)
 
     #
-    main_menu_container.add_element(game_title)
-    main_menu_container.add_element(bottom_row_container)
-    #
-    bottom_row_container.add_element(bts_container)
-
-    #
-    main_menu_scene.add_element(0, main_menu_container)
+    snaky_sprite: nd.ND_Sprite = nd.ND_Sprite(
+        window=win,
+        elt_id="snaky_sprite",
+        position=nd.ND_Position_Container(w="square", h="60%", container=bottom_row_container, position_margins=ND_Position_Margins(margin_left="100%", margin_right=0, margin_bottom="50%", margin_top="50%")),
+        base_texture="res/sprites/snake_icon.png"
+    )
+    bottom_row_container.add_element(snaky_sprite)
+    win.main_app.global_vars_set("snaky_sprite", snaky_sprite)
 
     #
     win.add_scene( main_menu_scene )
