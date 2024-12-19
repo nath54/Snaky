@@ -22,6 +22,7 @@ from scene_game_end import create_end_menu
 from scene_game_set_up import create_game_setup_scene
 from scene_pause_screen import create_pause_menu
 from scene_bots_training_menu import create_training_menu_scene
+from scene_game_settings import create_game_settings
 
 
 #
@@ -161,6 +162,7 @@ if __name__ == "__main__":
     create_game_setup_scene(win)
     create_pause_menu(win)
     create_training_menu_scene(win)
+    create_game_settings(win)
 
     #
     # win.set_fullscreen(2)

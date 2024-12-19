@@ -203,8 +203,8 @@ def on_bt_remove_player_button(win: nd.ND_Window) -> None:
 
 #
 def on_bt_game_settings_click(win: nd.ND_Window) -> None:
-    # TODO
-    pass
+    #
+    win.set_state("game_settings_menu")
 
 #
 def on_bt_back_clicked(win: nd.ND_Window) -> None:

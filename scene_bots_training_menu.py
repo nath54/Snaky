@@ -295,10 +295,13 @@ def on_bt_training_click(win: nd.ND_Window) -> None:
     #
     MAIN_WINDOW_ID: int = win.main_app.global_vars_get("MAIN_WINDOW_ID")
     #
-    win.main_app.global_vars_set("snakes_speed", 0.002)
+    snakes_speed: float = cast(float, win.main_app.get_element_value(MAIN_WINDOW_ID, "training_menu", "input_snakes_speed"))
+    init_snake_size: int = cast(int, win.main_app.get_element_value(MAIN_WINDOW_ID, "training_menu", "input_init_snakes_size"))
+    #
+    win.main_app.global_vars_set("snakes_speed", snakes_speed)
     win.main_app.global_vars_set("game_mode", "training_bots")
     win.main_app.global_vars_set("apples_multiple_values", False)
-    win.main_app.global_vars_set("init_snake_size", 0)
+    win.main_app.global_vars_set("init_snake_size", init_snake_size)
 
     #
     map_mode: str = cast(str, win.main_app.get_element_value(MAIN_WINDOW_ID, "training_menu", "input_map_mode"))
@@ -307,7 +310,6 @@ def on_bt_training_click(win: nd.ND_Window) -> None:
     nb_epochs: int = cast(int, win.main_app.get_element_value(MAIN_WINDOW_ID, "training_menu", "input_nb_epochs"))
     min_score_to_reproduce: int = cast(int, win.main_app.get_element_value(MAIN_WINDOW_ID, "training_menu", "input_min_score_to_reproduce"))
     nb_apples: int = cast(int, win.main_app.get_element_value(MAIN_WINDOW_ID, "training_menu", "input_nb_apples"))
-
 
     #
     win.main_app.global_vars_set("map_mode", map_mode)
@@ -738,6 +740,36 @@ def create_training_menu_scene(win: nd.ND_Window) -> None:
     row_nb_apples.add_element(input_nb_apples)
 
 
+    ##### Init Snakes Size
+    row_init_snakes_size: nd.ND_Container = nd.ND_Container(
+        window=win,
+        elt_id="row_init_snakes_size",
+        position=nd.ND_Position_Container(w="100%", h=50, container=right_col),
+        element_alignment="row"
+    )
+    right_col.add_element(row_init_snakes_size)
+
+    #
+    text_init_snakes_size: nd.ND_Text = nd.ND_Text(
+        window=win,
+        elt_id="text_init_snakes_size",
+        position=nd.ND_Position_Container(w=320, h=40, container=row_init_snakes_size),
+        text="init snakes size : "
+    )
+    row_init_snakes_size.add_element(text_init_snakes_size)
+
+    #
+    input_init_snakes_size: nd.ND_NumberInput = nd.ND_NumberInput(
+        window=win,
+        elt_id="input_init_snakes_size",
+        position=nd.ND_Position_Container(w=400, h=40, container=row_init_snakes_size),
+        value=win.main_app.global_vars_get_default("training_init_snakes_size", 0),
+        min_value=0,
+        max_value=100
+    )
+    row_init_snakes_size.add_element(input_init_snakes_size)
+
+
     ##### Nb Epochs
     row_nb_epochs: nd.ND_Container = nd.ND_Container(
         window=win,
@@ -823,7 +855,7 @@ def create_training_menu_scene(win: nd.ND_Window) -> None:
         value=win.main_app.global_vars_get_default("training_bots_learning_step", 0.001),
         min_value=0,
         max_value=0.5,
-        step=0.00001,
+        step=0.001,
         digits_after_comma=4
     )
     row_learning_step.add_element(input_learning_step)
@@ -855,7 +887,7 @@ def create_training_menu_scene(win: nd.ND_Window) -> None:
         value=win.main_app.global_vars_get_default("training_bots_snakes_speed", 0.001),
         min_value=0,
         max_value=0.5,
-        step=0.00001,
+        step=0.001,
         digits_after_comma=6
     )
     row_snakes_speed.add_element(input_snakes_speed)

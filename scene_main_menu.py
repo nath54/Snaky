@@ -159,6 +159,16 @@ def center_game_camera(main_app: nd.ND_MainApp) -> None:
 #
 def on_bt_play_clicked(win: nd.ND_Window) -> None:
     #
+    nb_apples: int = cast(int, win.main_app.get_element_value(win.window_id, "game_settings_menu", "input_nb_apples"))
+    init_snakes_size: int = cast(int, win.main_app.get_element_value(win.window_id, "game_settings_menu", "input_init_snakes_size"))
+    snakes_speed: int = cast(int, win.main_app.get_element_value(win.window_id, "game_settings_menu", "input_snakes_speed"))
+    map_mode: str = cast(str, win.main_app.get_element_value(win.window_id, "game_settings_menu", "input_map_mode"))
+    #
+    win.main_app.global_vars_set("init_snake_size", init_snakes_size)
+    win.main_app.global_vars_set("snakes_speed", snakes_speed)
+    win.main_app.global_vars_set("map_mode", map_mode)
+    win.main_app.global_vars_set("nb_init_apples", nb_apples)
+    #
     win.set_state("game_setup")
 
 #
@@ -426,6 +436,11 @@ def on_bt_click_training_bots(win: nd.ND_Window) -> None:
     win.set_state("training_menu")
 
 #
+def on_bt_click_game_settings(win: nd.ND_Window) -> None:
+    #
+    win.set_state("game_settings_menu")
+
+#
 def create_main_menu_scene(win: nd.ND_Window) -> None:
     #
     main_menu_scene: nd.ND_Scene = nd.ND_Scene(
@@ -497,7 +512,7 @@ def create_main_menu_scene(win: nd.ND_Window) -> None:
         window=win,
         elt_id="bt_settings",
         position=nd.ND_Position_Container(w=250, h=100, container=bts_container, position_margins=ND_Position_Margins(margin_left="50%", margin_top=25, margin_bottom=25)),
-        onclick=None,
+        onclick=on_bt_click_game_settings,
         text="Settings",
         font_size=35
     )
