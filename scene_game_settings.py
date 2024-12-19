@@ -111,7 +111,8 @@ def create_game_settings(win: nd.ND_Window) -> None:
         value=win.main_app.global_vars_get_default("game_settings_map_mode", "separate_close"),
         options=map_modes,
         option_list_buttons_height=300,
-        font_name="FreeSans"
+        font_name="FreeSans",
+        on_value_selected=lambda elt, new_val: elt.window.main_app.global_vars_set("game_settings_map_mode", new_val)
     )
     row_map_mode.add_element(input_map_mode)
 
@@ -141,7 +142,8 @@ def create_game_settings(win: nd.ND_Window) -> None:
         position=nd.ND_Position_Container(w=400, h=40, container=row_nb_apples),
         value=win.main_app.global_vars_get_default("game_nb_init_apples", 1),
         min_value=1,
-        max_value=100
+        max_value=100,
+        on_new_value_validated=lambda elt, new_val: elt.window.main_app.global_vars_set("game_nb_init_apples", new_val)
     )
     row_nb_apples.add_element(input_nb_apples)
 
@@ -171,7 +173,8 @@ def create_game_settings(win: nd.ND_Window) -> None:
         position=nd.ND_Position_Container(w=400, h=40, container=row_init_snakes_size),
         value=win.main_app.global_vars_get_default("game_init_snakes_size", 0),
         min_value=0,
-        max_value=100
+        max_value=100,
+        on_new_value_validated=lambda elt, new_val: elt.window.main_app.global_vars_set("game_init_snakes_size", new_val)
     )
     row_init_snakes_size.add_element(input_init_snakes_size)
 
@@ -203,7 +206,8 @@ def create_game_settings(win: nd.ND_Window) -> None:
         min_value=0,
         max_value=0.5,
         step=0.001,
-        digits_after_comma=6
+        digits_after_comma=6,
+        on_new_value_validated=lambda elt, new_val: elt.window.main_app.global_vars_set("game_snakes_speed", new_val)
     )
     row_snakes_speed.add_element(input_snakes_speed)
 

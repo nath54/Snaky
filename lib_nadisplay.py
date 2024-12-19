@@ -7,8 +7,10 @@ from threading import Thread, Lock, Condition
 
 import atexit
 
+import os
 import math
 import random
+import pickle
 
 import numpy as np
 
@@ -50,11 +52,14 @@ def get_font_size(txt: str, font_size: int, font_ratio: float = 3.0 / 4.0) -> tu
 #
 class ND_MainApp:
     #
-    def __init__(self, DisplayClass: Type["ND_Display"], WindowClass: Type["ND_Window"], EventsManagerClass: Type["ND_EventsManager"]) -> None:
+    def __init__(self, DisplayClass: Type["ND_Display"], WindowClass: Type["ND_Window"], EventsManagerClass: Type["ND_EventsManager"], global_vars_to_save: list[str] = [], path_to_global_vars_save_file: str = "") -> None:
         #
         self.global_vars: dict[str, Any] = {}
         self.global_vars_muts: dict[str, Lock] = {}
         self.global_vars_creation_mut: Lock = Lock()
+        #
+        self.global_vars_to_save: list[str] = global_vars_to_save
+        self.path_to_global_vars_save_file: str = path_to_global_vars_save_file
         #
         self.fps_display: int = 60
         self.fps_physics: int = 60
@@ -87,11 +92,19 @@ class ND_MainApp:
         self.threads_ids_not_joined: set[int] = set()
         self.mutex_threads_creation: Lock = Lock()
         self.threads_condition: Condition = Condition()
+        #
+        #
+        if self.path_to_global_vars_save_file != "" and os.path.exists(self.path_to_global_vars_save_file):
+            #
+            self.global_vars_load_from_path(self.path_to_global_vars_save_file)
 
     #
     def atexit(self) -> None:
         #
         print("At exit catched")
+        #
+        if self.global_vars_to_save and self.path_to_global_vars_save_file != "":
+            self.global_vars_save_to_path(path=self.path_to_global_vars_save_file, vars_to_save=self.global_vars_to_save)
         #
         self.is_running = False
         #
@@ -114,6 +127,39 @@ class ND_MainApp:
             self.display.wait_time_msec(delay_in_msec)
         #
         time.sleep(delay_in_msec / 1000.0)
+
+    #
+    def global_vars_save_to_path(self, path: str, vars_to_save: list[str]) -> None:
+        #
+        data_to_save: dict[str, Any] = {}
+        #
+        for var in vars_to_save:
+            if var in self.global_vars:
+                #
+                # print(f"DEBUG | global vars save {var}={self.global_vars[var]}")
+                #
+                data_to_save[var] = self.global_vars[var]
+        #
+        with open(path, "wb") as f:
+            pickle.dump(data_to_save, f)
+        #
+        print(f"MainApp : saved global vars to {path}")
+        #
+
+    #
+    def global_vars_load_from_path(self, path: str) -> None:
+        #
+        with open(path, "rb") as f:
+            data_to_load: dict[str, Any] = pickle.load(f)
+        #
+        for key in data_to_load:
+            #
+            # print(f"DEBUG | global vars load {key}={data_to_load[key]}")
+            #
+            self.global_vars_set(key, data_to_load[key])
+        #
+        print(f"MainApp : loaded global vars from {path}")
+        #
 
     #
     def global_vars_create(self, var_name: str, var_value: Any, if_exists: str = "ignore") -> None:
@@ -2850,10 +2896,13 @@ class ND_NumberInput(ND_Elt):
         min_value: float = 0,
         max_value: float = 100,
         step: float = 1,
-        digits_after_comma: int = 0
+        digits_after_comma: int = 0,
+        on_new_value_validated: Optional[Callable[["ND_NumberInput", float], None]] = None
     ) -> None:
         #
         super().__init__(window=window, elt_id=elt_id, position=position)
+        #
+        self.on_new_value_validated: Optional[Callable[["ND_NumberInput", float], None]] = on_new_value_validated
         #
         self.min_value: float = min_value
         self.max_value: float = max_value
@@ -2975,6 +3024,10 @@ class ND_NumberInput(ND_Elt):
             pass
         finally:
             self.line_edit.set_text(str(self.value))
+            #
+            if self.on_new_value_validated is not None:
+                #
+                self.on_new_value_validated(self, self.value)
 
     #
     def on_line_edit_escaped(self, _) -> None:

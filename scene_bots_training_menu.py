@@ -585,7 +585,8 @@ def create_training_menu_scene(win: nd.ND_Window) -> None:
         value=win.main_app.global_vars_get_default("training_bots_map_mode", "separate_close"),
         options=map_modes,
         option_list_buttons_height=300,
-        font_name="FreeSans"
+        font_name="FreeSans",
+        on_value_selected=lambda elt, new_val: elt.window.main_app.global_vars_set("training_bots_map_mode", new_val)
     )
     row_map_mode.add_element(input_map_mode)
 
@@ -615,7 +616,8 @@ def create_training_menu_scene(win: nd.ND_Window) -> None:
         position=nd.ND_Position_Container(w=400, h=40, container=row_min_score_to_reproduce),
         value=win.main_app.global_vars_get_default("training_bots_min_score_to_reproduce", 6),
         min_value=0,
-        max_value=1000
+        max_value=1000,
+        on_new_value_validated=lambda elt, new_val: elt.window.main_app.global_vars_set("training_bots_min_score_to_reproduce", new_val)
     )
     row_min_score_to_reproduce.add_element(input_min_score_to_reproduce)
 
@@ -645,7 +647,8 @@ def create_training_menu_scene(win: nd.ND_Window) -> None:
         position=nd.ND_Position_Container(w=400, h=40, container=row_max_steps),
         value=win.main_app.global_vars_get_default("training_bots_max_steps", 300),
         min_value=50,
-        max_value=10000
+        max_value=10000,
+        on_new_value_validated=lambda elt, new_val: elt.window.main_app.global_vars_set("training_bots_max_steps", new_val)
     )
     row_max_steps.add_element(input_max_steps)
 
@@ -675,7 +678,8 @@ def create_training_menu_scene(win: nd.ND_Window) -> None:
         position=nd.ND_Position_Container(w=400, h=40, container=row_grid_size),
         value=win.main_app.global_vars_get_default("training_bots_grid_size", 11),
         min_value=5,
-        max_value=100
+        max_value=100,
+        on_new_value_validated=lambda elt, new_val: elt.window.main_app.global_vars_set("training_bots_grid_size", new_val)
     )
     row_grid_size.add_element(input_grid_size)
 
@@ -705,7 +709,8 @@ def create_training_menu_scene(win: nd.ND_Window) -> None:
         position=nd.ND_Position_Container(w=400, h=40, container=row_nb_bots),
         value=win.main_app.global_vars_get_default("training_bots_nb_bots", 9),
         min_value=1,
-        max_value=100
+        max_value=100,
+        on_new_value_validated=lambda elt, new_val: elt.window.main_app.global_vars_set("training_bots_nb_bots", new_val)
     )
     row_nb_bots.add_element(input_nb_bots)
 
@@ -735,7 +740,8 @@ def create_training_menu_scene(win: nd.ND_Window) -> None:
         position=nd.ND_Position_Container(w=400, h=40, container=row_nb_apples),
         value=win.main_app.global_vars_get_default("training_bots_nb_apples", 1),
         min_value=1,
-        max_value=100
+        max_value=100,
+        on_new_value_validated=lambda elt, new_val: elt.window.main_app.global_vars_set("training_bots_nb_apples", new_val)
     )
     row_nb_apples.add_element(input_nb_apples)
 
@@ -765,7 +771,8 @@ def create_training_menu_scene(win: nd.ND_Window) -> None:
         position=nd.ND_Position_Container(w=400, h=40, container=row_init_snakes_size),
         value=win.main_app.global_vars_get_default("training_init_snakes_size", 0),
         min_value=0,
-        max_value=100
+        max_value=100,
+        on_new_value_validated=lambda elt, new_val: elt.window.main_app.global_vars_set("training_init_snakes_size", new_val)
     )
     row_init_snakes_size.add_element(input_init_snakes_size)
 
@@ -795,7 +802,8 @@ def create_training_menu_scene(win: nd.ND_Window) -> None:
         position=nd.ND_Position_Container(w=400, h=40, container=row_nb_epochs),
         value=win.main_app.global_vars_get_default("training_bots_nb_epochs", 20),
         min_value=1,
-        max_value=1000
+        max_value=1000,
+        on_new_value_validated=lambda elt, new_val: elt.window.main_app.global_vars_set("training_bots_nb_epochs", new_val)
     )
     row_nb_epochs.add_element(input_nb_epochs)
 
@@ -824,7 +832,8 @@ def create_training_menu_scene(win: nd.ND_Window) -> None:
         position=nd.ND_Position_Container(w=400, h=40, container=row_min_random_bots_per_epoch),
         value=win.main_app.global_vars_get_default("training_bots_min_random_bots_per_epoch", 4),
         min_value=0,
-        max_value=100
+        max_value=100,
+        on_new_value_validated=lambda elt, new_val: elt.window.main_app.global_vars_set("training_bots_min_random_bots_per_epoch", new_val)
     )
     row_min_random_bots_per_epoch.add_element(input_min_random_bots_per_epoch)
 
@@ -856,7 +865,8 @@ def create_training_menu_scene(win: nd.ND_Window) -> None:
         min_value=0,
         max_value=0.5,
         step=0.001,
-        digits_after_comma=4
+        digits_after_comma=6,
+        on_new_value_validated=lambda elt, new_val: elt.window.main_app.global_vars_set("training_bots_learning_step", new_val)
     )
     row_learning_step.add_element(input_learning_step)
 
@@ -888,7 +898,8 @@ def create_training_menu_scene(win: nd.ND_Window) -> None:
         min_value=0,
         max_value=0.5,
         step=0.001,
-        digits_after_comma=6
+        digits_after_comma=6,
+        on_new_value_validated=lambda elt, new_val: elt.window.main_app.global_vars_set("training_bots_snakes_speed", new_val)
     )
     row_snakes_speed.add_element(input_snakes_speed)
 
@@ -919,7 +930,8 @@ def create_training_menu_scene(win: nd.ND_Window) -> None:
         value=win.main_app.global_vars_get_default("training_bots_new_bots_version", "new_bot_v1"),
         options=set(["new_bot_v1", "new_bot_v2"]),
         option_list_buttons_height=300,
-        font_name="FreeSans"
+        font_name="FreeSans",
+        on_value_selected=lambda elt, new_val: elt.window.main_app.global_vars_set("training_bots_new_bots_version", new_val)
     )
     row_new_bots_version.add_element(input_new_bots_version)
 

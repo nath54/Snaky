@@ -83,9 +83,30 @@ if __name__ == "__main__":
 
     #
     app: nd.ND_MainApp = nd.ND_MainApp(
-                        DisplayClass=DisplayClass,
-                        WindowClass=WindowClass,
-                        EventsManagerClass=EventsManagerClass
+                            DisplayClass=DisplayClass,
+                            WindowClass=WindowClass,
+                            EventsManagerClass=EventsManagerClass,
+                            global_vars_to_save=[
+                                "game_nb_init_apples",
+                                "game_init_snake_size",
+                                "game_map_mode",
+                                "game_terrain_w",
+                                "game_terrain_h",
+                                "game_snakes_speed",
+                                "training_bots_new_bots_version",
+                                "training_bots_snakes_speed",
+                                "training_bots_learning_step",
+                                "training_bots_min_random_bots_per_epoch",
+                                "training_bots_nb_epochs",
+                                "training_init_snakes_size",
+                                "training_bots_nb_apples",
+                                "training_bots_nb_bots",
+                                "training_bots_grid_size",
+                                "training_bots_max_steps",
+                                "training_bots_min_score_to_reproduce",
+                                "training_bots_map_mode"
+                            ],
+                            path_to_global_vars_save_file=".global_vars"
     )
     #
     if app.display is None:
@@ -142,12 +163,18 @@ if __name__ == "__main__":
     print(f"Loaded {len(bots)} bots.")
 
     # On peut facilement remplacer quelques paramètres par défaut ici:
-    app.global_vars_set("game_nb_init_apples", 10)
-    app.global_vars_set("game_init_snake_size", 0)
-    app.global_vars_set("game_map_mode", "separate_close")  # "together", "separate_far", "separate_close"
-    app.global_vars_set("game_terrain_w", 11)
-    app.global_vars_set("game_terrain_h", 11)
-    app.global_vars_set("game_snakes_speed", 0.1)
+    if "game_nb_init_apples" not in app.global_vars:
+        app.global_vars_set("game_nb_init_apples", 10)
+    if "game_init_snake_size" not in app.global_vars:
+        app.global_vars_set("game_init_snake_size", 0)
+    if "game_map_mode" not in app.global_vars:
+        app.global_vars_set("game_map_mode", "separate_close")  # "together", "separate_far", "separate_close"
+    if "game_terrain_w" not in app.global_vars:
+        app.global_vars_set("game_terrain_w", 11)
+    if "game_terrain_h" not in app.global_vars:
+        app.global_vars_set("game_terrain_h", 11)
+    if "game_snakes_speed" not in app.global_vars:
+        app.global_vars_set("game_snakes_speed", 0.1)
 
     #
     init_snake_size: int = win.main_app.global_vars_get_default("game_init_snake_size", 0)  #
