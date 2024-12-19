@@ -6,3 +6,4 @@ venv/
 tmp.*
 vgcore*
 bots/
+bots_*/

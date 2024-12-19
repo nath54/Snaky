@@ -2724,6 +2724,9 @@ class ND_LineEdit(ND_Elt):
                 self.scroll_offset = int(self.scrollbar.get_scroll_ratio() * (self.full_text_width - self.w))
 
         elif isinstance(event, nd_event.ND_EventKeyDown) and self.focused:
+            #
+            shift_pressed: bool = self.window.main_app.events_manager.is_shift_pressed()
+            #
             # TODO: complete with all the keys, for instance the numpad keys, etc...
             if event.key == "escape":
                 self.state = "normal"
@@ -2754,10 +2757,19 @@ class ND_LineEdit(ND_Elt):
                     self.scroll_offset = text_width - self.w
             #
             elif len(event.key) == 1:
-                self.write(event.key)
+                if shift_pressed:
+                    self.write(event.key.upper())
+                else:
+                    self.write(event.key)
             #
             elif event.key == "espace":
                 self.write(" ")
+            #
+            elif event.key == "semicolon":
+                if shift_pressed:
+                    self.write(".")
+                else:
+                    self.write(",")
 
             # Update scrollbar position
             if self.full_text_width > self.w:

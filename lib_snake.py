@@ -220,8 +220,8 @@ class SnakeBot_Version1(SnakeBot):
         #
         self.name = new_name
         #
-        self.weights_path: str = f"{self.snakes_bot_paths}{self.name}_weight_"
-        self.save_bot_dict_path: str = f"{self.snakes_bot_paths}{self.name}.json"
+        self.weights_path = f"{self.snakes_bot_paths}{self.name}_weight_"
+        self.save_bot_dict_path = f"{self.snakes_bot_paths}{self.name}.json"
 
     #
     def delete_all_data(self) -> None:
@@ -427,8 +427,8 @@ class SnakeBot_Version2(SnakeBot):
         #
         self.name = new_name
         #
-        self.weights_path: str = f"{self.snakes_bot_paths}{self.name}_weight_"
-        self.save_bot_dict_path: str = f"{self.snakes_bot_paths}{self.name}.json"
+        self.weights_path = f"{self.snakes_bot_paths}{self.name}_weight_"
+        self.save_bot_dict_path = f"{self.snakes_bot_paths}{self.name}.json"
 
     #
     def delete_all_data(self) -> None:
