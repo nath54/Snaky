@@ -75,6 +75,9 @@ class ND_MainApp:
         #
         self.display: Optional["ND_Display"] = DisplayClass(self, WindowClass=WindowClass)
         #
+        if self.display is not None:
+            self.display.init_display()
+        #
         self.events_manager: "ND_EventsManager" = EventsManagerClass(self)
         #
         self.init_queue_functions: list[Callable[[ND_MainApp], None]] = []
@@ -690,10 +693,6 @@ class ND_MainApp:
         #
         print("\nBegin to exec all init functions in order\n")
 
-        #
-        if self.display is not None:
-            self.display.init_display()
-
         # Init functions queue
         for fn in self.init_queue_functions:
             fn(self)
@@ -1290,6 +1289,8 @@ class ND_EventsManager:
         self.keys_pressed: set[str] = set()
         #
         self.events_waiting_too_poll: list[nd_event.ND_Event] = []
+        #
+        self.mouse_buttons_pressed: set[int] = set()
 
     #
     def is_shift_pressed(self) -> bool:
@@ -2524,12 +2525,23 @@ class ND_H_ScrollBar(ND_Elt):
 # ND_V_ScrollBar class implementation
 class ND_V_ScrollBar(ND_Elt):
     #
-    def __init__(self, window: ND_Window, elt_id: str, position: ND_Position, content_height: int):
+    def __init__(
+                    self,
+                    window: ND_Window,
+                    elt_id: str,
+                    position: ND_Position,
+                    content_height: int,
+                    fg_color: ND_Color = cl("white"),
+                    bg_color: ND_Color = cl("dark gray")
+        ) -> None:
         #
         super().__init__(window=window, elt_id=elt_id, position=position)
         self.content_height = content_height
         self.scroll_position = 0
         self.dragging = False
+        #
+        self.fg_color: ND_Color = fg_color
+        self.bg_color: ND_Color = bg_color
 
     #
     def get_scroll_ratio(self) -> float:
@@ -2546,11 +2558,11 @@ class ND_V_ScrollBar(ND_Elt):
             return
 
         # Draw background
-        self.window.draw_filled_rect(self.x, self.y, self.w, self.h, cl("#CCCCCC"))
+        self.window.draw_filled_rect(self.x, self.y, self.w, self.h, self.bg_color)
 
         # Draw thumb
         thumb_y = self.y + int(self.scroll_position * (self.h - self.thumb_height) / (self.content_height - self.h))
-        self.window.draw_filled_rect(self.x, thumb_y, self.w, self.thumb_height, cl("#888888"))
+        self.window.draw_filled_rect(self.x, thumb_y, self.w, self.thumb_height, self.fg_color)
 
     #
     def handle_event(self, event: nd_event.ND_Event) -> None:
@@ -2562,8 +2574,10 @@ class ND_V_ScrollBar(ND_Elt):
             if event.button_id == 1:
                 if self.position.rect.contains_point(ND_Point(event.x, event.y)):
                     self.dragging = True
+                else:
+                    self.dragging = False
         #
-        elif isinstance(event, nd_event.ND_EventMouseButtonDown):
+        elif isinstance(event, nd_event.ND_EventMouseButtonUp):
             if event.button_id == 1:
                 self.dragging = False
         #
@@ -2571,7 +2585,7 @@ class ND_V_ScrollBar(ND_Elt):
             if self.dragging:
                 relative_y = event.y - self.y
                 self.scroll_position = max(0, min(self.content_height - self.h,
-                                                  int(relative_y * self.content_height / self.h)))
+                                                int(relative_y * self.content_height / self.h)))
 
 
 #
@@ -2825,17 +2839,20 @@ class ND_LineEdit(ND_Elt):
             # self.print_debug_infos()
 
 
-# TODO: ND_Checkbox
+# ND_Checkbox
 class ND_Checkbox(ND_Elt):
     def __init__(
         self,
         window: ND_Window,
         elt_id: str,
         position: ND_Position,
-        checked: bool = False
+        checked: bool = False,
+        on_pressed: Optional[Callable[["ND_Checkbox"], None]] = None
     ) -> None:
         #
         super().__init__(window=window, elt_id=elt_id, position=position)
+        #
+        self.on_pressed: Optional[Callable[["ND_Checkbox"], None]] = on_pressed
         #
         self.checked: bool = checked
         #
@@ -2845,6 +2862,8 @@ class ND_Checkbox(ND_Elt):
             position=self.position,
             onclick=self.on_bt_checked_pressed,
             text="v",
+            base_fg_color=cl("dark green"),
+            hover_fg_color=cl("green")
             # TODO: style
         )
         #
@@ -2854,6 +2873,8 @@ class ND_Checkbox(ND_Elt):
             position=self.position,
             onclick=self.on_bt_unchecked_pressed,
             text="x",
+            base_fg_color=cl("dark red"),
+            hover_fg_color=cl("red")
             # TODO: style
         )
 
@@ -2871,6 +2892,9 @@ class ND_Checkbox(ND_Elt):
         #
         self.bt_checked.visible = False
         self.bt_unchecked.visible = True
+        #
+        if self.on_pressed is not None:
+            self.on_pressed(self)
 
     #
     def on_bt_unchecked_pressed(self, _) -> None:
@@ -2879,13 +2903,30 @@ class ND_Checkbox(ND_Elt):
         #
         self.bt_checked.visible = True
         self.bt_unchecked.visible = False
+        #
+        if self.on_pressed is not None:
+            self.on_pressed(self)
 
     #
     def is_checked(self) -> bool:
         return self.checked
 
+    #
+    def handle_event(self, event: nd_event.ND_Event) -> None:
+        #
+        if event.blocked:
+            return
+        #
+        if not self.visible:
+            return
+        #
+        if self.checked:
+            self.bt_checked.handle_event(event)
+        else:
+            self.bt_unchecked.handle_event(event)
 
-# TODO: ND_NumberInput
+
+# ND_NumberInput
 class ND_NumberInput(ND_Elt):
     def __init__(
         self,
@@ -3039,7 +3080,7 @@ class ND_NumberInput(ND_Elt):
         # self.line_edit.set_text(str(self.value))
 
 
-# TODO: ND_SelectOptions
+# ND_SelectOptions
 class ND_SelectOptions(ND_Elt):
     def __init__(
         self,
@@ -3087,7 +3128,10 @@ class ND_SelectOptions(ND_Elt):
         self.bts_options_container: ND_Container = ND_Container(
             window=self.window,
             elt_id=f"{self.elt_id}_bts_options_container",
-            position=ND_Position(x=self.x, y=self.y, w=self.w, h=option_list_buttons_height)
+            position=ND_Position(x=self.x, y=self.y, w=self.w, h=option_list_buttons_height),
+            element_alignment="col",
+            scroll_h=True,
+            overflow_hidden=True
         )
         self.bts_options_container.visible = False
         #
@@ -3220,6 +3264,7 @@ class ND_SelectOptions(ND_Elt):
     def set_state_selection(self) -> None:
         #
         self.state = "selection"
+        #
         self.bts_options_container.visible = True
         self.main_button.visible = False
 
@@ -3299,8 +3344,8 @@ class ND_Container(ND_Elt):
         self.elements_by_id: dict[str, ND_Elt] = {}
 
         # Elements that represents the scrollbar if there is one
-        self.h_scrollbar: Optional[ND_H_ScrollBar] = None
-        self.v_scrollbar: Optional[ND_V_ScrollBar] = None
+        self.w_scrollbar: Optional[ND_H_ScrollBar] = None
+        self.h_scrollbar: Optional[ND_V_ScrollBar] = None
 
         #
         self.scrollbar_w_height: int = scrollbar_w_height
@@ -3373,36 +3418,47 @@ class ND_Container(ND_Elt):
 
         #
         if self.scroll_w:
+            #
             if self.content_width > self.w:
-                if not self.h_scrollbar:
-                    self.h_scrollbar = ND_H_ScrollBar(self.window, f"{self.elt_id}_hscroll",
+                #
+                if not self.w_scrollbar:
+                    self.w_scrollbar = ND_H_ScrollBar(self.window, f"{self.elt_id}_wscroll",
                                                       ND_Position(self.x, self.y + self.h - self.scrollbar_w_height, self.w, self.scrollbar_w_height),
                                                       self.content_width)
+                #
                 else:
-                    self.h_scrollbar.content_width = self.content_width
-                    self.h_scrollbar.position.set_w(self.w)
-                    self.h_scrollbar.position.set_y(self.h - self.scrollbar_w_height)
-                    #
+                    self.w_scrollbar.content_width = self.content_width
+                    self.w_scrollbar.position.set_x(self.x)
+                    self.w_scrollbar.position.set_y(self.y + self.h - self.scrollbar_w_height)
+                    self.w_scrollbar.position.set_w(self.w)
+                    self.w_scrollbar.position.set_h(self.scrollbar_w_height)
+            #
+            elif self.w_scrollbar:
+                #
+                del(self.w_scrollbar)
+                self.w_scrollbar = None
+
+        #
+        if self.scroll_h:
+            #
+            if self.content_height > self.h:
+                #
+                if not self.h_scrollbar:
+                    self.h_scrollbar = ND_V_ScrollBar(self.window, f"{self.elt_id}_hscroll",
+                                                    ND_Position(self.x + self.w - self.scrollbar_h_width, self.y, self.scrollbar_h_width, self.h),
+                                                    self.content_height)
+                #
+                else:
+                    self.h_scrollbar.content_height = self.content_height
+                    self.h_scrollbar.position.set_x(self.x + self.w - self.scrollbar_h_width)
+                    self.h_scrollbar.position.set_y(self.y)
+                    self.h_scrollbar.position.set_w(self.scrollbar_h_width)
+                    self.h_scrollbar.position.set_h(self.h)
+            #
             elif self.h_scrollbar:
                 #
                 del(self.h_scrollbar)
                 self.h_scrollbar = None
-
-        #
-        if self.scroll_h:
-            if self.content_height > self.h:
-                if not self.v_scrollbar:
-                    self.v_scrollbar = ND_V_ScrollBar(self.window, f"{self.elt_id}_vscroll",
-                                                    ND_Position(self.x + self.w - self.scrollbar_h_width, self.y, self.scrollbar_h_width, self.h),
-                                                    self.content_height)
-                else:
-                    self.v_scrollbar.content_height = self.content_height
-                    self.v_scrollbar.position.set_h(self.h)
-                    self.v_scrollbar.position.set_x(self.w - self.scrollbar_h_width)
-            elif self.v_scrollbar:
-                #
-                del(self.v_scrollbar)
-                self.v_scrollbar = None
 
     #
     def _layout_row_wrap(self) -> None:
@@ -3722,8 +3778,8 @@ class ND_Container(ND_Elt):
             self.window.enable_area_drawing_constraints(self.x, self.y, self.w, self.h)
 
         # Apply scrollbar offsets
-        scroll_x = self.h_scrollbar.scroll_position if self.h_scrollbar else 0
-        scroll_y = self.v_scrollbar.scroll_position if self.v_scrollbar else 0
+        scroll_x = self.w_scrollbar.scroll_position if self.w_scrollbar else 0
+        scroll_y = self.h_scrollbar.scroll_position if self.h_scrollbar else 0
 
         # Render each element with the scrollbar offsets applied
         elt: ND_Elt
@@ -3752,10 +3808,10 @@ class ND_Container(ND_Elt):
             self.window.disable_area_drawing_constraints()
 
         # Render scrollbars
+        if self.w_scrollbar:
+            self.w_scrollbar.render()
         if self.h_scrollbar:
             self.h_scrollbar.render()
-        if self.v_scrollbar:
-            self.v_scrollbar.render()
 
     #
     def handle_event(self, event):
@@ -3763,10 +3819,21 @@ class ND_Container(ND_Elt):
         if event.blocked:
             return
         #
+        if self.w_scrollbar:
+            self.w_scrollbar.handle_event(event)
         if self.h_scrollbar:
             self.h_scrollbar.handle_event(event)
-        if self.v_scrollbar:
-            self.v_scrollbar.handle_event(event)
+
+        # Mouse scroll events
+        if isinstance(event, nd_event.ND_EventMouseWheelScrolled):
+            #
+            if self.h_scrollbar is not None:
+                #
+                self.h_scrollbar.scroll_position = clamp(self.h_scrollbar.scroll_position + event.scroll_y, 0, self.h_scrollbar.content_height)
+            #
+            if self.w_scrollbar is not None:
+                #
+                self.w_scrollbar.scroll_position = clamp(self.w_scrollbar.scroll_position + event.scroll_x, 0, self.w_scrollbar.content_width)
 
         # Propagate events to child elements
         elt_order = range(len(self.elements))

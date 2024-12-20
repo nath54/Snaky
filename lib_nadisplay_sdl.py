@@ -276,6 +276,8 @@ class ND_EventsManager_SDL(ND_EventsManager):
         # -- MOUSE EVENT --
         elif sdl_event.type == sdl2.SDL_MOUSEBUTTONDOWN:
             #
+            self.mouse_buttons_pressed.add(sdl_event.button.button)
+            #
             return nd_event.ND_EventMouseButtonDown(
                                 button_id=sdl_event.button.button,
                                 x=sdl_event.button.x,
@@ -283,6 +285,8 @@ class ND_EventsManager_SDL(ND_EventsManager):
             )
         #
         elif sdl_event.type == sdl2.SDL_MOUSEBUTTONUP:
+            #
+            self.mouse_buttons_pressed.remove(sdl_event.button.button)
             #
             return nd_event.ND_EventMouseButtonUp(
                                 button_id=sdl_event.button.button,

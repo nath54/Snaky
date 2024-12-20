@@ -17,16 +17,43 @@ from scene_main_menu import init_really_game, colors_idx_to_colors, snake_base_t
 
 
 #
+def remove_bot_row(bot_name: str, bots_container: nd.ND_Container) -> None:
+    #
+    pass
+
+
+#
 def rename_bot_row(previous_bot_name: str, new_bot_name: str, bots_container: nd.ND_Container) -> None:
     #
     pass
 
 
+#
+def on_checkbox_selectable(cb: nd.ND_Checkbox) -> None:
+    #
+    pass
 
 #
 def on_bot_bt_name_pressed(elt: nd.ND_Clickable) -> None:
     #
     pass
+
+
+#
+def on_bot_input_name_validated(elt: nd.ND_Clickable) -> None:
+    #
+    pass
+
+#
+def on_bot_input_name_canceled(elt: nd.ND_Clickable) -> None:
+    #
+    pass
+
+#
+def on_bot_delete(elt: nd.ND_Clickable) -> None:
+    #
+    pass
+
 
 
 #
@@ -50,7 +77,8 @@ def create_bot_row(bot_name: str, bots: dict[str, dict], bots_container: nd.ND_C
         window=row.window,
         elt_id=f"{row_elt_id}_selectable_checkbox",
         position=nd.ND_Position_Container(w="square", h="75%", container=row, position_margins=margin_center),
-        checked=False
+        checked=False,
+        on_pressed=on_checkbox_selectable
     )
     row.add_element(selectable_checkbox)
 
@@ -61,6 +89,7 @@ def create_bot_row(bot_name: str, bots: dict[str, dict], bots_container: nd.ND_C
         position=nd.ND_Position_Container(w="50%", h="75%", container=row, position_margins=margin_center),
         elements_layers={}
     )
+    row.add_element(bot_name_multilayer)
 
     #
     bot_name_container: nd.ND_Container = nd.ND_Container(
@@ -78,8 +107,9 @@ def create_bot_row(bot_name: str, bots: dict[str, dict], bots_container: nd.ND_C
         window=row.window,
         elt_id=f"{row_elt_id}_bot_name_bt",
         position=nd.ND_Position_Container(w="100%", h="100%", container=bot_name_container),
-        onclick=None, #TODO
-        text=bot_name
+        onclick=on_bot_bt_name_pressed,
+        text=bot_name,
+        font_name="FreeSans"
     )
     bot_name_container.add_element(bot_name_bt)
 
@@ -100,7 +130,7 @@ def create_bot_row(bot_name: str, bots: dict[str, dict], bots_container: nd.ND_C
         position=nd.ND_Position_Container(w="50%", h="90%", container=bot_name_edit_container, position_margins=margin_center),
         text=bot_name,
         place_holder="bot name",
-        on_line_edit_validated=None, #TODO
+        font_name="FreeSans"
     )
     bot_name_edit_container.add_element(bot_name_edit_input)
 
@@ -110,7 +140,7 @@ def create_bot_row(bot_name: str, bots: dict[str, dict], bots_container: nd.ND_C
         elt_id=f"{row_elt_id}_bot_name_edit_bt_ok",
         position=nd.ND_Position_Container(w="square", h="90%", container=bot_name_edit_container, position_margins=margin_center),
         text="v",
-        onclick=None, #TODO
+        onclick=on_bot_input_name_validated,
         font_name="FreeSans"
     )
     bot_name_edit_container.add_element(bot_name_edit_bt_ok)
@@ -121,7 +151,7 @@ def create_bot_row(bot_name: str, bots: dict[str, dict], bots_container: nd.ND_C
         elt_id=f"{row_elt_id}_bot_name_edit_bt_cancel",
         position=nd.ND_Position_Container(w="square", h="90%", container=bot_name_edit_container, position_margins=margin_center),
         text="x",
-        onclick=None, #TODO
+        onclick=on_bot_input_name_canceled,
         font_name="FreeSans"
     )
     bot_name_edit_container.add_element(bot_name_edit_bt_cancel)
@@ -131,7 +161,8 @@ def create_bot_row(bot_name: str, bots: dict[str, dict], bots_container: nd.ND_C
         window=row.window,
         elt_id=f"{row_elt_id}_bot_max_score",
         position=nd.ND_Position_Container(w=150, h=40, container=row, position_margins=margin_center),
-        text=f"max score = {bots[bot_name]["max_score"]}"
+        text=f"max score = {bots[bot_name]["max_score"]}",
+        font_name="FreeSans"
     )
     row.add_element(bot_max_score)
 
@@ -141,7 +172,7 @@ def create_bot_row(bot_name: str, bots: dict[str, dict], bots_container: nd.ND_C
         elt_id=f"{row_elt_id}_bot_bt_delete",
         position=nd.ND_Position_Container(w=100, h=40, container=row, position_margins=margin_center),
         text="delete",
-        onclick=None # TODO
+        onclick=on_bot_delete
     )
     row.add_element(bot_bt_delete)
 
@@ -489,6 +520,10 @@ def at_traning_epoch_end(win: nd.ND_Window) -> None:
     #
     min_score_to_reproduce: int = cast(int, win.main_app.get_element_value(win.window_id, "training_menu", "input_min_score_to_reproduce"))
     #
+    #
+    bots: dict[str, dict] = win.main_app.global_vars_get("bots")
+    bots_container: nd.ND_Container = cast(nd.ND_Container, win.main_app.get_element(win.window_id, "training_menu", "bots_container"))
+
     # Saving bots
     for snakes in list(win.main_app.global_vars_get("dead_snakes").values()) + list(win.main_app.global_vars_get("snakes").values()):
         #
@@ -497,6 +532,8 @@ def at_traning_epoch_end(win: nd.ND_Window) -> None:
             print(f"Saving bot : {snakes.bot.name} of score : {snakes.score} > {min_score_to_reproduce}")
             snakes.bot.add_to_score(snakes.score)
             snakes.bot.save_bot()
+            #
+            create_bot_row(snakes.bot.name, bots, bots_container, win.main_app)
             #
         elif snakes.bot.max_score < min_score_to_reproduce:
             #
@@ -547,6 +584,8 @@ def on_bt_del_bad_bots_clicked(elt: nd.ND_Clickable) -> None:
     #
     nb_bots_deleted: int = 0
     #
+    bots_container: nd.ND_Container = cast(nd.ND_Container, win.main_app.get_element(win.window_id, "training_menu", "bots_container"))
+    #
     for bot_name in bots_to_remove:
         #
         bot_dict = bots[bot_name]
@@ -562,6 +601,8 @@ def on_bt_del_bad_bots_clicked(elt: nd.ND_Clickable) -> None:
         #
         if os.path.exists(snakes_bot_paths+bot_name+".json"):
             os.remove(snakes_bot_paths+bot_name+".json")
+        #
+        remove_bot_row(bot_name, bots_container)
         #
         del bots[bot_name]
         #
@@ -661,9 +702,18 @@ def create_training_menu_scene(win: nd.ND_Window) -> None:
         window=win,
         elt_id="bots_container",
         position=nd.ND_Position_Container(w="100%", h="70%", container=left_col, position_margins=margin_center),
-        element_alignment="col"
+        element_alignment="col",
+        scroll_h=True,
+        overflow_hidden=True
     )
     left_col.add_element(bots_container)
+
+    #
+    bots: dict[str, dict] = win.main_app.global_vars_get("bots")
+    #
+    for bot_name in bots:
+        #
+        create_bot_row(bot_name, bots, bots_container, win.main_app)
 
     #
     bt_del_bad_bots: nd.ND_Button = nd.ND_Button(

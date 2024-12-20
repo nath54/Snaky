@@ -261,10 +261,22 @@ class ND_Position:
         return self._x
 
     #
+    @x.setter
+    def x(self, value: int) -> None:
+        #
+        self._x = value
+
+    #
     @property
     def y(self) -> int:
         #
         return self._y
+
+    #
+    @y.setter
+    def y(self, value: int) -> None:
+        #
+        self._y = value
 
     #
     @property
@@ -273,10 +285,22 @@ class ND_Position:
         return self._w
 
     #
+    @w.setter
+    def w(self, value: int) -> None:
+        #
+        self._w = value
+
+    #
     @property
     def h(self) -> int:
         #
         return self._h
+
+    #
+    @h.setter
+    def h(self, value: int) -> None:
+        #
+        self._h = value
 
     #
     @property
@@ -292,16 +316,13 @@ class ND_Position:
     def set_x(self, new_x: int) -> None:
         self._x = new_x
 
-
     #
     def set_y(self, new_y: int) -> None:
         self._y = new_y
 
-
     #
     def set_w(self, new_w: int) -> None:
         self._w = new_w
-
 
     #
     def set_h(self, new_h: int) -> None:
