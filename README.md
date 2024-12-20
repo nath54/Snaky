@@ -1,11 +1,11 @@
 # Projet Snaky
 
-## Membres du groupe
+## 0. Membres du groupe
 
 - CERISARA Nathan
 - JACQUET Ysée
 
-## Introduction
+## 1. Introduction
 
 L'objectif de ce Projet était donc de réaliser une implémentation du jeu de Snake (un serpent sur une grille 2d qui doit manger des pommes) avec une librairie graphique comme Tkinter ou bien Pygame, puis de faire un apprentissage génétique pour créer des bots qui apprennent à jouer au jeu.
 
@@ -14,7 +14,7 @@ Ceci a donc été réalisé, et ce projet a été encore plus ambitieux, car il 
 *Note: La librairie `lib_nadisplay.py` est en fait plus un moteur d'application, qui contient une partie graphique, car gestion de threads, d'évenements, et de variables globales.*
 
 
-## Avertissements
+## 2. Avertissements
 
 
 Par **manque de temps**:
@@ -34,9 +34,9 @@ Aussi:
     * le nombre de joueurs / de bots
     * la vitesse des serpents
 
-## Mise en place
+## 3. Mise en place
 
-### Environnement virtuel (Optionnel)
+### 3.1. Environnement virtuel (Optionnel)
 
 Il est d'abord nécessaire d'avoir un environnement python fonctionnel (avec une version de python récente, *le projet a été développé et testé sour python3.12, les versions antérieures n'ont pas été testées*).
 
@@ -53,7 +53,7 @@ source venv/bin/activate
 deactivate
 ```
 
-### Installation des librairies requises
+### 3.2. Installation des librairies requises
 
 Il faut ensuite installer les librairies nécessaire, cela se réaliste avec la commande suivante depuis la racine du projet:
 
@@ -63,7 +63,7 @@ python3.12 -m pip install -r ./requirements
 
 La mise en place est maintenant terminée !
 
-### Lancement de l'application
+### 3.3. Lancement de l'application
 
 L'application se lance avec la commande suivante:
 
@@ -74,7 +74,7 @@ python3.12 main.py
 Et normalement, il ne devrait pas y avoir de problèmes et l'application va se lancer correctement.
 
 
-## Organisation du projet
+## 4. Organisation du projet
 
 Ce projet à été organisé comme suivant:
 
@@ -89,14 +89,17 @@ Ce projet à été organisé comme suivant:
 - la fonction `main.py` est le point d'entrée du programme, il gère aussi d'un point de vue très très haut les différents éléments de l'application et donne la main au moteur de l'application
 
 
-## Base de l'application / Comment l'utiliser
+## 5. Base de l'application / Comment l'utiliser
 
 TODO: à rédiger (description et fonctionnalités des différents menus pour : 1. Faire des parties normales  /  2. Entraînement de bots)
 
 Info qui ne se devine pas facilement: le bouton `delete bad bots` supprime tous les bots qui ont un `max_score` strictement inférieur à `min_score_to_reproduce`.
 
 
-### Structure des bots
+## 6.  Structure des bots
+
+Dans le jeu, un bot va choisir la prochaine direction à prendre après chaque mouvement.
+Ces bots ont tous un paramètre qui s'appelle `security` activé par défaut et qui consiste à ne pas proposer le choix des directions qui entraîneraient directement la mort du serpent.
 
 Déjà, il y a les bots suivants disponibles dans le jeu (non appris):
 - Un bot complètement random : `bot_random`
@@ -106,31 +109,31 @@ Ensuite, j'ai testé deux versions de bots différents pour l'apprentissage gén
 
 Ils ont le même contexte en entrée et la même sortie:
 
-#### Description du contexte en entrée de ces bots:
+### 6.1. Description du contexte en entrée de ces bots:
 
 TODO: à rédiger
 
 
-#### Description de la sortie de ces bots:
+### 6.2. Description de la sortie de ces bots:
 
 TODO: à rédiger
 
 
-#### Spécifités du bot version 1:
+### 6.3. Spécifités du bot version 1:
 
 TODO: à rédiger
 
 
-#### Spécifités du bot version 2:
+### 6.4. Spécifités du bot version 2:
 
 TODO: à rédiger
 
 
-## Apprentissage génétique des bots
+## 7. Apprentissage génétique des bots
 
 TODO: à rédiger
 
 
-## Conclusion
+## 8. Conclusion
 
 TODO: à rédiger
