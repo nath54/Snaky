@@ -2447,9 +2447,21 @@ class ND_Button(ND_Clickable):
 # ND_H_ScrollBar class implementation
 class ND_H_ScrollBar(ND_Elt):
     #
-    def __init__(self, window: ND_Window, elt_id: str, position: ND_Position, content_width: int, bg_cl: ND_Color = cl((10, 10, 10)), fg_cl: ND_Color = cl("white")):
+    def __init__(
+                    self,
+                    window: ND_Window,
+                    elt_id: str,
+                    position: ND_Position,
+                    content_width: int,
+                    bg_cl: ND_Color = cl((10, 10, 10)),
+                    fg_cl: ND_Color = cl("white"),
+                    on_value_changed: Optional[Callable[["ND_H_ScrollBar", float], None]] = None
+        ) -> None:
         #
         super().__init__(window=window, elt_id=elt_id, position=position)
+        #
+        self.on_value_changed: Optional[Callable[[ND_H_ScrollBar, float], None]] = on_value_changed
+        #
         self.content_width: int = content_width
         self.scroll_position: float = 0
         self.dragging: bool = False
@@ -2508,6 +2520,9 @@ class ND_H_ScrollBar(ND_Elt):
                         relative_x = event.x - self.x
                         self.scroll_position = max(0, min(self.content_width - self.w,
                                                     int(relative_x * self.content_width / self.w)))
+                        #
+                        if self.on_value_changed is not None:
+                            self.on_value_changed(self, self.scroll_position)
 
             #
             elif isinstance(event, nd_event.ND_EventMouseMotion):
@@ -2520,6 +2535,9 @@ class ND_H_ScrollBar(ND_Elt):
                     relative_x = event.x - self.x
                     self.scroll_position = max(0, min(self.content_width - self.w,
                                                     int(relative_x * self.content_width / self.w)))
+                    #
+                    if self.on_value_changed is not None:
+                        self.on_value_changed(self, self.scroll_position)
 
 
 # ND_V_ScrollBar class implementation
@@ -2532,10 +2550,14 @@ class ND_V_ScrollBar(ND_Elt):
                     position: ND_Position,
                     content_height: int,
                     fg_color: ND_Color = cl("white"),
-                    bg_color: ND_Color = cl("dark gray")
+                    bg_color: ND_Color = cl("dark gray"),
+                    on_value_changed: Optional[Callable[["ND_V_ScrollBar", float], None]] = None
         ) -> None:
         #
         super().__init__(window=window, elt_id=elt_id, position=position)
+        #
+        self.on_value_changed: Optional[Callable[[ND_V_ScrollBar, float], None]] = on_value_changed
+        #
         self.content_height = content_height
         self.scroll_position = 0
         self.dragging = False
@@ -2550,7 +2572,7 @@ class ND_V_ScrollBar(ND_Elt):
 
     @property
     def thumb_height(self) -> int:
-        return max(20, int(self.w * (self.w / self.content_height)))
+        return clamp(int(self.w * (self.w / self.content_height)), 2, 20)
 
     #
     def render(self) -> None:
@@ -2561,7 +2583,7 @@ class ND_V_ScrollBar(ND_Elt):
         self.window.draw_filled_rect(self.x, self.y, self.w, self.h, self.bg_color)
 
         # Draw thumb
-        thumb_y = self.y + int(self.scroll_position * (self.h - self.thumb_height) / (self.content_height - self.h))
+        thumb_y = self.y + int(self.scroll_position * (self.h - self.thumb_height) / (self.content_height))
         self.window.draw_filled_rect(self.x, thumb_y, self.w, self.thumb_height, self.fg_color)
 
     #
@@ -2573,6 +2595,14 @@ class ND_V_ScrollBar(ND_Elt):
         if isinstance(event, nd_event.ND_EventMouseButtonDown):
             if event.button_id == 1:
                 if self.position.rect.contains_point(ND_Point(event.x, event.y)):
+                    #
+                    self.scroll_position = clamp(int(((event.y - self.y) / self.h) * self.content_height), 0, self.content_height)
+                    #
+                    if self.on_value_changed is not None:
+                        self.on_value_changed(self, self.scroll_position)
+                    #
+                    event.blocked = True
+                    #
                     self.dragging = True
                 else:
                     self.dragging = False
@@ -2586,6 +2616,9 @@ class ND_V_ScrollBar(ND_Elt):
                 relative_y = event.y - self.y
                 self.scroll_position = max(0, min(self.content_height - self.h,
                                                 int(relative_y * self.content_height / self.h)))
+                #
+                if self.on_value_changed is not None:
+                    self.on_value_changed(self, self.scroll_position)
 
 
 #
@@ -3128,7 +3161,7 @@ class ND_SelectOptions(ND_Elt):
         self.bts_options_container: ND_Container = ND_Container(
             window=self.window,
             elt_id=f"{self.elt_id}_bts_options_container",
-            position=ND_Position(x=self.x, y=self.y, w=self.w, h=option_list_buttons_height),
+            position=ND_Position(x=self.x, y=self.y, w=self.w, h=self.option_list_buttons_height),
             element_alignment="col",
             scroll_h=True,
             overflow_hidden=True
@@ -3317,7 +3350,9 @@ class ND_Container(ND_Elt):
             min_space_width_containing_elements: int = 0,
             min_space_height_containing_elements: int = 0,
             scrollbar_w_height: int = 20,
-            scrollbar_h_width: int = 20
+            scrollbar_h_width: int = 20,
+            scroll_speed_w: int = 4,
+            scroll_speed_h: int = 4
         ) -> None:
 
         #
@@ -3329,6 +3364,16 @@ class ND_Container(ND_Elt):
         # If the container is a scrollable container in theses directions
         self.scroll_w: bool = scroll_w
         self.scroll_h: bool = scroll_h
+
+        #
+        self.scroll_speed_w: int = scroll_speed_w
+        self.scroll_speed_h: int = scroll_speed_h
+
+        #
+        self.scroll_x: float = 0
+        self.scroll_y: float = 0
+        self.last_scroll_x: float = 0
+        self.last_scroll_y: float = 0
 
         # The current scroll value
         self.scroll: ND_Point = ND_Point(0, 0)
@@ -3358,6 +3403,31 @@ class ND_Container(ND_Elt):
         # To help giving contained element space.
         self.min_space_width_containing_elements: int = min_space_width_containing_elements
         self.min_space_height_containing_elements: int = min_space_height_containing_elements
+
+    #
+    def update_scroll_layout(self) -> None:
+        #
+        self.scroll_x = -self.w_scrollbar.scroll_position if self.w_scrollbar else 0
+        self.scroll_y = -self.h_scrollbar.scroll_position if self.h_scrollbar else 0
+        #
+        self.update_layout()
+        #
+        return
+        # #
+        # scroll_dx: int = int(self.last_scroll_x - self.scroll_x)
+        # scroll_dy: int = int(self.last_scroll_y - self.scroll_y)
+        # #
+        # elt: ND_Elt
+        # for elt in self.elements:
+        #     #
+        #     elt.position.x += scroll_dx
+        #     elt.position.y += scroll_dy
+        #     #
+        #     if hasattr(elt, "update_scroll_layout"):
+        #         elt.update_scroll_layout()
+        # #
+        # self.last_scroll_x = self.scroll_x
+        # self.last_scroll_y = self.scroll_y
 
     #
     def add_element(self, element: ND_Elt) -> None:
@@ -3422,9 +3492,13 @@ class ND_Container(ND_Elt):
             if self.content_width > self.w:
                 #
                 if not self.w_scrollbar:
-                    self.w_scrollbar = ND_H_ScrollBar(self.window, f"{self.elt_id}_wscroll",
-                                                      ND_Position(self.x, self.y + self.h - self.scrollbar_w_height, self.w, self.scrollbar_w_height),
-                                                      self.content_width)
+                    self.w_scrollbar = ND_H_ScrollBar(
+                                                        window=self.window,
+                                                        elt_id=f"{self.elt_id}_wscroll",
+                                                        position=ND_Position(self.x, self.y + self.h - self.scrollbar_w_height, self.w, self.scrollbar_w_height),
+                                                        content_width=self.content_width,
+                                                        on_value_changed=lambda elt, value: self.update_scroll_layout()
+                    )
                 #
                 else:
                     self.w_scrollbar.content_width = self.content_width
@@ -3444,9 +3518,13 @@ class ND_Container(ND_Elt):
             if self.content_height > self.h:
                 #
                 if not self.h_scrollbar:
-                    self.h_scrollbar = ND_V_ScrollBar(self.window, f"{self.elt_id}_hscroll",
-                                                    ND_Position(self.x + self.w - self.scrollbar_h_width, self.y, self.scrollbar_h_width, self.h),
-                                                    self.content_height)
+                    self.h_scrollbar = ND_V_ScrollBar(
+                                                        window=self.window,
+                                                        elt_id=f"{self.elt_id}_hscroll",
+                                                        position=ND_Position(self.x + self.w - self.scrollbar_h_width, self.y, self.scrollbar_h_width, self.h),
+                                                        content_height=self.content_height,
+                                                        on_value_changed=lambda elt, value: self.update_scroll_layout()
+                    )
                 #
                 else:
                     self.h_scrollbar.content_height = self.content_height
@@ -3500,13 +3578,15 @@ class ND_Container(ND_Elt):
         self.content_height = sum(rows_height)
         self.content_width = max(rows_width)
         #
-        crt_y: int = self.y
+        self.last_scroll_y = self.scroll_y
+        self.last_scroll_x = self.scroll_x
+        crt_y: int = self.y + int(self.scroll_y)
         space_left: int = 0
 
         # Second pass
         for i_row in range(len(rows)):
             #
-            crt_x = self.x
+            crt_x = self.x + int(self.scroll_x)
             space_left = self.w - rows_width[i_row]
             #
             for elt in rows[i_row]:
@@ -3560,14 +3640,16 @@ class ND_Container(ND_Elt):
         if isinstance(self.position, ND_Position_Container) and self.position.is_w_auto():
             self.position._w = self.content_width
         #
-        crt_y: int = self.y
+        self.last_scroll_y = self.scroll_y
+        crt_y: int = self.y + int(self.scroll_y)
         space_left: int = 0
 
         # Second pass
         #
         self.content_height = 0
         #
-        crt_x = self.x
+        self.last_scroll_x = self.scroll_x
+        crt_x = self.x + int(self.scroll_x)
         space_left = self.w - row_width
         #
         for elt in self.elements:
@@ -3639,13 +3721,15 @@ class ND_Container(ND_Elt):
         self.content_height = max(cols_height)
         self.content_width = sum(cols_width)
         #
-        crt_x: int = self.x
+        self.last_scroll_x = self.scroll_x
+        self.last_scroll_y = self.scroll_y
+        crt_x: int = self.x + int(self.scroll_x)
         space_left: int = 0
 
         # Second pass
         for i_col in range(len(cols)):
             #
-            crt_y = self.y
+            crt_y = self.y + int(self.scroll_y)
             space_left = self.h - cols_height[i_col]
             #
             for elt in cols[i_col]:
@@ -3695,7 +3779,8 @@ class ND_Container(ND_Elt):
             col_left_height_total_weight += elt_stretch_ratio
 
         #
-        crt_x: int = self.x
+        self.last_scroll_x = self.scroll_x
+        crt_x: int = self.x + int(self.scroll_x)
         space_left: int = 0
 
 
@@ -3709,7 +3794,8 @@ class ND_Container(ND_Elt):
         #
         self.content_width = 0
         #
-        crt_y = self.y
+        self.last_scroll_y = self.scroll_y
+        crt_y = self.y + int(self.scroll_y)
         space_left = self.h - col_height
         #
         for elt in self.elements:
@@ -3753,14 +3839,19 @@ class ND_Container(ND_Elt):
         x, y = 0, 0
         row_height = 0
 
+        #
+        self.last_scroll_x = self.scroll_x
+        self.last_scroll_y = self.scroll_y
+
+        #
         for i, element in enumerate(self.elements):
             element.position._w = min(element.w, max_width)
             if i % cols == 0 and i != 0:
                 x = 0
                 y += row_height + row_spacing
                 row_height = 0
-            element._x = self.x + x
-            element._y = self.y + y
+            element._x = self.x + int(self.scroll_x) + x
+            element._y = self.y + int(self.scroll_y) + y
             x += element.tx + col_spacing
             row_height = max(row_height, element.ty)
 
@@ -3777,10 +3868,6 @@ class ND_Container(ND_Elt):
         if self.overflow_hidden:
             self.window.enable_area_drawing_constraints(self.x, self.y, self.w, self.h)
 
-        # Apply scrollbar offsets
-        scroll_x = self.w_scrollbar.scroll_position if self.w_scrollbar else 0
-        scroll_y = self.h_scrollbar.scroll_position if self.h_scrollbar else 0
-
         # Render each element with the scrollbar offsets applied
         elt: ND_Elt
         rendering_order = range(len(self.elements))
@@ -3792,16 +3879,9 @@ class ND_Container(ND_Elt):
             #
             elt = self.elements[i]
 
-            # Set scroll effect
-            elt.position._x -= int(scroll_x)
-            elt.position._y -= int(scroll_y)
-
             #
             elt.render()
 
-            # Remove scroll effect
-            elt.position._x += int(scroll_x)
-            elt.position._y += int(scroll_y)
 
         # Remove clipping
         if self.overflow_hidden:
@@ -3814,7 +3894,7 @@ class ND_Container(ND_Elt):
             self.h_scrollbar.render()
 
     #
-    def handle_event(self, event):
+    def handle_event(self, event: nd_event.ND_Event) -> None:
         #
         if event.blocked:
             return
@@ -3827,13 +3907,23 @@ class ND_Container(ND_Elt):
         # Mouse scroll events
         if isinstance(event, nd_event.ND_EventMouseWheelScrolled):
             #
+            update_scroll: bool = False
+            #
             if self.h_scrollbar is not None:
                 #
-                self.h_scrollbar.scroll_position = clamp(self.h_scrollbar.scroll_position + event.scroll_y, 0, self.h_scrollbar.content_height)
+                self.h_scrollbar.scroll_position = clamp(self.h_scrollbar.scroll_position + event.scroll_y * self.scroll_speed_h, 0, self.h_scrollbar.content_height)
+                #
+                update_scroll = True
             #
             if self.w_scrollbar is not None:
                 #
-                self.w_scrollbar.scroll_position = clamp(self.w_scrollbar.scroll_position + event.scroll_x, 0, self.w_scrollbar.content_width)
+                self.w_scrollbar.scroll_position = clamp(self.w_scrollbar.scroll_position + event.scroll_x * self.scroll_speed_w, 0, self.w_scrollbar.content_width)
+                #
+                update_scroll = True
+            #
+            if update_scroll:
+                self.update_scroll_layout()
+
 
         # Propagate events to child elements
         elt_order = range(len(self.elements))
@@ -4358,9 +4448,21 @@ class ND_Position_RectGrid(ND_Position):
         return self.rect_grid.grid_tx
 
     #
+    @w.setter
+    def w(self, new_value: int) -> None:
+        # TODO
+        pass
+
+    #
     @property
     def h(self) -> int:
         return self.rect_grid.grid_ty
+
+    #
+    @h.setter
+    def h(self, new_value: int) -> None:
+        # TODO
+        pass
 
     #
     def current_grid_case(self, case: ND_Point) -> None:
@@ -4383,9 +4485,21 @@ class ND_Position_FullWindow(ND_Position):
         return 0
 
     #
+    @x.setter
+    def x(self, new_value: int) -> None:
+        # TODO
+        pass
+
+    #
     @property
     def y(self) -> int:
         return 0
+
+    #
+    @y.setter
+    def y(self, new_value: int) -> None:
+        # TODO
+        pass
 
     #
     @property
@@ -4393,9 +4507,21 @@ class ND_Position_FullWindow(ND_Position):
         return self.window.width
 
     #
+    @w.setter
+    def w(self, new_value: int) -> None:
+        # TODO
+        pass
+
+    #
     @property
     def h(self) -> int:
         return self.window.height
+
+    #
+    @h.setter
+    def h(self, new_value: int) -> None:
+        # TODO
+        pass
 
 
 #
@@ -4473,6 +4599,12 @@ class ND_Position_Container(ND_Position):
         return width
 
     #
+    @w.setter
+    def w(self, new_value: int) -> None:
+        # TODO
+        pass
+
+    #
     @property
     def h(self) -> int:
         #
@@ -4498,6 +4630,12 @@ class ND_Position_Container(ND_Position):
                 height = self.positions_constraints.max_height
         #
         return height
+
+    #
+    @h.setter
+    def h(self, new_value: int) -> None:
+        # TODO
+        pass
 
     #
     def get_margin_left(self, space_around: int = -1) -> int:
@@ -4700,6 +4838,12 @@ class ND_Position_MultiLayer(ND_Position):
         return int(w * self.multilayer.w)
 
     #
+    @w.setter
+    def w(self, new_value: int) -> None:
+        # TODO
+        pass
+
+    #
     @property
     def h(self) -> int:
         #
@@ -4712,6 +4856,12 @@ class ND_Position_MultiLayer(ND_Position):
         h: float = get_percentage_from_str(self.h_str) / 100.0
         #
         return int(h * self.multilayer.h)
+
+    #
+    @h.setter
+    def h(self, new_value: int) -> None:
+        # TODO
+        pass
 
     #
     def get_margin_left(self, space_around: int = -1) -> int:

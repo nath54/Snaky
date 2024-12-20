@@ -9,9 +9,9 @@ from scene_main_menu import on_bt_click_quit, on_bt_click_init_game
 
 
 #
-def on_bt_go_to_menu(win: nd.ND_Window) -> None:
+def on_bt_go_to_menu(elt: nd.ND_Clickable) -> None:
     #
-    win.set_state("main_menu")
+    elt.window.set_state("main_menu")
 
 #
 def create_pause_menu(win: nd.ND_Window) -> None:

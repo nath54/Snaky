@@ -18,46 +18,48 @@ from scene_main_menu import init_really_game, colors_idx_to_colors, snake_base_t
 
 #
 def remove_bot_row(bot_name: str, bots_container: nd.ND_Container) -> None:
-    #
+    #TODO
     pass
 
 
 #
 def rename_bot_row(previous_bot_name: str, new_bot_name: str, bots_container: nd.ND_Container) -> None:
-    #
+    #TODO
     pass
 
 
 #
 def on_checkbox_selectable(cb: nd.ND_Checkbox) -> None:
-    #
+    #TODO
     pass
 
 #
 def on_bot_bt_name_pressed(elt: nd.ND_Clickable) -> None:
-    #
+    #TODO
     pass
 
 
 #
 def on_bot_input_name_validated(elt: nd.ND_Clickable) -> None:
-    #
+    #TODO
     pass
 
 #
 def on_bot_input_name_canceled(elt: nd.ND_Clickable) -> None:
-    #
+    #TODO
     pass
 
 #
 def on_bot_delete(elt: nd.ND_Clickable) -> None:
-    #
+    #TODO
     pass
 
 
 
 #
 def create_bot_row(bot_name: str, bots: dict[str, dict], bots_container: nd.ND_Container, main_app: nd.ND_MainApp) -> None:
+    #
+    return # On a pas le temps de faire cela finalement
     #
     margin_center: nd.ND_Position_Margins = nd.ND_Position_Margins(margin_left="50%", margin_right="50%", margin_top="50%", margin_bottom="50%")
     #
