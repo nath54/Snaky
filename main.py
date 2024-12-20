@@ -135,7 +135,7 @@ if __name__ == "__main__":
     app.global_vars_set("MAIN_WINDOW_ID", 0)
     app.global_vars_set("snakes_bot_paths", snakes_bot_paths)
 
-    # Chargement des bots qui ont déjà été sauvegardés
+    # Loading bots that have already been saved
     app.global_vars_set("bots", {})
 
     #
@@ -145,7 +145,7 @@ if __name__ == "__main__":
         if not filepath.endswith(".json"):
             continue
 
-        # Les bots seront enregistrés dans un fichier json
+        # Bots will be saved in a json file
 
         #
         with open(f"{snakes_bot_paths}{filepath}", "r", encoding="utf-8") as f:
@@ -162,7 +162,7 @@ if __name__ == "__main__":
     bots: dict[str, dict] = app.global_vars_get("bots")
     print(f"Loaded {len(bots)} bots.")
 
-    # On peut facilement remplacer quelques paramètres par défaut ici:
+    # We can easily replace some default parameters here:
     if "game_nb_init_apples" not in app.global_vars:
         app.global_vars_set("game_nb_init_apples", 10)
     if "game_init_snake_size" not in app.global_vars:

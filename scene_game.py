@@ -230,8 +230,8 @@ def update_physic(main_app: nd.ND_MainApp, delta_time: float) -> None:
                     grid.set_transformations_to_position(snak.cases[1], nd.ND_Transformations(rotation=angle))
 
             #
-            if snak.hidding_size > 0:  # En avancant, le serpent augmente sa taille
-                #
+            if snak.hidding_size > 0: 
+                # By moving forward, the snake increases its size
                 snak.hidding_size -= 1
             #
             else:
@@ -277,7 +277,7 @@ def update_physic(main_app: nd.ND_MainApp, delta_time: float) -> None:
             snaks_to_die = []
 
             #
-            if not snakes:  # Plus de serpents en vie => Partie finie
+            if not snakes: # No more snakes alive => Game over
                 #
                 updates = False
                 #

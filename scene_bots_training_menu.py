@@ -199,8 +199,8 @@ def on_bt_black_to_menu_clicked(elt: nd.ND_Clickable) -> None:
         #
         if i > 0 or sel_opt.options != new_options:
             sel_opt.update_options(new_options)
-        else:  # Ils sont sensé avoir tous les mêmes options, donc s'il y en a un qui est à jour, on est bon, pas besoin de tous les voir
-            break
+        else:
+            break # They are supposed to have the same options, so if one is up to date, we are good, no need to see all of them
     #
     win.set_state("main_menu")
 
@@ -347,14 +347,14 @@ def reproduce_bots_v2(bots: dict[str, dict], bots_to_reproduce: list[str], main_
     #
     a = random.randint(1, nb_possibilities)
     #
-    if a == 1:  # On prend un serpent et on modifie un peu ses paramètres
+    if a == 1:  # We take a snake and we modify its parameters a little
         #
         bot_name: str = random.choice(bots_to_reproduce)
         bot_dict: dict = bots[bot_name]
         #
         return new_genes_from_bot_dict(bots, bot_dict, main_app)
     #
-    else:       # On prend deux serpents et on les fusionne entre eux
+    else: # We take two snakes and we merge them
         #
         bot1_name: str = random.choice(bots_to_reproduce)
         bot1_dict: dict = bots[bot1_name]
@@ -400,7 +400,7 @@ def really_init_training_mode(win: nd.ND_Window) -> None:
     #
     for bot_name in bots:
         #
-        if bots[bot_name]["max_score"] >= min_score_to_reproduce:  # C'est ici qu'on fait de l'eugénisme !
+        if bots[bot_name]["max_score"] >= min_score_to_reproduce:  # It's here that we do eugenics!
             bots_to_reproduce.append(bot_name)
 
     #

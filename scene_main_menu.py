@@ -236,7 +236,7 @@ def init_really_game(win: nd.ND_Window) -> None:
     bg_grid: nd.ND_RectGrid = win.main_app.global_vars_get("bg_grid")
     game_infos_container: nd.ND_Container = win.main_app.global_vars_get("game_infos_container")
 
-    # On nettoie les scorebox des anciennes parties
+    # We clean the scoreboxes of the old games
     trash: list[Optional[nd.ND_Container]] = cast(list[Optional[nd.ND_Container]], game_infos_container.elements)
     game_infos_container.elements = []
     game_infos_container.elements_by_id = {}
@@ -247,7 +247,7 @@ def init_really_game(win: nd.ND_Window) -> None:
         trash[i] = None
     del trash
 
-    # On nettoie la grille
+    # We clean the grid
     grid.clean()
     bg_grid.clean()
 
