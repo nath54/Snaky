@@ -92,17 +92,12 @@ Ce projet à été organisé comme suivant:
 TODO: à rédiger
 
 
-## Apprentissage génétique des bots
-
-TODO: à rédiger
-
-
 ### Structure des bots
 
 TODO: à rédiger
 
 
-### Apprentissage
+## Apprentissage génétique des bots
 
 TODO: à rédiger
 
