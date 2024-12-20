@@ -74,27 +74,43 @@ Et normalement, il ne devrait pas y avoir de problèmes et l'application va se l
 
 ## Organisation du projet
 
-TODO: à rédiger
+Ce projet à été organisé comme suivant:
+
+- tous les fichiers qui commencent par `lib_nadisplay` sont des fichiers de la librairie graphique, ils ne sont donc pas très importants pour le Snake en lui-même.
+
+- tous les fichiers qui commencent par `scene_` sont des fichiers qui contiennent la définition graphique de chaque menu, et toutes les fonctions utiles et nécessaires dans leur contexte
+
+    * La fonction qui met à jour la physique des serpents (le coeur du jeu) a pour nom `update_physic` et est dans `scene_game.py`
+
+- le fichier `lib_snake.py` contient quelques classes associées au serpents, **dont les bots**, des fonctions pour dessiner les environnements dans la grille, et des fonctions pour changer l'apparence des serpents
+
+- la fonction `main.py` est le point d'entrée du programme, il gère aussi d'un point de vue très très haut les différents éléments de l'application et donne la main au moteur de l'application
+
 
 ## Base de l'application / Comment l'utiliser
 
 TODO: à rédiger
 
+
 ## Apprentissage génétique des bots
 
 TODO: à rédiger
+
 
 ### Structure des bots
 
 TODO: à rédiger
 
+
 ### Apprentissage
 
 TODO: à rédiger
 
+
 ## Librairie Graphique
 
 TODO: à rédiger
+
 
 ## Conclusion
 
