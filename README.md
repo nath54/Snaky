@@ -31,6 +31,10 @@ Par **manque de temps**:
 
 Aussi:
 - L'entièreté du développement et des tests ont été réalisés sur Linux, la réelle compatibilité sur Windows de la librairie `lib_nadisplay.py` reste encore à ce jour inconnue.
+- S'il y a des soucis de performances, vous pouvez essayer de changer les paramètres suivant :
+    * la taille de la grille
+    * le nombre de joueurs / de bots
+    * la vitesse des serpents
 
 ## Mise en place
 
