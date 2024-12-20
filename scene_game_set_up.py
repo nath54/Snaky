@@ -170,9 +170,11 @@ def add_player_row_to_set_up_player_menu(win: nd.ND_Window, players_container: n
     players_container.add_element(player_row)
 
 #
-def on_bt_add_player_button(win: nd.ND_Window) -> None:
+def on_bt_add_player_button(elt: nd.ND_Clickable) -> None:
     #
-    MAIN_WINDOW_ID: int = win.main_app.global_vars_get("MAIN_WINDOW_ID")
+    win: nd.ND_Window = elt.window
+    #
+    MAIN_WINDOW_ID: int = win.window_id
     #
     players_container: Optional[nd.ND_Container] = cast(Optional[nd.ND_Container], win.main_app.get_element(MAIN_WINDOW_ID, "game_setup", "players_container") )
     #
@@ -190,9 +192,11 @@ def on_bt_add_player_button(win: nd.ND_Window) -> None:
     add_player_row_to_set_up_player_menu(win, players_container, n)
 
 #
-def on_bt_remove_player_button(win: nd.ND_Window) -> None:
+def on_bt_remove_player_button(elt: nd.ND_Clickable) -> None:
     #
-    MAIN_WINDOW_ID: int = win.main_app.global_vars_get("MAIN_WINDOW_ID")
+    win: nd.ND_Window = elt.window
+    #
+    MAIN_WINDOW_ID: int = win.window_id
     #
     players_container: Optional[nd.ND_Container] = cast(Optional[nd.ND_Container], win.main_app.get_element(MAIN_WINDOW_ID, "game_setup", "players_container") )
     #
@@ -224,19 +228,21 @@ def on_bt_remove_player_button(win: nd.ND_Window) -> None:
     # TODO: assure that row_elt is well destroyed properly
 
 #
-def on_bt_game_settings_click(win: nd.ND_Window) -> None:
+def on_bt_game_settings_click(elt: nd.ND_Clickable) -> None:
     #
-    win.set_state("game_settings_menu")
+    elt.window.set_state("game_settings_menu")
 
 #
-def on_bt_back_clicked(win: nd.ND_Window) -> None:
+def on_bt_back_clicked(elt: nd.ND_Clickable) -> None:
     #
-    win.set_state("main_menu")
+    elt.window.set_state("main_menu")
 
 #
-def on_bt_map_size_change_clicked(win: nd.ND_Window) -> None:
+def on_bt_map_size_change_clicked(elt: nd.ND_Clickable) -> None:
     #
-    MAIN_WINDOW_ID: int = win.main_app.global_vars_get("MAIN_WINDOW_ID")
+    win: nd.ND_Window = elt.window
+    #
+    MAIN_WINDOW_ID: int = win.window_id
     #
     map_width_multilayer: Optional[nd.ND_MultiLayer] = cast(Optional[nd.ND_MultiLayer], win.main_app.get_element(MAIN_WINDOW_ID, "game_setup", "map_width_multilayer") )
     map_height_multilayer: Optional[nd.ND_MultiLayer] = cast(Optional[nd.ND_MultiLayer], win.main_app.get_element(MAIN_WINDOW_ID, "game_setup", "map_height_multilayer") )
@@ -267,9 +273,11 @@ def on_bt_map_size_change_clicked(win: nd.ND_Window) -> None:
     #
 
 #
-def on_bt_map_size_validate_clicked(win: nd.ND_Window) -> None:
+def on_bt_map_size_validate_clicked(elt: nd.ND_Clickable) -> None:
     #
-    MAIN_WINDOW_ID: int = win.main_app.global_vars_get("MAIN_WINDOW_ID")
+    win: nd.ND_Window = elt.window
+    #
+    MAIN_WINDOW_ID: int = win.window_id
     #
     map_width_multilayer: Optional[nd.ND_MultiLayer] = cast(Optional[nd.ND_MultiLayer], win.main_app.get_element(MAIN_WINDOW_ID, "game_setup", "map_width_multilayer") )
     map_height_multilayer: Optional[nd.ND_MultiLayer] = cast(Optional[nd.ND_MultiLayer], win.main_app.get_element(MAIN_WINDOW_ID, "game_setup", "map_height_multilayer") )
@@ -305,9 +313,11 @@ def on_bt_map_size_validate_clicked(win: nd.ND_Window) -> None:
     map_utils_edit_size_row.visible = False
 
 #
-def on_bt_map_size_reset_clicked(win: nd.ND_Window) -> None:
+def on_bt_map_size_reset_clicked(elt: nd.ND_Clickable) -> None:
     #
-    MAIN_WINDOW_ID: int = win.main_app.global_vars_get("MAIN_WINDOW_ID")
+    win: nd.ND_Window = elt.window
+    #
+    MAIN_WINDOW_ID: int = win.window_id
     #
     map_width_multilayer: Optional[nd.ND_MultiLayer] = cast(Optional[nd.ND_MultiLayer], win.main_app.get_element(MAIN_WINDOW_ID, "game_setup", "map_width_multilayer") )
     map_height_multilayer: Optional[nd.ND_MultiLayer] = cast(Optional[nd.ND_MultiLayer], win.main_app.get_element(MAIN_WINDOW_ID, "game_setup", "map_height_multilayer") )
@@ -337,9 +347,11 @@ def on_bt_map_size_reset_clicked(win: nd.ND_Window) -> None:
     map_utils_edit_size_row.visible = False
 
 #
-def on_bt_map_size_cancel_clicked(win: nd.ND_Window) -> None:
+def on_bt_map_size_cancel_clicked(elt: nd.ND_Clickable) -> None:
     #
-    MAIN_WINDOW_ID: int = win.main_app.global_vars_get("MAIN_WINDOW_ID")
+    win: nd.ND_Window = elt.window
+    #
+    MAIN_WINDOW_ID: int = win.window_id
     #
     map_width_multilayer: Optional[nd.ND_MultiLayer] = cast(Optional[nd.ND_MultiLayer], win.main_app.get_element(MAIN_WINDOW_ID, "game_setup", "map_width_multilayer") )
     map_height_multilayer: Optional[nd.ND_MultiLayer] = cast(Optional[nd.ND_MultiLayer], win.main_app.get_element(MAIN_WINDOW_ID, "game_setup", "map_height_multilayer") )

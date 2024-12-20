@@ -17,9 +17,142 @@ from scene_main_menu import init_really_game, colors_idx_to_colors, snake_base_t
 
 
 #
-def on_bt_black_to_menu_clicked(win: nd.ND_Window) -> None:
+def rename_bot_row(previous_bot_name: str, new_bot_name: str, bots_container: nd.ND_Container) -> None:
     #
-    MAIN_WINDOW_ID: int = win.main_app.global_vars_get("MAIN_WINDOW_ID")
+    pass
+
+
+
+#
+def on_bot_bt_name_pressed(elt: nd.ND_Clickable) -> None:
+    #
+    pass
+
+
+#
+def create_bot_row(bot_name: str, bots: dict[str, dict], bots_container: nd.ND_Container, main_app: nd.ND_MainApp) -> None:
+    #
+    margin_center: nd.ND_Position_Margins = nd.ND_Position_Margins(margin_left="50%", margin_right="50%", margin_top="50%", margin_bottom="50%")
+    #
+    row_elt_id: str = bot_name
+
+    #
+    row: nd.ND_Container = nd.ND_Container(
+        window=bots_container.window,
+        elt_id=row_elt_id,
+        position=nd.ND_Position_Container(w="100%", h=50, container=bots_container),
+        element_alignment="row"
+    )
+    bots_container.add_element(row)
+
+    #
+    selectable_checkbox: nd.ND_Checkbox = nd.ND_Checkbox(
+        window=row.window,
+        elt_id=f"{row_elt_id}_selectable_checkbox",
+        position=nd.ND_Position_Container(w="square", h="75%", container=row, position_margins=margin_center),
+        checked=False
+    )
+    row.add_element(selectable_checkbox)
+
+    #
+    bot_name_multilayer: nd.ND_MultiLayer = nd.ND_MultiLayer(
+        window=row.window,
+        elt_id=f"{row_elt_id}_bot_name_multilayer",
+        position=nd.ND_Position_Container(w="50%", h="75%", container=row, position_margins=margin_center),
+        elements_layers={}
+    )
+
+    #
+    bot_name_container: nd.ND_Container = nd.ND_Container(
+        window=row.window,
+        elt_id=f"{row_elt_id}_row_container",
+        position=nd.ND_Position_MultiLayer(multilayer=bot_name_multilayer, w="100%", h="100%"),
+        element_alignment="row",
+        overflow_hidden=True,
+        scroll_w=True
+    )
+    bot_name_multilayer.add_element(0, bot_name_container)
+
+    #
+    bot_name_bt: nd.ND_Button = nd.ND_Button(
+        window=row.window,
+        elt_id=f"{row_elt_id}_bot_name_bt",
+        position=nd.ND_Position_Container(w="100%", h="100%", container=bot_name_container),
+        onclick=None, #TODO
+        text=bot_name
+    )
+    bot_name_container.add_element(bot_name_bt)
+
+    #
+    bot_name_edit_container: nd.ND_Container = nd.ND_Container(
+        window=row.window,
+        elt_id=f"{row_elt_id}_bot_name_edit_container",
+        position=nd.ND_Position_MultiLayer(multilayer=bot_name_multilayer, w="100%", h="100%"),
+        element_alignment="row"
+    )
+    bot_name_edit_container.visible = False
+    bot_name_multilayer.add_element(1, bot_name_edit_container)
+
+    #
+    bot_name_edit_input: nd.ND_LineEdit = nd.ND_LineEdit(
+        window=row.window,
+        elt_id=f"{row_elt_id}_bot_name_edit_input",
+        position=nd.ND_Position_Container(w="50%", h="90%", container=bot_name_edit_container, position_margins=margin_center),
+        text=bot_name,
+        place_holder="bot name",
+        on_line_edit_validated=None, #TODO
+    )
+    bot_name_edit_container.add_element(bot_name_edit_input)
+
+    #
+    bot_name_edit_bt_ok: nd.ND_Button = nd.ND_Button(
+        window=row.window,
+        elt_id=f"{row_elt_id}_bot_name_edit_bt_ok",
+        position=nd.ND_Position_Container(w="square", h="90%", container=bot_name_edit_container, position_margins=margin_center),
+        text="v",
+        onclick=None, #TODO
+        font_name="FreeSans"
+    )
+    bot_name_edit_container.add_element(bot_name_edit_bt_ok)
+
+    #
+    bot_name_edit_bt_cancel: nd.ND_Button = nd.ND_Button(
+        window=row.window,
+        elt_id=f"{row_elt_id}_bot_name_edit_bt_cancel",
+        position=nd.ND_Position_Container(w="square", h="90%", container=bot_name_edit_container, position_margins=margin_center),
+        text="x",
+        onclick=None, #TODO
+        font_name="FreeSans"
+    )
+    bot_name_edit_container.add_element(bot_name_edit_bt_cancel)
+
+    #
+    bot_max_score: nd.ND_Text = nd.ND_Text(
+        window=row.window,
+        elt_id=f"{row_elt_id}_bot_max_score",
+        position=nd.ND_Position_Container(w=150, h=40, container=row, position_margins=margin_center),
+        text=f"max score = {bots[bot_name]["max_score"]}"
+    )
+    row.add_element(bot_max_score)
+
+    #
+    bot_bt_delete: nd.ND_Button = nd.ND_Button(
+        window=row.window,
+        elt_id=f"{row_elt_id}_bot_bt_delete",
+        position=nd.ND_Position_Container(w=100, h=40, container=row, position_margins=margin_center),
+        text="delete",
+        onclick=None # TODO
+    )
+    row.add_element(bot_bt_delete)
+
+
+
+#
+def on_bt_black_to_menu_clicked(elt: nd.ND_Clickable) -> None:
+    #
+    win: nd.ND_Window = elt.window
+    #
+    MAIN_WINDOW_ID: int = win.window_id
     #
     new_options: set[str] = set(snake_base_types + list(win.main_app.global_vars_get("bots").keys()))
     #
@@ -291,9 +424,11 @@ def get_average_batch_bots_score(main_app: nd.ND_MainApp) -> float:
     return sum_scores / float(len(snakes))
 
 #
-def on_bt_training_click(win: nd.ND_Window) -> None:
+def on_bt_training_click(elt: nd.ND_Clickable) -> None:
     #
-    MAIN_WINDOW_ID: int = win.main_app.global_vars_get("MAIN_WINDOW_ID")
+    win: nd.ND_Window = elt.window
+    #
+    MAIN_WINDOW_ID: int = win.window_id
     #
     snakes_speed: float = cast(float, win.main_app.get_element_value(MAIN_WINDOW_ID, "training_menu", "input_snakes_speed"))
     init_snake_size: int = cast(int, win.main_app.get_element_value(MAIN_WINDOW_ID, "training_menu", "input_init_snakes_size"))
@@ -384,9 +519,11 @@ def at_traning_epoch_end(win: nd.ND_Window) -> None:
     continue_training_bots(win)
 
 #
-def on_bt_del_bad_bots_clicked(win: nd.ND_Window) -> None:
+def on_bt_del_bad_bots_clicked(elt: nd.ND_Clickable) -> None:
     #
-    MAIN_WINDOW_ID: int = win.main_app.global_vars_get("MAIN_WINDOW_ID")
+    win: nd.ND_Window = elt.window
+    #
+    MAIN_WINDOW_ID: int = win.window_id
     #
     min_score_to_reproduce: int = cast(int, win.main_app.get_element_value(MAIN_WINDOW_ID, "training_menu", "input_min_score_to_reproduce"))
     #

@@ -178,7 +178,9 @@ def center_game_camera(main_app: nd.ND_MainApp) -> None:
     pass
 
 #
-def on_bt_play_clicked(win: nd.ND_Window) -> None:
+def on_bt_play_clicked(elt: nd.ND_Clickable) -> None:
+    #
+    win: nd.ND_Window = elt.window
     #
     nb_apples: int = cast(int, win.main_app.get_element_value(win.window_id, "game_settings_menu", "input_nb_apples"))
     init_snakes_size: int = cast(int, win.main_app.get_element_value(win.window_id, "game_settings_menu", "input_init_snakes_size"))
@@ -431,7 +433,9 @@ def init_really_game(win: nd.ND_Window) -> None:
     win.set_state("game")
 
 #
-def on_bt_click_init_game(win: nd.ND_Window) -> None:
+def on_bt_click_init_game(elt: nd.ND_Clickable) -> None:
+    #
+    win: nd.ND_Window = elt.window
 
     #
     win.main_app.global_vars_set("game_mode", "standard_game")
@@ -451,17 +455,23 @@ def on_bt_click_init_game(win: nd.ND_Window) -> None:
     init_really_game(win)
 
 #
-def on_bt_click_quit(win: nd.ND_Window) -> None:
+def on_bt_click_quit(elt: nd.ND_Clickable) -> None:
+    #
+    win: nd.ND_Window = elt.window
     #
     win.main_app.quit()
 
 #
-def on_bt_click_training_bots(win: nd.ND_Window) -> None:
+def on_bt_click_training_bots(elt: nd.ND_Clickable) -> None:
+    #
+    win: nd.ND_Window = elt.window
     #
     win.set_state("training_menu")
 
 #
-def on_bt_click_game_settings(win: nd.ND_Window) -> None:
+def on_bt_click_game_settings(elt: nd.ND_Clickable) -> None:
+    #
+    win: nd.ND_Window = elt.window
     #
     win.set_state("game_settings_menu")
 

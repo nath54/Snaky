@@ -1941,14 +1941,14 @@ class ND_Clickable(ND_Elt):
             window: ND_Window,
             elt_id: str,
             position: ND_Position,
-            onclick: Optional[Callable] = None,
+            onclick: Optional[Callable[["ND_Clickable"], None]] = None,
             active: bool = True,
             block_events_below: bool = True
         ) -> None:
 
         #
         super().__init__(window=window, elt_id=elt_id, position=position)
-        self.onclick: Optional[Callable] = onclick
+        self.onclick: Optional[Callable[[ND_Clickable], None]] = onclick
         self.state: str = "normal"  # Can be "normal", "hover", or "clicked"
         self.mouse_bt_down_on_hover: bool = False
         self.block_events_below: bool = block_events_below
@@ -2001,7 +2001,7 @@ class ND_Clickable(ND_Elt):
                         event.blocked = True
                     #
                     if self.onclick:
-                        self.onclick(self.window)
+                        self.onclick(self)
             #
             self.mouse_bt_down_on_hover = False
 
@@ -2355,7 +2355,7 @@ class ND_Button(ND_Clickable):
             window: ND_Window,
             elt_id: str,
             position: ND_Position,
-            onclick: Optional[Callable],
+            onclick: Optional[Callable[[ND_Clickable], None]],
             text: str,
             mouse_active: bool = True,
             font_name: Optional[str] = None,
@@ -3098,7 +3098,7 @@ class ND_SelectOptions(ND_Elt):
                 elt_id=f"{self.elt_id}_bt_option_{option}",
                 position=ND_Position_Container(w=self.w, h=self.h, container=self.bts_options_container),
                 text=option,
-                onclick=lambda x, option=option: self.on_option_button_clicked(option),
+                onclick=lambda x, option=option: self.on_option_button_clicked(option), # type: ignore
                 font_name=self.font_name,
                 font_size=self.font_size
             )
@@ -3133,7 +3133,7 @@ class ND_SelectOptions(ND_Elt):
             elt_id=f"{self.elt_id}_bt_option_{option_value}",
             position=ND_Position_Container(w=self.w, h=self.h, container=self.bts_options_container),
             text=option_value,
-            onclick=lambda x, option=option_value: self.on_option_button_clicked(option),
+            onclick=lambda x, option=option_value: self.on_option_button_clicked(option), # type: ignore
             font_name=self.font_name,
             font_size=self.font_size
         )
@@ -3189,7 +3189,7 @@ class ND_SelectOptions(ND_Elt):
                 elt_id=f"{self.elt_id}_bt_option_{option}",
                 position=ND_Position_Container(w=self.w, h=self.h, container=self.bts_options_container),
                 text=option,
-                onclick=lambda x, option=option: self.on_option_button_clicked(option),
+                onclick=lambda x, option=option: self.on_option_button_clicked(option), # type: ignore
                 font_name=self.font_name,
                 font_size=self.font_size
             )
