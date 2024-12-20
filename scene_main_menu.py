@@ -42,7 +42,7 @@ snakes_skins_to_skin_idx: dict[str, int] = {"snake": 1, "dragon":3, "monster": 2
 snake_base_types: list[str] = ["human", "bot_random", "bot_perfect"]
 
 #
-map_modes: set[str] = set(["together", "separate_close", "separate_far"])
+map_modes: set[str] = set(["together", "separate_close"])
 
 
 #
