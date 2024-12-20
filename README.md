@@ -23,7 +23,6 @@ Par **manque de temps**:
 - L'aspect graphique de l'application n'a pas pu être développé, donc c'est un peu moche, mais au moins c'est fonctionnel
 - Taille de la fenêtre (flexible, mais pas trop)
 - Potentiels bugs dans l'application: quitter et relancer. Il n'y a normalement pas de bugs qui empĉhe complètement l'utilisation de l'application
-- Sauvegarde des paramètres à la fermeture de l'application et rechargement automatique au lancement pas implémenté (ca n'est pas compliqué, mais pas eu le temps de le faire)
 - Tous les paramètres de jeu ne sont pas encore bien customisables
 - Une campagne et une histoire avaient été imaginées, mais pas eu le temps de la mettre dans le jeu (*__plot de l'histoire:__ Un petit serpent a vu un jour un impressionnant dragon chinois volant dans le ciel, et il voulu devenir un dragon lui aussi. Il part donc à l'aventure découvrir le monde, et essayer de trouver comment devenir lui aussi un grand dragon chinois volant*).
 - Il n'y a malheureusement qu'une seule carte disponible dans le jeu.
@@ -97,6 +96,31 @@ TODO: à rédiger
 
 
 ### Structure des bots
+
+Déjà, il y a les bots suivants disponibles dans le jeu (non appris):
+- Un bot complètement random : `bot_random`
+- Un bot parfait : `bot_perfect`
+
+Ensuite, j'ai testé deux versions de bots différents pour l'apprentissage génétique.
+
+Ils ont le même contexte en entrée et la même sortie:
+
+#### Description du contexte en entrée de ces bots:
+
+TODO: à rédiger
+
+
+#### Description de la sortie de ces bots:
+
+TODO: à rédiger
+
+
+#### Spécifités du bot version 1:
+
+TODO: à rédiger
+
+
+#### Spécifités du bot version 2:
 
 TODO: à rédiger
 
