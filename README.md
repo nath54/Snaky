@@ -156,6 +156,10 @@ Lors d'une initialisation aléatoire, on initialise tous ces paramètres avec un
 
 Une tentative d'apprentissage consiste à enchaîner un certain nombre de parties de bots, entre chaque groupe de parties, on va créer de nouveaux bots, s'il y a des bots qui ont un max_score supérieur à un seuil minimal pour pouvoir se reproduire, au hasard: soit on en prends deux et on les fusionne, soit on crée un nouveau bot en appliquant un bruit gaussien (de variance le paramètre `learning_rate`). On crée aussi de nouveaux bots complètement au hasard, et l'objectif souhaité est donc de trouver des poids qui donnent un bot qui réussit à manger pleins de pomme tout en survivant le plus possible.
 
+Ensuite, l'idée est de manuellement enchaîner plusieurs tentatives d'apprentissage tout en augmentant graduellement le seuil de score minimal pour se reproduire, et en supprimant tous les bots qui ont un score inférieur à ce seuil.
+
+La théorie dit qu'en explorant suffisament l'espace des possibilités, on peut avoir un bon bot ! La pratique nous dit que soit il faut être extrêmement chanceux (plus difficile que gagner au loto), ou bien explorer suffisament longtemps l'espace des paramètres possibles.
+
 
 ## 8. Conclusion
 
