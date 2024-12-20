@@ -20,7 +20,7 @@ Ceci a donc été réalisé, et ce projet a été encore plus ambitieux, car il 
 Par **manque de temps**:
 
 - L'aspect graphique de l'application n'a pas pu être développé, donc c'est un peu moche, mais au moins c'est fonctionnel
-- Taille de la fenêtre (flexible, mais pas trop)
+- Taille de la fenêtre (flexible, mais pas trop), donc l'affichage ne marche pas bien si on redimensionne la fenêtre en trop petit
 - Potentiels bugs dans l'application: quitter et relancer. Il n'y a normalement pas de bugs qui empĉhe complètement l'utilisation de l'application
 - Tous les paramètres de jeu ne sont pas encore bien customisables
 - Une campagne et une histoire avaient été imaginées, mais pas eu le temps de la mettre dans le jeu (*__plot de l'histoire:__ Un petit serpent a vu un jour un impressionnant dragon chinois volant dans le ciel, et il voulu devenir un dragon lui aussi. Il part donc à l'aventure découvrir le monde, et essayer de trouver comment devenir lui aussi un grand dragon chinois volant*).
@@ -111,27 +111,50 @@ Ils ont le même contexte en entrée et la même sortie:
 
 ### 6.1. Description du contexte en entrée de ces bots:
 
-TODO: à rédiger
+On va prendre la matrice de la grille centrée sur la tête du serpent et avec un certain rayon (par défaut à 3).
+Les obstacles prennent pour valeur `-1`, les cases vides `0`, et les cases avec des pommes `1`.
+
+Cette matrice est ensuite applatie et on y concatène:
+    - optionnellement: la direction de la ou les prochaines pommes
+    - optionnellement: des valeurs aléatoires pour essayer de casser les cycles des bots (mais ca ne marche pas: possiblement un bug ou pas assez de valeurs aléatoires, ou pas assez fortes)
 
 
 ### 6.2. Description de la sortie de ces bots:
 
-TODO: à rédiger
+Ces bots renvoient ensuite en sortie un vecteur de dimension 4 (chaque dimension correspond à une direction), et on renvoie la direction correspondant à la plus grande valeur de ce vecteur.
 
 
 ### 6.3. Spécifités du bot version 1:
 
-TODO: à rédiger
+La première version testée consiste juste à une multiplication linéaire, dont la matrice des poids de dimension (taille du vecteur de contexte en entrée, 4).
+
+- X = contexte d'entrée (n)
+- Y = X * W1   avec W1 de dimension (n, 4)
+
+Lors d'une initialisation aléatoire, on initialise cette matrice de poids avec une loi normale centrée sur 0 et de variance 1.
 
 
 ### 6.4. Spécifités du bot version 2:
 
-TODO: à rédiger
+La seconde version testée consiste à deux couches de multiplication linéaire et avec l'application d'une fonction d'activation entre les deux:
+
+Soit:
+
+- X = contexte d'entrée (n)
+- X = X * W1   avec W1 de dimension (n, h) avec donc h un hyperparamètre qui modélise la dimension intermédiaire.
+- X = MAX(X, 0)  sur chacune des composantes
+- Y = X * W2   avec W2 de dimension (h, 4)
+
+
+L'idée était d'avoir plus de paramètres disponibles pour essayer de pouvoir avoir plus de libertés et de possibilités pour le comportement des bots.
+
+Lors d'une initialisation aléatoire, on initialise tous ces paramètres avec une loi normale centrée sur 0 et de variance 1.
 
 
 ## 7. Apprentissage génétique des bots
 
-TODO: à rédiger
+
+Une tentative d'apprentissage consiste à enchaîner un certain nombre de parties de bots, entre chaque groupe de parties, on va créer de nouveaux bots, s'il y a des bots qui ont un max_score supérieur à un seuil minimal pour pouvoir se reproduire, au hasard: soit on en prends deux et on les fusionne, soit on crée un nouveau bot en appliquant un bruit gaussien (de variance le paramètre `learning_rate`). On crée aussi de nouveaux bots complètement au hasard, et l'objectif souhaité est donc de trouver des poids qui donnent un bot qui réussit à manger pleins de pomme tout en survivant le plus possible.
 
 
 ## 8. Conclusion
