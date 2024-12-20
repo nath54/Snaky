@@ -16,7 +16,6 @@ Ceci a donc été réalisé, et ce projet a été encore plus ambitieux, car il 
 
 ## Avertissements
 
-TODO: à rédiger
 
 Par **manque de temps**:
 
@@ -26,11 +25,11 @@ Par **manque de temps**:
 - Tous les paramètres de jeu ne sont pas encore bien customisables
 - Une campagne et une histoire avaient été imaginées, mais pas eu le temps de la mettre dans le jeu (*__plot de l'histoire:__ Un petit serpent a vu un jour un impressionnant dragon chinois volant dans le ciel, et il voulu devenir un dragon lui aussi. Il part donc à l'aventure découvrir le monde, et essayer de trouver comment devenir lui aussi un grand dragon chinois volant*).
 - Il n'y a malheureusement qu'une seule carte disponible dans le jeu.
-- Les bots ne sont malheureusement pas aussi bon que souhaité
+- Les bots ne sont malheureusement pas aussi bon que souhaité ou alors ca prends vraiment bcp de temps pour trouver un bon bot par apprentissage génétique / alors la structure utilisée ne le permet pas.
 
 Aussi:
 - L'entièreté du développement et des tests ont été réalisés sur Linux, la réelle compatibilité sur Windows de la librairie `lib_nadisplay.py` reste encore à ce jour inconnue.
-- S'il y a des soucis de performances, vous pouvez essayer de changer les paramètres suivant :
+- S'il y a des soucis de performances, vous pouvez essayer de changer les paramètres suivant pour avoir une expérience plus agréable :
     * la taille de la grille
     * le nombre de joueurs / de bots
     * la vitesse des serpents
@@ -92,7 +91,9 @@ Ce projet à été organisé comme suivant:
 
 ## Base de l'application / Comment l'utiliser
 
-TODO: à rédiger
+TODO: à rédiger (description et fonctionnalités des différents menus pour : 1. Faire des parties normales  /  2. Entraînement de bots)
+
+Info qui ne se devine pas facilement: le bouton `delete bad bots` supprime tous les bots qui ont un `max_score` strictement inférieur à `min_score_to_reproduce`.
 
 
 ### Structure des bots
@@ -126,11 +127,6 @@ TODO: à rédiger
 
 
 ## Apprentissage génétique des bots
-
-TODO: à rédiger
-
-
-## Librairie Graphique
 
 TODO: à rédiger
 
