@@ -88,7 +88,37 @@ Ce projet a été organisé comme suivant:
 
 ## V. Base de l'application / Comment l'utiliser
 
-TODO: à rédiger (description et fonctionnalités des différents menus pour : 1. Faire des parties normales  /  2. Entraînement de bots)
+### V. 1. Lancer une partie normale
+
+Lancer une partie standard se fait naturellement en cliquant sur `play` : il est alors possible de procéder à quelques réglages tels que :
+
+- Le nombre de joueurs humains et de bots (boutons `add` et `del`)
+- Leurs noms
+- Les touches de contrôle (pour les joueurs humains, inutile pour les bots)
+- le style des serpents et leur couleur si `snake` est sélectionné (cliquer sur la tête de serpent)
+- la taille de la carte (`reset` correspondant à 30x30)
+
+Il est également possible de régler les paramètres généraux du jeu à partir du bouton `game settings` ou directement depuis `settings` sur le menu principal :
+
+- Le mode de la carte : `together` signifie que tous les serpents évoluent dans la même grille, tandis que `separate_close` les place sur des grilles distinctes
+- Le nombre de pommes présentent simultanément sur la carte
+- La taille initiale des serpents
+- La vitesse des serpents
+
+### V. 2. Entraîner des bots
+
+Pour entraîner des bots, on bascule sur `train bots`. On peut alors effectuer nos choix de paramètres avant de lancer l'apprentissage :
+
+- Le mode de la carte (idem que pour les parties standards)
+- Le score minimal pour autoriser la reproduction d'un bot
+- Le nombre d'étapes
+- La taille de la grille (carrée)
+- Le nombre de bots à entraîner
+- Le nombre de pommes sur la grille
+- La taille initiale des serpents
+- Le nombre d'époques de l'apprentissage
+
+TODO : compléter
 
 Info qui ne se devine pas facilement: le bouton `delete bad bots` supprime tous les bots qui ont un `max_score` strictement inférieur à `min_score_to_reproduce`.
 
