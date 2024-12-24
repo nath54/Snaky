@@ -180,7 +180,3 @@ Une tentative d'apprentissage consiste à enchaîner un certain nombre de partie
 Ensuite, l'idée est de manuellement enchaîner plusieurs tentatives d'apprentissage tout en augmentant graduellement le seuil de score minimal pour se reproduire, et en supprimant tous les bots qui ont un score inférieur à ce seuil.
 
 La théorie dit qu'en explorant suffisament l'espace des possibilités, on peut avoir un bon bot ! La pratique nous dit que soit il faut être extrêmement chanceux (plus difficile que de gagner au loto), ou bien explorer suffisament longtemps l'espace des paramètres possibles.
-
-## VIII. Conclusion
-
-TODO: à rédiger
